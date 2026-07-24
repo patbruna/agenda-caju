@@ -124,8 +124,40 @@
 
   .foot{margin-top:22px;font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px;}
   .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;
-    padding:10px 18px;border-radius:24px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;}
+    padding:10px 18px;border-radius:24px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;max-width:90vw;text-align:center;}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .toast.err{background:var(--reprovado);font-weight:600;}
+
+  /* Tela de login */
+  #gate{max-width:380px;margin:8vh auto;background:var(--card);border:1px solid var(--line);
+    border-radius:var(--radius);padding:28px 26px;}
+  #gate h2{margin:0 0 4px;font-size:20px;}
+  #gate p.sub{margin:0 0 18px;font-size:13px;color:var(--muted);}
+  #gate label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px;}
+  #gate input{font:inherit;width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;margin-bottom:12px;}
+  #gate button{width:100%;padding:11px;font-size:15px;}
+  #gate .err{display:none;background:var(--recusou-bg);color:var(--recusou);border:1px solid #eec4bd;
+    border-radius:9px;padding:9px 12px;font-size:13px;font-weight:600;margin-bottom:12px;}
+  #gate .err.show{display:block;}
+  .boot{text-align:center;padding:14vh 20px;color:var(--muted);font-size:15px;}
+
+  /* Barra de sessão / sincronismo */
+  .session{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--muted);
+    margin-left:auto;}
+  .sync{display:inline-flex;align-items:center;gap:6px;font-weight:600;}
+  .sync .dot{width:8px;height:8px;border-radius:50%;background:var(--wa);}
+  .sync.off .dot{background:var(--recusou);}
+  .sync.off{color:var(--recusou);}
+  .linkbtn{font:inherit;font-size:13px;background:none;border:none;color:var(--muted);cursor:pointer;
+    text-decoration:underline;padding:0;}
+  .linkbtn:hover{color:var(--ink);}
+
+  /* Painel de primeira carga */
+  .seedbox{background:var(--alert-bg);border:1px solid #f2d19a;border-radius:var(--radius);
+    padding:18px 20px;margin:16px 0;}
+  .seedbox h3{margin:0 0 6px;font-size:16px;color:#8a4b00;}
+  .seedbox p{margin:0 0 12px;font-size:13px;color:#8a4b00;}
+  .seedbox .btns{display:flex;gap:8px;flex-wrap:wrap;}
   @media(max-width:720px){
     .row{grid-template-columns:120px 1fr;grid-auto-rows:auto;}
     .row .confirm-cell,.row .status-cell,.row .actions{grid-column:1/-1;}
@@ -136,16 +168,46 @@
 </style>
 </head>
 <body>
-<div class="wrap">
+
+<!-- Enquanto verifica se já existe sessão salva -->
+<div class="boot" id="boot">Carregando…</div>
+
+<!-- Tela de login: aparece se ninguém estiver logado -->
+<div id="gate" style="display:none">
+  <div class="eyebrow">Grupo Caju · Recrutamento</div>
+  <h2>Agenda de entrevistas</h2>
+  <p class="sub">Acesso restrito à equipe de recrutamento.</p>
+  <div class="err" id="gateErr"></div>
+  <form onsubmit="doLogin(event)">
+    <label for="email">E-mail</label>
+    <input type="email" id="email" autocomplete="username" required>
+    <label for="senha">Senha</label>
+    <input type="password" id="senha" autocomplete="current-password" required>
+    <button class="btn" type="submit" id="gateBtn">Entrar</button>
+  </form>
+</div>
+
+<div class="wrap" id="app" style="display:none">
   <div class="eyebrow">Grupo Caju · Recrutamento</div>
   <h1>Agenda de entrevistas — Executivo de Back</h1>
   <div class="clock" id="clock"></div>
 
   <div class="banner" id="banner"></div>
 
+  <div class="seedbox" id="seedbox" style="display:none">
+    <h3>A agenda está vazia</h3>
+    <p id="seedMsg"></p>
+    <div class="btns" id="seedBtns"></div>
+  </div>
+
   <div class="bar">
     <label class="toggle"><input type="checkbox" id="soundOn"> 🔔 Alerta sonoro</label>
     <label class="toggle" title="Aviso quando faltarem 15 minutos"><input type="checkbox" id="alertOn" checked> Alertar 15 min antes</label>
+    <div class="session">
+      <span class="sync" id="sync" title="Alterações são salvas no Supabase"><span class="dot"></span><span id="syncTxt">Sincronizado</span></span>
+      <span id="whoami"></span>
+      <button class="linkbtn" onclick="doLogout()">Sair</button>
+    </div>
   </div>
 
   <div class="tabs" id="tabs">
@@ -188,13 +250,26 @@
 
   <div class="foot">
     <p><b>Como usar:</b> marque a caixinha <b>Confirmado</b> quando o candidato responder. Ajuste data e horário direto nos campos de cada linha — a agenda reordena e reagrupa por dia sozinha. Quando faltarem 15 minutos para uma entrevista, a linha acende e aparece um aviso no topo (com som, se ativado).</p>
-    <p><b>Fica salvo neste navegador:</b> suas atualizações são guardadas na máquina em que você abrir este arquivo — use sempre o mesmo navegador para não perder o progresso.</p>
+    <p><b>Salvo na nuvem:</b> cada alteração vai direto para o banco de dados no Supabase, então a agenda é a mesma em qualquer computador ou celular. Se duas pessoas estiverem com a página aberta, as duas telas se atualizam sozinhas. O indicador <b>Sincronizado</b> no topo fica vermelho se algo não conseguir ser salvo — se isso acontecer, confira a internet e recarregue a página.</p>
   </div>
 </div>
 <div class="toast" id="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const STORAGE_KEY='caju_agenda_v2';
+/* ---------------------------------------------------------------
+   Conexão com o Supabase.
+   A chave abaixo é a "publishable" — feita para ficar no código do
+   navegador. Ela sozinha não abre nada: as políticas de RLS no banco
+   (ver supabase/01-estrutura.sql) só liberam leitura e escrita para
+   usuário logado.
+   --------------------------------------------------------------- */
+const SB_URL='https://usjunqrcdbmrqerpxydt.supabase.co';
+const SB_KEY='sb_publishable_6LDiddFi26QnQk_Ptw4sNA_docgmMG7';
+const sb=window.supabase.createClient(SB_URL,SB_KEY);
+
+const LEGACY_KEY='caju_agenda_v2';  // gaveta antiga do navegador — só para importar
+const PREFS_KEY='caju_prefs';       // som/alerta: preferência de cada máquina
 const STATUSES=['Pendente','Convidado','Confirmado','Realizada','Aprovado','Reprovado','Recusou'];
 const WD=['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
 
@@ -247,25 +322,242 @@ const defaults=[
 ];
 
 let soundBoot=null, alertBoot=null;
-let data=load();
+let data=[];
 const beeped=new Set();
+let liveChan=null, tickTimer=null, pendingRender=false, iniciado=false;
 
-function load(){
-  try{const raw=localStorage.getItem(STORAGE_KEY);
-    if(raw){const o=JSON.parse(raw);
-      if(typeof o.sound==='boolean') soundBoot=o.sound;
-      if(typeof o.alert==='boolean') alertBoot=o.alert;
-      if(typeof o.tplAprov==='string') tplAprov=o.tplAprov;
-      if(typeof o.tplReprov==='string') tplReprov=o.tplReprov;
-      if(Array.isArray(o.data)) return o.data;
-    }}catch(e){}
-  return JSON.parse(JSON.stringify(defaults));
+/* =========================================================
+   Preferências desta máquina (som e alerta).
+   Continuam no navegador de propósito: são de cada aparelho,
+   não da agenda compartilhada.
+   ========================================================= */
+function loadPrefs(){
+  try{const o=JSON.parse(localStorage.getItem(PREFS_KEY)||'{}');
+    if(typeof o.sound==='boolean') soundBoot=o.sound;
+    if(typeof o.alert==='boolean') alertBoot=o.alert;
+  }catch(e){}
 }
-function save(){
-  try{localStorage.setItem(STORAGE_KEY,JSON.stringify({
-    data, sound:document.getElementById('soundOn').checked, alert:document.getElementById('alertOn').checked,
-    tplAprov, tplReprov
+function savePrefs(){
+  try{localStorage.setItem(PREFS_KEY,JSON.stringify({
+    sound:document.getElementById('soundOn').checked,
+    alert:document.getElementById('alertOn').checked
   }));}catch(e){}
+}
+function applyPrefs(){
+  if(soundBoot)document.getElementById('soundOn').checked=true;
+  if(alertBoot===false)document.getElementById('alertOn').checked=false;
+  document.getElementById('soundOn').addEventListener('change',()=>{savePrefs();beeped.clear();});
+  document.getElementById('alertOn').addEventListener('change',()=>{savePrefs();tick();});
+}
+
+/* =========================================================
+   Tradução entre o banco e a tela.
+   Banco: data (date), hora (time), pode ser nulo.
+   Tela:  date / time como texto, vazio quando não definido.
+   ========================================================= */
+function fromDb(r){
+  return {id:r.id, nome:r.nome, cat:r.cat, fone:r.fone||'',
+          date:r.data||'', time:(r.hora||'').slice(0,5), status:r.status};
+}
+
+/* Indicador no topo. Fica vermelho se uma gravação falhar, para
+   nunca mais existir perda silenciosa de alteração. */
+function setSync(ok,txt){
+  const el=document.getElementById('sync');
+  el.classList.toggle('off',!ok);
+  document.getElementById('syncTxt').textContent=txt||(ok?'Sincronizado':'Erro ao salvar');
+}
+
+/* =========================================================
+   Login
+   ========================================================= */
+async function doLogin(ev){
+  ev.preventDefault();
+  const btn=document.getElementById('gateBtn'), err=document.getElementById('gateErr');
+  const email=document.getElementById('email').value.trim();
+  const senha=document.getElementById('senha').value;
+  btn.disabled=true; btn.textContent='Entrando…'; err.className='err';
+  const {error}=await sb.auth.signInWithPassword({email,password:senha});
+  btn.disabled=false; btn.textContent='Entrar';
+  if(error){
+    err.textContent = /invalid login|invalid credentials/i.test(error.message)
+      ? 'E-mail ou senha incorretos.'
+      : /not confirmed/i.test(error.message)
+        ? 'Este e-mail ainda não foi confirmado. Confirme o usuário no painel do Supabase.'
+        : error.message;
+    err.className='err show';
+    return;
+  }
+  document.getElementById('senha').value='';
+}
+async function doLogout(){
+  if(!confirm('Sair da agenda?'))return;
+  if(liveChan){sb.removeChannel(liveChan);liveChan=null;}
+  if(tickTimer){clearInterval(tickTimer);tickTimer=null;}
+  await sb.auth.signOut();
+}
+
+async function boot(){
+  loadPrefs();
+  const {data:{session}}=await sb.auth.getSession();
+  await mostrar(session);
+  sb.auth.onAuthStateChange((_ev,s)=>mostrar(s));
+}
+async function mostrar(session){
+  document.getElementById('boot').style.display='none';
+  if(!session){
+    iniciado=false;
+    document.getElementById('app').style.display='none';
+    document.getElementById('gate').style.display='';
+    return;
+  }
+  document.getElementById('gate').style.display='none';
+  document.getElementById('app').style.display='';
+  if(iniciado)return;          // evita recarregar tudo ao renovar o token
+  iniciado=true;
+  document.getElementById('whoami').textContent=session.user.email;
+  applyPrefs();
+  await fetchConfig();
+  await fetchAll();
+  subscribeLive();
+  render();
+  tickTimer=setInterval(tick,1000);
+}
+
+/* =========================================================
+   Leitura
+   ========================================================= */
+async function fetchAll(){
+  const {data:rows,error}=await sb.from('candidatos').select('*');
+  if(error){
+    setSync(false,'Erro ao carregar');
+    showToast('Não foi possível carregar a agenda: '+error.message,true);
+    return;
+  }
+  data=rows.map(fromDb);
+  setSync(true);
+  checkEmpty();
+}
+async function fetchConfig(){
+  const {data:row,error}=await sb.from('configuracoes').select('*').eq('id',1).maybeSingle();
+  if(!error&&row){
+    if(row.msg_aprovacao) tplAprov=row.msg_aprovacao;
+    if(row.msg_reprovacao) tplReprov=row.msg_reprovacao;
+  }
+  document.getElementById('msgAprov').value=tplAprov;
+  document.getElementById('msgReprov').value=tplReprov;
+}
+
+/* =========================================================
+   Escrita — um candidato por vez.
+   A tela muda na hora (resposta rápida) e, se o banco recusar,
+   voltamos ao estado do servidor e avisamos em vermelho.
+   Gravar candidato por candidato é o que permite duas pessoas
+   editarem juntas sem uma apagar a alteração da outra.
+   ========================================================= */
+async function patchRow(id,fields){
+  setSync(true,'Salvando…');
+  const {error}=await sb.from('candidatos').update(fields).eq('id',id);
+  if(error){
+    setSync(false,'Erro ao salvar');
+    showToast('Não salvou: '+error.message,true);
+    await fetchAll(); render();
+    return false;
+  }
+  setSync(true);
+  return true;
+}
+
+/* =========================================================
+   Tempo real — a tela do colega se atualiza sozinha
+   ========================================================= */
+function subscribeLive(){
+  liveChan=sb.channel('agenda-live')
+    .on('postgres_changes',{event:'*',schema:'public',table:'candidatos'},p=>{
+      if(p.eventType==='DELETE'){data=data.filter(x=>x.id!==p.old.id);}
+      else{
+        const c=fromDb(p.new), i=data.findIndex(x=>x.id===c.id);
+        if(i>=0)data[i]=c; else data.push(c);
+      }
+      scheduleRender();
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'configuracoes'},p=>{
+      if(p.new){
+        tplAprov=p.new.msg_aprovacao||tplAprov;
+        tplReprov=p.new.msg_reprovacao||tplReprov;
+      }
+    })
+    .subscribe();
+}
+/* Não redesenha enquanto alguém está com o cursor num campo da lista:
+   isso roubaria o foco no meio da digitação. Espera o campo perder o foco. */
+function scheduleRender(){
+  const a=document.activeElement;
+  if(a&&document.getElementById('list').contains(a)){
+    if(!pendingRender){
+      pendingRender=true;
+      a.addEventListener('blur',()=>{pendingRender=false;render();},{once:true});
+    }
+    return;
+  }
+  render();
+}
+
+/* =========================================================
+   Primeira carga: importar do navegador ou usar a lista inicial
+   ========================================================= */
+function legacyData(){
+  try{const o=JSON.parse(localStorage.getItem(LEGACY_KEY)||'null');
+    if(o&&Array.isArray(o.data)&&o.data.length)return o;}catch(e){}
+  return null;
+}
+function checkEmpty(){
+  const box=document.getElementById('seedbox');
+  if(data.length){box.style.display='none';return;}
+  const antigo=legacyData(), btns=[];
+  let msg='Nenhum candidato cadastrado no banco ainda.';
+  if(antigo){
+    msg='Encontrei '+antigo.data.length+' candidatos guardados neste navegador, da versão antiga da agenda. '+
+        'Importe para o Supabase — depois disso eles aparecem em qualquer computador ou celular.';
+    btns.push('<button class="btn" onclick="importLegacy()">⬆ Importar '+antigo.data.length+' candidatos deste navegador</button>');
+  }
+  btns.push('<button class="btn" style="background:var(--muted)" onclick="seedDefaults()">Carregar lista inicial ('+defaults.length+')</button>');
+  document.getElementById('seedMsg').textContent=msg;
+  document.getElementById('seedBtns').innerHTML=btns.join('');
+  box.style.display='';
+}
+async function insertMany(lista,rotulo){
+  const rows=lista.map(c=>({
+    nome:c.nome,
+    cat:['bom','analisar','agendado'].includes(c.cat)?c.cat:'agendado',
+    fone:(c.fone||'').replace(/\D/g,''),
+    data:c.date||null,
+    hora:c.time||null,
+    status:STATUSES.includes(c.status)?c.status:'Pendente'
+  }));
+  setSync(true,'Salvando…');
+  const {error}=await sb.from('candidatos').insert(rows);
+  if(error){
+    setSync(false,'Erro ao salvar');
+    showToast('Não conseguiu gravar: '+error.message,true);
+    return;
+  }
+  setSync(true);
+  await fetchAll(); render(); showToast(rotulo);
+}
+async function importLegacy(){
+  const o=legacyData();
+  if(!o){showToast('Nada encontrado neste navegador',true);return;}
+  if(typeof o.tplAprov==='string'||typeof o.tplReprov==='string'){
+    document.getElementById('msgAprov').value=o.tplAprov||tplAprov;
+    document.getElementById('msgReprov').value=o.tplReprov||tplReprov;
+    await saveMsgs(true);
+  }
+  await insertMany(o.data,'Importado! Seus dados agora estão no Supabase.');
+}
+function seedDefaults(){
+  if(!confirm('Carregar a lista inicial de '+defaults.length+' candidatos?'))return;
+  insertMany(defaults,'Lista inicial carregada');
 }
 
 function catLabel(c){return c==='bom'?'Potencial bom':c==='analisar'?'Analisar':'Agendado';}
@@ -393,23 +685,55 @@ function renderResultList(kind,list){
   });
 }
 
-function setStatus(id,v){const c=data.find(x=>x.id===id);c.status=v;save();render();}
-function setConfirm(id,checked){const c=data.find(x=>x.id===id);
-  if(checked)c.status='Confirmado';else if(c.status==='Confirmado')c.status='Convidado';save();render();}
-function setTime(id,v){const c=data.find(x=>x.id===id);c.time=v;beeped.delete(id);save();render();}
-function setDate(id,v){const c=data.find(x=>x.id===id);c.date=v;beeped.delete(id);save();render();}
-function removeC(id){const c=data.find(x=>x.id===id);
-  if(confirm('Remover '+c.nome+' da agenda?')){data=data.filter(x=>x.id!==id);save();render();}}
-function addCandidate(){
+function setStatus(id,v){const c=data.find(x=>x.id===id);if(!c)return;
+  c.status=v;render();patchRow(id,{status:v});}
+function setConfirm(id,checked){const c=data.find(x=>x.id===id);if(!c)return;
+  if(checked)c.status='Confirmado';else if(c.status==='Confirmado')c.status='Convidado';
+  render();patchRow(id,{status:c.status});}
+function setTime(id,v){const c=data.find(x=>x.id===id);if(!c)return;
+  c.time=v;beeped.delete(id);render();patchRow(id,{hora:v||null});}
+function setDate(id,v){const c=data.find(x=>x.id===id);if(!c)return;
+  c.date=v;beeped.delete(id);render();patchRow(id,{data:v||null});}
+
+async function removeC(id){
+  const c=data.find(x=>x.id===id);if(!c)return;
+  if(!confirm('Remover '+c.nome+' da agenda?'))return;
+  const backup=data;
+  data=data.filter(x=>x.id!==id);render();
+  setSync(true,'Salvando…');
+  const {error}=await sb.from('candidatos').delete().eq('id',id);
+  if(error){
+    data=backup;render();
+    setSync(false,'Erro ao salvar');
+    showToast('Não removeu: '+error.message,true);
+    return;
+  }
+  setSync(true);showToast('Removido');
+}
+
+async function addCandidate(){
   const nome=document.getElementById('addNome').value.trim();
   const date=document.getElementById('addDate').value.trim();
   const time=document.getElementById('addTime').value.trim();
   let fone=document.getElementById('addFone').value.replace(/\D/g,'');
   if(!nome){showToast('Informe o nome');return;}
   if(fone&&fone.length<=11)fone='55'+fone;
-  data.push({id:'x'+Date.now(),nome,cat:'agendado',fone,date,time,status:'Convidado'});
-  document.getElementById('addNome').value='';document.getElementById('addTime').value='';document.getElementById('addFone').value='';
-  save();render();showToast('Adicionado');
+  setSync(true,'Salvando…');
+  const {data:rows,error}=await sb.from('candidatos')
+    .insert({nome,cat:'agendado',fone,data:date||null,hora:time||null,status:'Convidado'})
+    .select();
+  if(error){
+    setSync(false,'Erro ao salvar');
+    showToast('Não adicionou: '+error.message,true);
+    return;
+  }
+  setSync(true);
+  // o aviso de tempo real pode chegar antes daqui — daí não duplica
+  if(rows&&rows[0]&&!data.some(x=>x.id===rows[0].id))data.push(fromDb(rows[0]));
+  document.getElementById('addNome').value='';
+  document.getElementById('addTime').value='';
+  document.getElementById('addFone').value='';
+  render();showToast('Adicionado');
 }
 
 function fmtDiff(min){const a=Math.abs(min);
@@ -455,28 +779,38 @@ function setTab(t){
   render();
 }
 
-function saveMsgs(){
+/* As mensagens ficam no banco: se você editar, o colega vê a mesma versão. */
+async function saveMsgs(silencioso){
   tplAprov=document.getElementById('msgAprov').value;
   tplReprov=document.getElementById('msgReprov').value;
-  save();render();showToast('Mensagens salvas');
+  setSync(true,'Salvando…');
+  const {error}=await sb.from('configuracoes')
+    .update({msg_aprovacao:tplAprov,msg_reprovacao:tplReprov}).eq('id',1);
+  if(error){
+    setSync(false,'Erro ao salvar');
+    showToast('Não salvou as mensagens: '+error.message,true);
+    return;
+  }
+  setSync(true);render();
+  if(!silencioso)showToast('Mensagens salvas');
 }
-function resetMsgs(){
+async function resetMsgs(){
   if(!confirm('Restaurar as mensagens padrão de aprovação e reprovação?'))return;
-  tplAprov=DEF_APROV;tplReprov=DEF_REPROV;
-  document.getElementById('msgAprov').value=tplAprov;
-  document.getElementById('msgReprov').value=tplReprov;
-  save();render();showToast('Mensagens restauradas');
+  document.getElementById('msgAprov').value=DEF_APROV;
+  document.getElementById('msgReprov').value=DEF_REPROV;
+  await saveMsgs(true);
+  showToast('Mensagens restauradas');
 }
-document.getElementById('msgAprov').value=tplAprov;
-document.getElementById('msgReprov').value=tplReprov;
 
-if(soundBoot)document.getElementById('soundOn').checked=true;
-if(alertBoot===false)document.getElementById('alertOn').checked=false;
-document.getElementById('soundOn').addEventListener('change',()=>{save();beeped.clear();});
-document.getElementById('alertOn').addEventListener('change',()=>{save();tick();});
-render();setInterval(tick,1000);
-function showToast(t){const el=document.getElementById('toast');el.textContent=t;el.classList.add('show');
-  clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),1800);}
+function showToast(t,isErr){
+  const el=document.getElementById('toast');
+  el.textContent=t;
+  el.className='toast show'+(isErr?' err':'');
+  clearTimeout(el._t);
+  el._t=setTimeout(()=>{el.className='toast';},isErr?6000:1800);
+}
+
+boot();
 </script>
 </body>
 </html>
