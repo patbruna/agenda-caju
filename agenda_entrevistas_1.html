@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agenda de Entrevistas — Grupo Caju</title>
+<style>
+  :root{
+    --page:#eceff0; --card:#fff; --ink:#16211c; --muted:#65756c; --line:#dbe1dd;
+    --wa:#1fa855; --wa-dark:#178a45;
+    --confirmado:#178a45; --confirmado-bg:#e7f4ec;
+    --convidado:#9a6b00; --convidado-bg:#fbf1db;
+    --pendente:#5a6b63; --pendente-bg:#eef1ef;
+    --realizada:#2563a8; --realizada-bg:#e7effa;
+    --recusou:#b23a2b; --recusou-bg:#fbe9e6;
+    --aprovado:#0f7a3d; --aprovado-bg:#dff3e6;
+    --reprovado:#a33224; --reprovado-bg:#fbe6e2;
+    --alert:#e07a00; --alert-bg:#fff3e0;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--page);color:var(--ink);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.5;
+    padding:26px 16px 90px;}
+  .wrap{max-width:980px;margin:0 auto;}
+  .eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--wa-dark);font-weight:700;margin-bottom:6px;}
+  h1{font-size:26px;margin:0 0 2px;font-weight:700;letter-spacing:-.01em;}
+  .clock{color:var(--muted);font-size:14px;font-variant-numeric:tabular-nums;}
+  .clock b{color:var(--ink);}
+
+  .banner{display:none;background:var(--alert-bg);border:1px solid #f2d19a;border-left:5px solid var(--alert);
+    border-radius:12px;padding:12px 16px;margin:16px 0;font-weight:600;color:#8a4b00;}
+  .banner.show{display:block;}
+  .banner .b-row{display:flex;align-items:center;gap:8px;}
+  .banner .b-row + .b-row{margin-top:5px;}
+
+  .bar{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:14px 16px;margin:16px 0;display:flex;gap:22px;flex-wrap:wrap;align-items:center;}
+  .toggle{display:flex;align-items:center;gap:7px;font-size:14px;color:var(--muted);cursor:pointer;user-select:none;}
+  .toggle input{width:17px;height:17px;accent-color:var(--wa);}
+
+  .stats{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px;}
+  .stat{font-size:13px;font-weight:600;padding:6px 12px;border-radius:20px;background:var(--card);border:1px solid var(--line);}
+  .stat b{font-size:15px;}
+  .stat.c{color:var(--confirmado);} .stat.v{color:var(--convidado);} .stat.p{color:var(--pendente);}
+
+  .dayhead{display:flex;align-items:center;gap:10px;margin:20px 2px 10px;font-weight:700;font-size:15px;color:var(--ink);}
+  .dayhead::after{content:"";flex:1;height:1px;background:var(--line);}
+  .dayhead .badge{font-size:12px;font-weight:600;color:var(--muted);background:var(--card);border:1px solid var(--line);padding:2px 10px;border-radius:20px;}
+
+  .row{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:12px 14px;margin-bottom:10px;display:grid;
+    grid-template-columns:140px 1fr 104px 132px 84px;gap:12px;align-items:center;
+    transition:background .2s,border-color .2s,box-shadow .2s;}
+  .row.alert{border-color:var(--alert);background:var(--alert-bg);box-shadow:0 0 0 3px rgba(224,122,0,.12);
+    animation:pulse 1.6s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 3px rgba(224,122,0,.10);}50%{box-shadow:0 0 0 6px rgba(224,122,0,.02);}}
+  .row.realizada{opacity:.62;}
+
+  .when{display:flex;flex-direction:column;gap:5px;}
+  .when input{font:inherit;padding:6px;border:1px solid var(--line);border-radius:8px;width:100%;font-variant-numeric:tabular-nums;}
+  .when input.t{font-weight:700;text-align:center;}
+  .who .name{font-weight:700;font-size:16px;}
+  .who .meta{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:2px;}
+  .chip{font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;}
+  .chip.bom{background:var(--confirmado-bg);color:var(--confirmado);}
+  .chip.analisar{background:#fdf3dd;color:#9a6b00;}
+  .chip.agendado{background:var(--realizada-bg);color:var(--realizada);}
+  .conflict-badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:var(--recusou-bg);color:var(--recusou);}
+  .countdown{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:2px;}
+  .countdown.soon{color:var(--alert);font-weight:700;}
+
+  .conf{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--muted);
+    cursor:pointer;user-select:none;padding:7px 9px;border:1px solid var(--line);border-radius:9px;justify-content:center;}
+  .conf input{width:17px;height:17px;accent-color:var(--confirmado);}
+  .conf.on{background:var(--confirmado-bg);color:var(--confirmado);border-color:#bfe0cc;}
+
+  select.status{font:inherit;font-weight:600;padding:8px 6px;border-radius:8px;border:1px solid var(--line);width:100%;cursor:pointer;}
+  select.status.s-Confirmado{background:var(--confirmado-bg);color:var(--confirmado);border-color:#bfe0cc;}
+  select.status.s-Convidado{background:var(--convidado-bg);color:var(--convidado);border-color:#ecd9a6;}
+  select.status.s-Pendente{background:var(--pendente-bg);color:var(--pendente);}
+  select.status.s-Realizada{background:var(--realizada-bg);color:var(--realizada);border-color:#c3d6ec;}
+  select.status.s-Recusou{background:var(--recusou-bg);color:var(--recusou);border-color:#eec4bd;}
+  select.status.s-Aprovado{background:var(--aprovado-bg);color:var(--aprovado);border-color:#a9dcbf;}
+  select.status.s-Reprovado{background:var(--reprovado-bg);color:var(--reprovado);border-color:#eec0b8;}
+
+  /* Abas */
+  .tabs{display:flex;gap:6px;margin:16px 0 4px;flex-wrap:wrap;}
+  .tab{font:inherit;font-size:14px;font-weight:600;padding:9px 16px;border-radius:11px;cursor:pointer;
+    border:1px solid var(--line);background:var(--card);color:var(--muted);display:flex;align-items:center;gap:7px;}
+  .tab:hover{border-color:#c4ccc7;}
+  .tab.on{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .tab .n{font-size:12px;font-weight:700;padding:1px 8px;border-radius:20px;background:var(--page);color:var(--ink);}
+  .tab.on .n{background:rgba(255,255,255,.22);color:#fff;}
+  .tab.t-aprov.on{background:var(--aprovado);border-color:var(--aprovado);}
+  .tab.t-reprov.on{background:var(--reprovado);border-color:var(--reprovado);}
+
+  /* Linhas de resultado (aprovados/reprovados) */
+  .row.result{grid-template-columns:1fr minmax(190px,auto) 132px 44px;}
+  .muted-when{font-size:12px;color:var(--muted);}
+  .result-action{display:flex;justify-content:flex-end;}
+  .sendbtn{font:inherit;font-weight:700;border:none;border-radius:10px;cursor:pointer;padding:10px 16px;
+    text-decoration:none;display:inline-flex;align-items:center;gap:7px;font-size:14px;white-space:nowrap;}
+  .sendbtn.ok{background:var(--aprovado);color:#fff;} .sendbtn.ok:hover{filter:brightness(1.07);}
+  .sendbtn.no{background:var(--reprovado);color:#fff;} .sendbtn.no:hover{filter:brightness(1.07);}
+  .sendbtn.ghost{background:var(--pendente-bg);color:var(--muted);cursor:default;}
+  .empty{background:var(--card);border:1px dashed var(--line);border-radius:var(--radius);
+    padding:26px 18px;text-align:center;color:var(--muted);font-size:14px;}
+
+  .actions{display:flex;gap:6px;justify-content:flex-end;}
+  .icon{width:36px;height:36px;border:1px solid var(--line);background:#fff;border-radius:9px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;font-size:16px;text-decoration:none;color:var(--muted);}
+  .icon.wa{color:var(--wa);border-color:#bfe6cd;} .icon.wa:hover{background:var(--confirmado-bg);}
+  .icon.del:hover{color:var(--recusou);border-color:#eec4bd;background:var(--recusou-bg);}
+  .icon.disabled{opacity:.35;pointer-events:none;}
+
+  .addbox{background:var(--card);border:1px dashed var(--line);border-radius:var(--radius);padding:14px 16px;margin-top:16px;}
+  .addbox summary{cursor:pointer;font-weight:600;color:var(--wa-dark);}
+  .addgrid{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:12px;}
+  .addgrid label{font-size:12px;color:var(--muted);}
+  .addgrid input{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;}
+  .btn{font:inherit;font-weight:600;border:none;border-radius:9px;cursor:pointer;padding:9px 16px;background:var(--wa);color:#fff;}
+  .btn:hover{background:var(--wa-dark);}
+
+  .foot{margin-top:22px;font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px;}
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;
+    padding:10px 18px;border-radius:24px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  @media(max-width:720px){
+    .row{grid-template-columns:120px 1fr;grid-auto-rows:auto;}
+    .row .confirm-cell,.row .status-cell,.row .actions{grid-column:1/-1;}
+    .row.result{grid-template-columns:1fr;}
+    .row.result .who,.row.result .result-action,.row.result .status-cell,.row.result .actions{grid-column:1/-1;}
+    .row.result .result-action,.row.result .sendbtn{justify-content:center;width:100%;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Grupo Caju · Recrutamento</div>
+  <h1>Agenda de entrevistas — Executivo de Back</h1>
+  <div class="clock" id="clock"></div>
+
+  <div class="banner" id="banner"></div>
+
+  <div class="bar">
+    <label class="toggle"><input type="checkbox" id="soundOn"> 🔔 Alerta sonoro</label>
+    <label class="toggle" title="Aviso quando faltarem 15 minutos"><input type="checkbox" id="alertOn" checked> Alertar 15 min antes</label>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab on" data-tab="agenda" onclick="setTab('agenda')">📅 Agenda <span class="n" id="tab-n-agenda">0</span></button>
+    <button class="tab t-aprov" data-tab="aprovados" onclick="setTab('aprovados')">✅ Aprovados <span class="n" id="tab-n-aprovados">0</span></button>
+    <button class="tab t-reprov" data-tab="reprovados" onclick="setTab('reprovados')">🚫 Reprovados <span class="n" id="tab-n-reprovados">0</span></button>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <div id="list"></div>
+
+  <details class="addbox">
+    <summary>+ Adicionar candidato</summary>
+    <div class="addgrid">
+      <div><label>Nome</label><br><input type="text" id="addNome" placeholder="Nome completo"></div>
+      <div><label>Data</label><br><input type="date" id="addDate" value="2026-07-23"></div>
+      <div><label>Horário</label><br><input type="time" id="addTime"></div>
+      <div><label>WhatsApp (DDD+nº)</label><br><input type="text" id="addFone" placeholder="opcional"></div>
+      <button class="btn" onclick="addCandidate()">Adicionar</button>
+    </div>
+  </details>
+
+  <details class="addbox">
+    <summary>✎ Editar mensagens de aprovação / reprovação</summary>
+    <p style="font-size:12px;color:var(--muted);margin:10px 0 4px;">Use <b>{NOME}</b> para o primeiro nome do candidato. As mensagens são usadas nos botões de envio das abas Aprovados e Reprovados.</p>
+    <div style="margin-top:8px;">
+      <label style="font-size:12px;color:var(--aprovado);font-weight:700;">Mensagem de APROVAÇÃO</label>
+      <textarea id="msgAprov" rows="7" style="width:100%;font:inherit;padding:9px;border:1px solid var(--line);border-radius:8px;margin-top:4px;resize:vertical;"></textarea>
+    </div>
+    <div style="margin-top:12px;">
+      <label style="font-size:12px;color:var(--reprovado);font-weight:700;">Mensagem de REPROVAÇÃO</label>
+      <textarea id="msgReprov" rows="7" style="width:100%;font:inherit;padding:9px;border:1px solid var(--line);border-radius:8px;margin-top:4px;resize:vertical;"></textarea>
+    </div>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn" onclick="saveMsgs()">Salvar mensagens</button>
+      <button class="btn" style="background:var(--muted);" onclick="resetMsgs()">Restaurar padrão</button>
+    </div>
+  </details>
+
+  <div class="foot">
+    <p><b>Como usar:</b> marque a caixinha <b>Confirmado</b> quando o candidato responder. Ajuste data e horário direto nos campos de cada linha — a agenda reordena e reagrupa por dia sozinha. Quando faltarem 15 minutos para uma entrevista, a linha acende e aparece um aviso no topo (com som, se ativado).</p>
+    <p><b>Fica salvo neste navegador:</b> suas atualizações são guardadas na máquina em que você abrir este arquivo — use sempre o mesmo navegador para não perder o progresso.</p>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY='caju_agenda_v2';
+const STATUSES=['Pendente','Convidado','Confirmado','Realizada','Aprovado','Reprovado','Recusou'];
+const WD=['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+
+const template=
+`Olá, {NOME}! Tudo bem?
+Agradecemos por participar do nosso processo seletivo.
+Gostaríamos de convidá-lo(a) para a próxima etapa: entrevista online, que acontecerá no dia {DATA}.
+📅 Data: {DATA}
+🕒 Horário: {HORARIO}
+📍 Formato: Online (o link da reunião será enviado próximo ao horário da entrevista).
+Durante a entrevista, conversaremos sobre sua experiência profissional, sua trajetória e apresentaremos com mais detalhes a oportunidade de Executivo de Front ou Executivo de Back, conforme a vaga, incluindo as responsabilidades, metas e expectativas do cargo.
+Por gentileza, confirme sua disponibilidade respondendo a esta mensagem.
+Ficamos felizes com seu interesse em fazer parte do Grupo Caju e esperamos falar com você em breve!
+Atenciosamente,
+Equipe de Recrutamento – Grupo Caju`;
+
+const DEF_APROV=
+`Olá, {NOME}! Tudo bem?
+Temos uma ótima notícia: você foi APROVADO(A) nesta etapa do nosso processo seletivo do Grupo Caju! 🎉
+Parabéns pelo seu desempenho — ficamos muito felizes com o resultado da sua entrevista.
+Agora você avança para a próxima fase: a Avaliação Técnica. Em breve nossa equipe entrará em contato com todas as informações (data, formato e orientações) para essa etapa.
+Fique atento(a) ao seu WhatsApp e e-mail. Seguimos juntos nessa jornada!
+Atenciosamente,
+Equipe de Recrutamento – Grupo Caju`;
+
+const DEF_REPROV=
+`Olá, {NOME}! Tudo bem?
+Agradecemos muito pela sua participação no nosso processo seletivo do Grupo Caju e pelo tempo dedicado a cada etapa.
+Após uma análise cuidadosa, informamos que, neste momento, seguiremos com outros candidatos cujo perfil está mais alinhado às necessidades atuais da vaga.
+Essa decisão não diminui suas qualificações. Vamos guardar o seu contato em nosso banco de talentos para futuras oportunidades.
+Desejamos muito sucesso na sua trajetória profissional!
+Atenciosamente,
+Equipe de Recrutamento – Grupo Caju`;
+
+let tplAprov=DEF_APROV, tplReprov=DEF_REPROV;
+
+const defaults=[
+  {id:'m1', nome:'Matheus Soares',      cat:'agendado', fone:'',              date:'2026-07-23', time:'18:00', status:'Confirmado'},
+  {id:'c9', nome:'João Augusto',        cat:'analisar', fone:'5581995240705', date:'2026-07-23', time:'18:30', status:'Convidado'},
+  {id:'m2', nome:'Enzo',                cat:'agendado', fone:'',              date:'2026-07-23', time:'19:15', status:'Confirmado'},
+  {id:'c1', nome:'German Andrade',      cat:'bom',      fone:'5531992832080', date:'2026-07-23', time:'19:30', status:'Confirmado'},
+  {id:'c2', nome:'Lucas Pedroso',       cat:'bom',      fone:'5511910458624', date:'2026-07-23', time:'20:00', status:'Convidado'},
+  {id:'c4', nome:'Ramiro Pozzi',        cat:'bom',      fone:'5522997798189', date:'2026-07-23', time:'20:30', status:'Convidado'},
+  {id:'c5', nome:'Rodrigo Ferreira',    cat:'bom',      fone:'5521999340505', date:'2026-07-23', time:'20:45', status:'Confirmado'},
+  {id:'c6', nome:'Diogo Chiapin',       cat:'bom',      fone:'5579998836926', date:'2026-07-23', time:'21:00', status:'Confirmado'},
+  {id:'c3', nome:'José Augusto Surace', cat:'bom',      fone:'5515981335058', date:'2026-07-24', time:'18:30', status:'Convidado'},
+  {id:'c10',nome:'Michelly Melissa',    cat:'analisar', fone:'5531973512628', date:'2026-07-24', time:'19:00', status:'Confirmado'},
+  {id:'c7', nome:'Val Galvão',          cat:'bom',      fone:'5511958005053', date:'2026-07-24', time:'19:15', status:'Convidado'},
+  {id:'c8', nome:'Anderson Vital',      cat:'bom',      fone:'',              date:'',           time:'',      status:'Pendente'},
+];
+
+let soundBoot=null, alertBoot=null;
+let data=load();
+const beeped=new Set();
+
+function load(){
+  try{const raw=localStorage.getItem(STORAGE_KEY);
+    if(raw){const o=JSON.parse(raw);
+      if(typeof o.sound==='boolean') soundBoot=o.sound;
+      if(typeof o.alert==='boolean') alertBoot=o.alert;
+      if(typeof o.tplAprov==='string') tplAprov=o.tplAprov;
+      if(typeof o.tplReprov==='string') tplReprov=o.tplReprov;
+      if(Array.isArray(o.data)) return o.data;
+    }}catch(e){}
+  return JSON.parse(JSON.stringify(defaults));
+}
+function save(){
+  try{localStorage.setItem(STORAGE_KEY,JSON.stringify({
+    data, sound:document.getElementById('soundOn').checked, alert:document.getElementById('alertOn').checked,
+    tplAprov, tplReprov
+  }));}catch(e){}
+}
+
+function catLabel(c){return c==='bom'?'Potencial bom':c==='analisar'?'Analisar':'Agendado';}
+function pad(n){return String(n).padStart(2,'0');}
+function dispTime(t){const m=(t||'').match(/(\d{1,2})[:h](\d{2})/);return m?`${pad(m[1])}h${m[2]}`:'—';}
+function fmtBR(d){const m=(d||'').match(/(\d{4})-(\d{2})-(\d{2})/);return m?`${m[3]}/${m[2]}/${m[1]}`:'[data]';}
+function dispDate(d){if(!d)return 'Sem data definida';
+  const m=d.match(/(\d{4})-(\d{2})-(\d{2})/);if(!m)return d;
+  return WD[new Date(+m[1],+m[2]-1,+m[3]).getDay()]+', '+m[3]+'/'+m[2]+'/'+m[1];}
+function dt(c){if(!c.date||!c.time)return null;
+  const d=c.date.match(/(\d{4})-(\d{2})-(\d{2})/),t=c.time.match(/(\d{1,2})[:h](\d{2})/);
+  if(!d||!t)return null;return new Date(+d[1],+d[2]-1,+d[3],+t[1],+t[2],0);}
+function keyOf(c){return (c.date||'9999-99-99')+'T'+(c.time||'99:99');}
+function sortData(){data.sort((a,b)=>keyOf(a).localeCompare(keyOf(b)));}
+
+function waLink(c,type){
+  let tpl=template;
+  if(type==='aprovado')tpl=tplAprov;
+  else if(type==='reprovado')tpl=tplReprov;
+  const msg=tpl.replace(/{NOME}/g,c.nome.split(' ')[0])
+    .replace(/{DATA}/g,fmtBR(c.date))
+    .replace(/{HORARIO}/g,c.time?dispTime(c.time):'[inserir horário]');
+  return 'https://wa.me/'+c.fone+'?text='+encodeURIComponent(msg);
+}
+
+function renderStats(){
+  const n=s=>data.filter(c=>c.status===s).length;
+  document.getElementById('stats').innerHTML=
+    `<span class="stat c">Confirmados <b>${n('Confirmado')}</b></span>`+
+    `<span class="stat v">Aguardando <b>${n('Convidado')}</b></span>`+
+    `<span class="stat p">Pendentes <b>${n('Pendente')}</b></span>`+
+    `<span class="stat">Realizadas <b>${n('Realizada')}</b></span>`+
+    `<span class="stat">Total <b>${data.length}</b></span>`;
+  updateTabCounts();
+}
+function updateTabCounts(){
+  const nAprov=data.filter(c=>c.status==='Aprovado').length;
+  const nReprov=data.filter(c=>c.status==='Reprovado').length;
+  const nAgenda=data.filter(c=>c.status!=='Aprovado'&&c.status!=='Reprovado').length;
+  document.getElementById('tab-n-agenda').textContent=nAgenda;
+  document.getElementById('tab-n-aprovados').textContent=nAprov;
+  document.getElementById('tab-n-reprovados').textContent=nReprov;
+}
+
+function render(){
+  sortData();
+  const list=document.getElementById('list');list.innerHTML='';
+  if(activeTab==='aprovados'){renderResultList('Aprovado',list);renderStats();tick();return;}
+  if(activeTab==='reprovados'){renderResultList('Reprovado',list);renderStats();tick();return;}
+  // Aba Agenda: exclui aprovados/reprovados
+  const agenda=data.filter(c=>c.status!=='Aprovado'&&c.status!=='Reprovado');
+  const slot={};
+  agenda.forEach(c=>{if(c.date&&c.time&&c.status!=='Recusou'){const k=c.date+'T'+c.time;slot[k]=(slot[k]||0)+1;}});
+  let lastDay=null;
+  agenda.forEach(c=>{
+    if(c.date!==lastDay){
+      const h=document.createElement('div');h.className='dayhead';
+      const cnt=agenda.filter(x=>x.date===c.date).length;
+      h.innerHTML=`${dispDate(c.date)} <span class="badge">${cnt} ${cnt===1?'entrevista':'entrevistas'}</span>`;
+      list.appendChild(h);lastDay=c.date;
+    }
+    const conflict=c.date&&c.time&&c.status!=='Recusou'&&slot[c.date+'T'+c.time]>1;
+    const row=document.createElement('div');
+    row.className='row'+(c.status==='Realizada'?' realizada':'');row.id='row-'+c.id;
+    const opts=STATUSES.map(s=>`<option ${s===c.status?'selected':''}>${s}</option>`).join('');
+    const waBtn=c.fone
+      ? `<a class="icon wa" href="${waLink(c,'convite')}" target="_blank" rel="noopener" title="Abrir convite no WhatsApp">✆</a>`
+      : `<span class="icon wa disabled" title="Sem telefone">✆</span>`;
+    row.innerHTML=`
+      <div class="when">
+        <input type="date" value="${c.date}" onchange="setDate('${c.id}',this.value)">
+        <input class="t" type="time" value="${c.time}" onchange="setTime('${c.id}',this.value)">
+      </div>
+      <div class="who">
+        <div class="name">${c.nome}</div>
+        <div class="meta"><span class="chip ${c.cat}">${catLabel(c.cat)}</span>${conflict?'<span class="conflict-badge">⚠ horário duplicado</span>':''}</div>
+        <div class="countdown" id="cd-${c.id}"></div>
+      </div>
+      <div class="confirm-cell">
+        <label class="conf ${c.status==='Confirmado'?'on':''}">
+          <input type="checkbox" ${c.status==='Confirmado'?'checked':''} onchange="setConfirm('${c.id}',this.checked)">Confirmado
+        </label>
+      </div>
+      <div class="status-cell">
+        <select class="status s-${c.status}" onchange="setStatus('${c.id}',this.value)">${opts}</select>
+      </div>
+      <div class="actions">
+        ${waBtn}
+        <button class="icon del" onclick="removeC('${c.id}')" title="Remover">✕</button>
+      </div>`;
+    list.appendChild(row);
+  });
+  renderStats();tick();
+}
+
+function renderResultList(kind,list){
+  const isAppr=kind==='Aprovado';
+  const items=data.filter(c=>c.status===kind);
+  if(!items.length){
+    list.innerHTML=`<div class="empty">Nenhum candidato ${isAppr?'aprovado':'reprovado'} ainda.<br>Na aba <b>Agenda</b>, mude o status de um candidato para <b>${kind}</b> para que ele apareça aqui.</div>`;
+    return;
+  }
+  items.forEach(c=>{
+    const tpl=isAppr?'aprovado':'reprovado';
+    const opts=STATUSES.map(s=>`<option ${s===c.status?'selected':''}>${s}</option>`).join('');
+    const sendBtn=c.fone
+      ? `<a class="sendbtn ${isAppr?'ok':'no'}" href="${waLink(c,tpl)}" target="_blank" rel="noopener">✆ Enviar ${isAppr?'aprovação':'reprovação'}</a>`
+      : `<span class="sendbtn ghost" title="Cadastre o WhatsApp na aba Agenda">Sem WhatsApp</span>`;
+    const quando=c.date?`<span class="muted-when">entrevista ${fmtBR(c.date)}${c.time?' · '+dispTime(c.time):''}</span>`:'';
+    const row=document.createElement('div');
+    row.className='row result';row.id='row-'+c.id;
+    row.innerHTML=`
+      <div class="who">
+        <div class="name">${c.nome}</div>
+        <div class="meta"><span class="chip ${c.cat}">${catLabel(c.cat)}</span>${quando}</div>
+      </div>
+      <div class="result-action">${sendBtn}</div>
+      <div class="status-cell">
+        <select class="status s-${c.status}" onchange="setStatus('${c.id}',this.value)">${opts}</select>
+      </div>
+      <div class="actions">
+        <button class="icon del" onclick="removeC('${c.id}')" title="Remover">✕</button>
+      </div>`;
+    list.appendChild(row);
+  });
+}
+
+function setStatus(id,v){const c=data.find(x=>x.id===id);c.status=v;save();render();}
+function setConfirm(id,checked){const c=data.find(x=>x.id===id);
+  if(checked)c.status='Confirmado';else if(c.status==='Confirmado')c.status='Convidado';save();render();}
+function setTime(id,v){const c=data.find(x=>x.id===id);c.time=v;beeped.delete(id);save();render();}
+function setDate(id,v){const c=data.find(x=>x.id===id);c.date=v;beeped.delete(id);save();render();}
+function removeC(id){const c=data.find(x=>x.id===id);
+  if(confirm('Remover '+c.nome+' da agenda?')){data=data.filter(x=>x.id!==id);save();render();}}
+function addCandidate(){
+  const nome=document.getElementById('addNome').value.trim();
+  const date=document.getElementById('addDate').value.trim();
+  const time=document.getElementById('addTime').value.trim();
+  let fone=document.getElementById('addFone').value.replace(/\D/g,'');
+  if(!nome){showToast('Informe o nome');return;}
+  if(fone&&fone.length<=11)fone='55'+fone;
+  data.push({id:'x'+Date.now(),nome,cat:'agendado',fone,date,time,status:'Convidado'});
+  document.getElementById('addNome').value='';document.getElementById('addTime').value='';document.getElementById('addFone').value='';
+  save();render();showToast('Adicionado');
+}
+
+function fmtDiff(min){const a=Math.abs(min);
+  if(a>=60){const h=Math.floor(a/60),m=Math.round(a%60);return `${h}h${m>0?pad(m):''}`;}
+  return `${Math.round(a)} min`;}
+
+function beep(){try{const ac=new (window.AudioContext||window.webkitAudioContext)();
+  const o=ac.createOscillator(),g=ac.createGain();o.connect(g);g.connect(ac.destination);
+  o.type='sine';o.frequency.value=880;g.gain.setValueAtTime(.001,ac.currentTime);
+  g.gain.exponentialRampToValueAtTime(.3,ac.currentTime+.02);
+  g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+.5);o.start();o.stop(ac.currentTime+.55);}catch(e){}}
+
+function tick(){
+  const now=new Date();
+  document.getElementById('clock').innerHTML='Agora: <b>'+pad(now.getDate())+'/'+pad(now.getMonth()+1)+'/'+now.getFullYear()+
+    ' '+pad(now.getHours())+':'+pad(now.getMinutes())+':'+pad(now.getSeconds())+'</b>';
+  const doAlert=document.getElementById('alertOn').checked;const banner=[];
+  data.forEach(c=>{
+    if(c.status==='Aprovado'||c.status==='Reprovado')return;
+    const cd=document.getElementById('cd-'+c.id),row=document.getElementById('row-'+c.id);
+    const when=dt(c);
+    if(!when||c.status==='Realizada'||c.status==='Recusou'){
+      if(cd){cd.textContent=(c.date&&c.time)?'':'sem horário';cd.className='countdown';}
+      if(row)row.classList.remove('alert');return;}
+    const diff=(when-now)/60000;
+    if(diff>15){if(cd){cd.textContent='em '+fmtDiff(diff);cd.className='countdown';}if(row)row.classList.remove('alert');}
+    else if(diff<=15&&diff>0){if(cd){cd.textContent='⏰ faltam '+fmtDiff(diff);cd.className='countdown soon';}
+      if(doAlert){if(row)row.classList.add('alert');banner.push('faltam '+fmtDiff(diff)+' para '+c.nome+' ('+dispTime(c.time)+')');
+        if(document.getElementById('soundOn').checked&&!beeped.has(c.id)){beeped.add(c.id);beep();}}else if(row)row.classList.remove('alert');}
+    else if(diff<=0&&diff>-30){if(cd){cd.textContent='acontecendo agora';cd.className='countdown soon';}
+      if(doAlert){if(row)row.classList.add('alert');banner.push('agora: '+c.nome+' ('+dispTime(c.time)+')');}}
+    else{if(cd){cd.textContent='horário passou';cd.className='countdown';}if(row)row.classList.remove('alert');}
+  });
+  const b=document.getElementById('banner');
+  if(banner.length){b.className='banner show';b.innerHTML=banner.map(t=>'<div class="b-row">⏰ '+t+'</div>').join('');}
+  else{b.className='banner';b.innerHTML='';}
+}
+
+let activeTab='agenda';
+function setTab(t){
+  activeTab=t;
+  document.querySelectorAll('.tab').forEach(el=>el.classList.toggle('on',el.dataset.tab===t));
+  render();
+}
+
+function saveMsgs(){
+  tplAprov=document.getElementById('msgAprov').value;
+  tplReprov=document.getElementById('msgReprov').value;
+  save();render();showToast('Mensagens salvas');
+}
+function resetMsgs(){
+  if(!confirm('Restaurar as mensagens padrão de aprovação e reprovação?'))return;
+  tplAprov=DEF_APROV;tplReprov=DEF_REPROV;
+  document.getElementById('msgAprov').value=tplAprov;
+  document.getElementById('msgReprov').value=tplReprov;
+  save();render();showToast('Mensagens restauradas');
+}
+document.getElementById('msgAprov').value=tplAprov;
+document.getElementById('msgReprov').value=tplReprov;
+
+if(soundBoot)document.getElementById('soundOn').checked=true;
+if(alertBoot===false)document.getElementById('alertOn').checked=false;
+document.getElementById('soundOn').addEventListener('change',()=>{save();beeped.clear();});
+document.getElementById('alertOn').addEventListener('change',()=>{save();tick();});
+render();setInterval(tick,1000);
+function showToast(t){const el=document.getElementById('toast');el.textContent=t;el.classList.add('show');
+  clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),1800);}
+</script>
+</body>
+</html>
