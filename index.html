@@ -576,7 +576,13 @@ async function importLegacy(){
   if(ok){try{localStorage.setItem(IMPORT_FLAG,'1');}catch(e){} checkEmpty();}
 }
 function seedDefaults(){
-  if(!confirm('Carregar a lista inicial de '+defaults.length+' candidatos?'))return;
+  if(!confirm(
+    'ATENÇÃO — use isto só se você NÃO tem dados antigos para importar.\n\n'+
+    'Esta lista traz os '+defaults.length+' candidatos originais SEM as suas atualizações '+
+    'de status. Se você ainda pretende usar o botão de importar do navegador, '+
+    'os candidatos vão ficar duplicados.\n\n'+
+    'Carregar a lista inicial mesmo assim?'
+  ))return;
   insertMany(defaults,'Lista inicial carregada');
 }
 
