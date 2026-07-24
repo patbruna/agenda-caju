@@ -195,7 +195,7 @@
   <div class="banner" id="banner"></div>
 
   <div class="seedbox" id="seedbox" style="display:none">
-    <h3>A agenda está vazia</h3>
+    <h3 id="seedTitle">A agenda está vazia</h3>
     <p id="seedMsg"></p>
     <div class="btns" id="seedBtns"></div>
   </div>
@@ -270,6 +270,7 @@ const sb=window.supabase.createClient(SB_URL,SB_KEY);
 
 const LEGACY_KEY='caju_agenda_v2';  // gaveta antiga do navegador — só para importar
 const PREFS_KEY='caju_prefs';       // som/alerta: preferência de cada máquina
+const IMPORT_FLAG='caju_importado'; // marca que a importação já foi feita aqui
 const STATUSES=['Pendente','Convidado','Confirmado','Realizada','Aprovado','Reprovado','Recusou'];
 const WD=['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
 
@@ -511,17 +512,31 @@ function legacyData(){
     if(o&&Array.isArray(o.data)&&o.data.length)return o;}catch(e){}
   return null;
 }
+/* O convite para importar NÃO depende da tabela estar vazia. Se dependesse,
+   bastaria um candidato de teste no banco para o botão desaparecer e os dados
+   antigos deste navegador ficarem inalcançáveis. Some apenas depois que a
+   importação for concluída de fato. */
 function checkEmpty(){
   const box=document.getElementById('seedbox');
-  if(data.length){box.style.display='none';return;}
-  const antigo=legacyData(), btns=[];
-  let msg='Nenhum candidato cadastrado no banco ainda.';
-  if(antigo){
-    msg='Encontrei '+antigo.data.length+' candidatos guardados neste navegador, da versão antiga da agenda. '+
-        'Importe para o Supabase — depois disso eles aparecem em qualquer computador ou celular.';
+  const antigo=legacyData();
+  const jaImportou=localStorage.getItem(IMPORT_FLAG)==='1';
+  const ofereceImport=!!antigo&&!jaImportou;
+
+  if(data.length&&!ofereceImport){box.style.display='none';return;}
+
+  const btns=[];
+  let titulo='A agenda está vazia', msg='Nenhum candidato cadastrado no banco ainda.';
+  if(ofereceImport){
+    titulo='Dados antigos encontrados neste navegador';
+    msg='Encontrei '+antigo.data.length+' candidatos guardados neste navegador, da versão antiga da agenda'+
+        (data.length?' (a agenda no banco já tem '+data.length+' — a importação soma, não substitui)':'')+
+        '. Importe para o Supabase e eles passam a aparecer em qualquer computador ou celular.';
     btns.push('<button class="btn" onclick="importLegacy()">⬆ Importar '+antigo.data.length+' candidatos deste navegador</button>');
   }
-  btns.push('<button class="btn" style="background:var(--muted)" onclick="seedDefaults()">Carregar lista inicial ('+defaults.length+')</button>');
+  if(!data.length){
+    btns.push('<button class="btn" style="background:var(--muted)" onclick="seedDefaults()">Carregar lista inicial ('+defaults.length+')</button>');
+  }
+  document.getElementById('seedTitle').textContent=titulo;
   document.getElementById('seedMsg').textContent=msg;
   document.getElementById('seedBtns').innerHTML=btns.join('');
   box.style.display='';
@@ -540,20 +555,25 @@ async function insertMany(lista,rotulo){
   if(error){
     setSync(false,'Erro ao salvar');
     showToast('Não conseguiu gravar: '+error.message,true);
-    return;
+    return false;
   }
   setSync(true);
   await fetchAll(); render(); showToast(rotulo);
+  return true;
 }
 async function importLegacy(){
   const o=legacyData();
   if(!o){showToast('Nada encontrado neste navegador',true);return;}
+  if(!confirm('Importar '+o.data.length+' candidatos deste navegador para o Supabase?'))return;
   if(typeof o.tplAprov==='string'||typeof o.tplReprov==='string'){
     document.getElementById('msgAprov').value=o.tplAprov||tplAprov;
     document.getElementById('msgReprov').value=o.tplReprov||tplReprov;
     await saveMsgs(true);
   }
-  await insertMany(o.data,'Importado! Seus dados agora estão no Supabase.');
+  const ok=await insertMany(o.data,'Importado! Seus dados agora estão no Supabase.');
+  // Marca só depois de gravar de verdade. Se falhar, o botão continua ali.
+  // A gaveta antiga não é apagada: fica como cópia de segurança.
+  if(ok){try{localStorage.setItem(IMPORT_FLAG,'1');}catch(e){} checkEmpty();}
 }
 function seedDefaults(){
   if(!confirm('Carregar a lista inicial de '+defaults.length+' candidatos?'))return;
