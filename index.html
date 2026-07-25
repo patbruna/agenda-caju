@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Agenda de Entrevistas — Grupo Caju</title>
+<title>Processo Seletivo — Grupo Caju</title>
 <style>
   :root{
     --page:#eceff0; --card:#fff; --ink:#16211c; --muted:#65756c; --line:#dbe1dd;
@@ -16,9 +16,22 @@
     --aprovado:#0f7a3d; --aprovado-bg:#dff3e6;
     --reprovado:#a33224; --reprovado-bg:#fbe6e2;
     --alert:#e07a00; --alert-bg:#fff3e0;
+    --rail:#b2c0b9; --now:#e07a00;
+    /* Uma cor por etapa. O roxo da final é o único tom novo da paleta:
+       é a etapa que não é operação, é decisão, e destoar ajuda. */
+    --et-entrevista:#2563a8; --et-entrevista-bg:#e7effa;
+    --et-tecnica:#9a6b00;    --et-tecnica-bg:#fbf1db;
+    --et-final:#6b4bab;      --et-final-bg:#eee9f9;
+    --et-contratado:#0f7a3d; --et-contratado-bg:#dff3e6;
     --radius:14px;
+    --mono:ui-monospace,"SF Mono","Cascadia Mono","Roboto Mono",Menlo,Consolas,monospace;
   }
   *{box-sizing:border-box;}
+  :focus-visible{outline:2px solid var(--wa-dark);outline-offset:2px;}
+  @media(prefers-reduced-motion:reduce){
+    *{animation-duration:.001ms !important;animation-iteration-count:1 !important;
+      transition-duration:.001ms !important;}
+  }
   body{margin:0;background:var(--page);color:var(--ink);
     font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.5;
     padding:26px 16px 90px;}
@@ -44,22 +57,70 @@
   .stat b{font-size:15px;}
   .stat.c{color:var(--confirmado);} .stat.v{color:var(--convidado);} .stat.p{color:var(--pendente);}
 
-  .dayhead{display:flex;align-items:center;gap:10px;margin:20px 2px 10px;font-weight:700;font-size:15px;color:var(--ink);}
-  .dayhead::after{content:"";flex:1;height:1px;background:var(--line);}
-  .dayhead .badge{font-size:12px;font-weight:600;color:var(--muted);background:var(--card);border:1px solid var(--line);padding:2px 10px;border-radius:20px;}
+  /* ---------- Dia ---------- */
+  .day{margin:0 0 30px;}
+  .dayhead{position:sticky;top:0;z-index:5;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;
+    margin:0 0 14px;padding:14px 2px 10px;background:var(--page);border-bottom:1px solid var(--line);}
+  .daytag{font:700 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;
+    padding:5px 9px;border-radius:6px;background:var(--pendente-bg);color:var(--muted);}
+  .daytag.hoje{background:var(--wa);color:#fff;}
+  .daytag.amanha{background:var(--convidado-bg);color:var(--convidado);}
+  .daytag.sem{background:var(--realizada-bg);color:var(--realizada);}
+  .dayname{font-weight:700;font-size:16px;letter-spacing:-.01em;}
+  .daymeta{margin-left:auto;font:600 12px var(--mono);color:var(--muted);}
 
-  .row{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
-    padding:12px 14px;margin-bottom:10px;display:grid;
-    grid-template-columns:140px 1fr 104px 132px 84px;gap:12px;align-items:center;
-    transition:background .2s,border-color .2s,box-shadow .2s;}
-  .row.alert{border-color:var(--alert);background:var(--alert-bg);box-shadow:0 0 0 3px rgba(224,122,0,.12);
+  /* ---------- Trilha de horários ---------- */
+  .rail{position:relative;padding-left:136px;}
+  .rail::before{content:"";position:absolute;left:120px;top:16px;bottom:16px;width:2px;
+    background:var(--rail);border-radius:2px;}
+
+  .slot{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:12px 14px;margin-bottom:10px;display:grid;gap:12px;align-items:center;
+    transition:background .2s,border-color .2s,box-shadow .2s;
+    position:relative;grid-template-columns:1fr 104px 132px 84px;}
+  /* Nó na trilha: a cor conta o status sem precisar ler nada. */
+  .slot::before{content:"";position:absolute;left:-23px;top:19px;width:11px;height:11px;
+    border-radius:50%;background:var(--card);border:2.5px solid var(--rail);box-sizing:content-box;}
+  .slot.s-Confirmado::before{border-color:var(--confirmado);}
+  .slot.s-Convidado::before{border-color:var(--convidado);}
+  .slot.s-Realizada::before{border-color:var(--realizada);}
+  .slot.s-Recusou::before{border-color:var(--recusou);}
+  .slot.conflict::before{border-color:var(--recusou);box-shadow:0 0 0 3px var(--recusou-bg);}
+  .slot.alert{border-color:var(--alert);background:var(--alert-bg);box-shadow:0 0 0 3px rgba(224,122,0,.12);
     animation:pulse 1.6s ease-in-out infinite;}
   @keyframes pulse{0%,100%{box-shadow:0 0 0 3px rgba(224,122,0,.10);}50%{box-shadow:0 0 0 6px rgba(224,122,0,.02);}}
-  .row.realizada{opacity:.62;}
+  .slot.realizada{opacity:.62;}
 
-  .when{display:flex;flex-direction:column;gap:5px;}
-  .when input{font:inherit;padding:6px;border:1px solid var(--line);border-radius:8px;width:100%;font-variant-numeric:tabular-nums;}
-  .when input.t{font-weight:700;text-align:center;}
+  /* Horário e data ficam na trilha, fora do cartão. Sem moldura até o mouse chegar. */
+  .when{position:absolute;left:-136px;top:9px;width:112px;display:flex;flex-direction:column;
+    align-items:flex-end;gap:1px;}
+  .when input{font:inherit;border:1px solid transparent;background:transparent;border-radius:7px;
+    text-align:right;color:var(--ink);padding:2px 4px;width:100%;}
+  .when input.t{font:700 21px/1.15 var(--mono);letter-spacing:-.02em;}
+  .when input.d{font:600 11px/1.3 var(--mono);color:var(--muted);}
+  .when input:hover,.when input:focus{border-color:var(--line);background:var(--card);}
+  /* O relógio nativo não cabe ao lado de um horário desse tamanho e não faz
+     falta: o campo aceita digitação e setas. No campo de data ele fica. */
+  .when input.t::-webkit-calendar-picker-indicator{display:none;}
+  .when input.d::-webkit-calendar-picker-indicator{opacity:.3;cursor:pointer;}
+  .when input.d:hover::-webkit-calendar-picker-indicator{opacity:.75;}
+
+  /* Intervalo entre um horário e o seguinte. */
+  .gap{position:relative;height:22px;margin:-2px 0 8px;}
+  .gap span{position:absolute;left:-136px;width:112px;text-align:right;top:1px;
+    font:600 11px var(--mono);color:var(--muted);}
+  .gap.long{height:40px;}
+  .gap.long::before{content:"";position:absolute;left:-16px;top:0;bottom:0;width:2px;
+    background:repeating-linear-gradient(to bottom,var(--rail) 0 4px,var(--page) 4px 9px);}
+
+  /* Onde o relógio está agora, só no dia de hoje. */
+  .nowline{position:relative;height:0;margin:7px 0;}
+  .nowline::before{content:"";position:absolute;left:-16px;right:2px;top:0;height:2px;
+    background:var(--now);opacity:.5;border-radius:2px;}
+  .nowline::after{content:"";position:absolute;left:-23px;top:-5px;width:12px;height:12px;
+    border-radius:50%;background:var(--now);}
+  .nowtime{position:absolute;left:-136px;width:112px;text-align:right;top:-9px;
+    font:700 12px var(--mono);color:var(--now);}
   .who .name{font-weight:700;font-size:16px;}
   .who .meta{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:2px;}
   .chip{font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;}
@@ -92,17 +153,68 @@
   .tab.on{background:var(--ink);color:#fff;border-color:var(--ink);}
   .tab .n{font-size:12px;font-weight:700;padding:1px 8px;border-radius:20px;background:var(--page);color:var(--ink);}
   .tab.on .n{background:rgba(255,255,255,.22);color:#fff;}
-  .tab.t-aprov.on{background:var(--aprovado);border-color:var(--aprovado);}
   .tab.t-reprov.on{background:var(--reprovado);border-color:var(--reprovado);}
 
-  /* Linhas de resultado (aprovados/reprovados) */
-  .row.result{grid-template-columns:1fr minmax(190px,auto) 132px 44px;}
-  .muted-when{font-size:12px;color:var(--muted);}
-  .result-action{display:flex;justify-content:flex-end;}
+  /* ---------- Etapas do processo ---------- */
+  .etapa-chip{font:700 11px/1 var(--mono);letter-spacing:.04em;padding:3px 8px;border-radius:6px;}
+  .et-entrevista{background:var(--et-entrevista-bg);color:var(--et-entrevista);}
+  .et-tecnica{background:var(--et-tecnica-bg);color:var(--et-tecnica);}
+  .et-final{background:var(--et-final-bg);color:var(--et-final);}
+  .et-contratado{background:var(--et-contratado-bg);color:var(--et-contratado);}
+
+  .stage{margin:0 0 28px;}
+  .stagehead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;
+    margin:0 0 12px;padding:12px 2px 9px;border-bottom:2px solid var(--line);}
+  .stagename{font-weight:700;font-size:16px;letter-spacing:-.01em;}
+  .stagehead.st-entrevista{border-bottom-color:var(--et-entrevista);}
+  .stagehead.st-entrevista .stagename{color:var(--et-entrevista);}
+  .stagehead.st-tecnica{border-bottom-color:var(--et-tecnica);}
+  .stagehead.st-tecnica .stagename{color:var(--et-tecnica);}
+  .stagehead.st-final{border-bottom-color:var(--et-final);}
+  .stagehead.st-final .stagename{color:var(--et-final);}
+  .stagehead.st-contratado{border-bottom-color:var(--et-contratado);}
+  .stagehead.st-contratado .stagename{color:var(--et-contratado);}
+  .stagemeta{margin-left:auto;font:600 12px var(--mono);color:var(--muted);}
+
+  /* ---------- Cartão do funil ---------- */
+  .fcard{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:14px 16px;margin-bottom:10px;}
+  .fcard.fora{opacity:.78;}
+  .fcard-top{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;}
+  .fcard .name{font-weight:700;font-size:16px;}
+  .fcard-sub{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:4px;
+    font-size:13px;color:var(--muted);}
+  .semdata{font-style:italic;}
+  .fcard-controls{margin-left:auto;display:flex;gap:8px;align-items:center;}
+  .fcard-controls select.status{width:auto;min-width:132px;}
+
+  .tecgrid{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;
+    margin-top:13px;padding-top:13px;border-top:1px dashed var(--line);}
+  .tecgrid label{display:block;font-size:12px;color:var(--muted);margin-bottom:3px;}
+  .tecgrid input{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;}
+  .tecgrid .tnota input{width:92px;font:700 16px var(--mono);text-align:center;}
+  .tecgrid .tlink{flex:1;min-width:220px;}
+  .tecgrid .tlink input{width:100%;}
+  .verlink{font-size:13px;font-weight:600;color:var(--wa-dark);padding-bottom:10px;white-space:nowrap;}
+
+  .anot{margin-top:12px;}
+  .anot summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);}
+  .anot .vazio{font-weight:400;}
+  .anot textarea{width:100%;font:inherit;padding:9px;margin-top:8px;resize:vertical;
+    border:1px solid var(--line);border-radius:8px;}
+
+  .fcard-acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:13px;}
+  .linkbtn.volta{margin-left:auto;}
+  .msgsel{font:inherit;padding:9px 10px;border:1px solid var(--line);border-radius:9px;
+    background:var(--card);cursor:pointer;max-width:100%;margin-top:4px;}
+
   .sendbtn{font:inherit;font-weight:700;border:none;border-radius:10px;cursor:pointer;padding:10px 16px;
     text-decoration:none;display:inline-flex;align-items:center;gap:7px;font-size:14px;white-space:nowrap;}
   .sendbtn.ok{background:var(--aprovado);color:#fff;} .sendbtn.ok:hover{filter:brightness(1.07);}
   .sendbtn.no{background:var(--reprovado);color:#fff;} .sendbtn.no:hover{filter:brightness(1.07);}
+  .sendbtn.conv{background:var(--card);color:var(--wa-dark);border:1px solid #bfe6cd;}
+  .sendbtn.conv:hover{background:var(--confirmado-bg);}
+  .sendbtn.next{background:var(--ink);color:#fff;} .sendbtn.next:hover{filter:brightness(1.35);}
   .sendbtn.ghost{background:var(--pendente-bg);color:var(--muted);cursor:default;}
   .empty{background:var(--card);border:1px dashed var(--line);border-radius:var(--radius);
     padding:26px 18px;text-align:center;color:var(--muted);font-size:14px;}
@@ -159,11 +271,27 @@
   .seedbox p{margin:0 0 12px;font-size:13px;color:#8a4b00;}
   .seedbox .btns{display:flex;gap:8px;flex-wrap:wrap;}
   @media(max-width:720px){
-    .row{grid-template-columns:120px 1fr;grid-auto-rows:auto;}
-    .row .confirm-cell,.row .status-cell,.row .actions{grid-column:1/-1;}
-    .row.result{grid-template-columns:1fr;}
-    .row.result .who,.row.result .result-action,.row.result .status-cell,.row.result .actions{grid-column:1/-1;}
-    .row.result .result-action,.row.result .sendbtn{justify-content:center;width:100%;}
+    /* No celular a trilha não cabe: o horário sobe para dentro do cartão. */
+    .rail{padding-left:0;}
+    .rail::before,.slot::before{display:none;}
+    .slot{grid-template-columns:1fr;}
+    .when{position:static;flex-direction:row;align-items:baseline;justify-content:flex-start;
+      width:auto;gap:12px;}
+    .when input{width:auto;text-align:left;border-color:var(--line);background:var(--card);}
+    .when input.t{font-size:24px;}
+    .gap{height:auto;margin:0 0 10px;text-align:center;}
+    .gap span{position:static;display:inline-block;width:auto;text-align:center;}
+    .gap.long::before{display:none;}
+    .nowline{height:auto;margin:0 0 10px;}
+    .nowline::before,.nowline::after{display:none;}
+    .nowtime{position:static;display:block;width:auto;text-align:center;
+      padding-top:6px;border-top:2px solid var(--now);}
+    .daymeta{margin-left:0;width:100%;}
+    .stagemeta{margin-left:0;width:100%;}
+    .fcard-controls{margin-left:0;width:100%;}
+    .fcard-controls select.status{flex:1;}
+    .fcard-acts .sendbtn{flex:1;justify-content:center;}
+    .linkbtn.volta{margin-left:0;width:100%;text-align:center;padding-top:4px;}
   }
 </style>
 </head>
@@ -175,7 +303,7 @@
 <!-- Tela de login: aparece se ninguém estiver logado -->
 <div id="gate" style="display:none">
   <div class="eyebrow">Grupo Caju · Recrutamento</div>
-  <h2>Agenda de entrevistas</h2>
+  <h2>Processo seletivo</h2>
   <p class="sub">Acesso restrito à equipe de recrutamento.</p>
   <div class="err" id="gateErr"></div>
   <form onsubmit="doLogin(event)">
@@ -189,7 +317,7 @@
 
 <div class="wrap" id="app" style="display:none">
   <div class="eyebrow">Grupo Caju · Recrutamento</div>
-  <h1>Agenda de entrevistas — Executivo de Back</h1>
+  <h1>Processo seletivo — Executivo de Back</h1>
   <div class="clock" id="clock"></div>
 
   <div class="banner" id="banner"></div>
@@ -212,8 +340,8 @@
 
   <div class="tabs" id="tabs">
     <button class="tab on" data-tab="agenda" onclick="setTab('agenda')">📅 Agenda <span class="n" id="tab-n-agenda">0</span></button>
-    <button class="tab t-aprov" data-tab="aprovados" onclick="setTab('aprovados')">✅ Aprovados <span class="n" id="tab-n-aprovados">0</span></button>
-    <button class="tab t-reprov" data-tab="reprovados" onclick="setTab('reprovados')">🚫 Reprovados <span class="n" id="tab-n-reprovados">0</span></button>
+    <button class="tab" data-tab="funil" onclick="setTab('funil')">🧭 Funil <span class="n" id="tab-n-funil">0</span></button>
+    <button class="tab t-reprov" data-tab="fora" onclick="setTab('fora')">🚫 Fora <span class="n" id="tab-n-fora">0</span></button>
   </div>
 
   <div class="stats" id="stats"></div>
@@ -224,7 +352,7 @@
     <summary>+ Adicionar candidato</summary>
     <div class="addgrid">
       <div><label>Nome</label><br><input type="text" id="addNome" placeholder="Nome completo"></div>
-      <div><label>Data</label><br><input type="date" id="addDate" value="2026-07-23"></div>
+      <div><label>Data</label><br><input type="date" id="addDate"></div>
       <div><label>Horário</label><br><input type="time" id="addTime"></div>
       <div><label>WhatsApp (DDD+nº)</label><br><input type="text" id="addFone" placeholder="opcional"></div>
       <button class="btn" onclick="addCandidate()">Adicionar</button>
@@ -232,24 +360,20 @@
   </details>
 
   <details class="addbox">
-    <summary>✎ Editar mensagens de aprovação / reprovação</summary>
-    <p style="font-size:12px;color:var(--muted);margin:10px 0 4px;">Use <b>{NOME}</b> para o primeiro nome do candidato. As mensagens são usadas nos botões de envio das abas Aprovados e Reprovados.</p>
-    <div style="margin-top:8px;">
-      <label style="font-size:12px;color:var(--aprovado);font-weight:700;">Mensagem de APROVAÇÃO</label>
-      <textarea id="msgAprov" rows="7" style="width:100%;font:inherit;padding:9px;border:1px solid var(--line);border-radius:8px;margin-top:4px;resize:vertical;"></textarea>
-    </div>
-    <div style="margin-top:12px;">
-      <label style="font-size:12px;color:var(--reprovado);font-weight:700;">Mensagem de REPROVAÇÃO</label>
-      <textarea id="msgReprov" rows="7" style="width:100%;font:inherit;padding:9px;border:1px solid var(--line);border-radius:8px;margin-top:4px;resize:vertical;"></textarea>
-    </div>
+    <summary>✎ Mensagens de WhatsApp</summary>
+    <p style="font-size:12px;color:var(--muted);margin:10px 0 10px;">Cada etapa tem seu próprio convite e seu próprio aviso de resultado. Use <b>{NOME}</b> para o primeiro nome, <b>{DATA}</b> e <b>{HORARIO}</b> para o compromisso marcado. As mensagens são as mesmas para você e para o resto da equipe.</p>
+    <label style="font-size:12px;color:var(--muted);">Qual mensagem</label><br>
+    <select id="msgSel" class="msgsel" onchange="trocaMsg()"></select>
+    <textarea id="msgTxt" rows="9" style="width:100%;font:inherit;padding:9px;border:1px solid var(--line);border-radius:8px;margin-top:10px;resize:vertical;"></textarea>
     <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
-      <button class="btn" onclick="saveMsgs()">Salvar mensagens</button>
-      <button class="btn" style="background:var(--muted);" onclick="resetMsgs()">Restaurar padrão</button>
+      <button class="btn" onclick="saveMsg()">Salvar mensagem</button>
+      <button class="btn" style="background:var(--muted);" onclick="resetMsg()">Restaurar padrão desta</button>
     </div>
   </details>
 
   <div class="foot">
-    <p><b>Como usar:</b> marque a caixinha <b>Confirmado</b> quando o candidato responder. Ajuste data e horário direto nos campos de cada linha — a agenda reordena e reagrupa por dia sozinha. Quando faltarem 15 minutos para uma entrevista, a linha acende e aparece um aviso no topo (com som, se ativado).</p>
+    <p><b>As três etapas:</b> entrevista, avaliação técnica e entrevista final com os sócios. Marcar <b>Aprovado</b> não muda ninguém de etapa — quem muda é o botão <b>Avançar</b>, na aba Funil. A separação é de propósito: dá tempo de mandar a mensagem de aprovação antes de o candidato trocar de lugar na tela. Ao avançar, o status volta para Pendente e a data fica em branco, para você marcar o novo compromisso. Clique errado se desfaz em <b>voltar uma etapa</b>.</p>
+    <p><b>Agenda:</b> mostra tudo que tem hora marcada, de qualquer etapa, com um selo dizendo qual é. Para remarcar, clique no horário ou na data à esquerda e digite o novo valor — a agenda reordena e reagrupa por dia sozinha. A bolinha na trilha muda de cor conforme o status, e o número entre dois compromissos é o intervalo entre eles. Quando faltarem 15 minutos, o compromisso acende e aparece um aviso no topo (com som, se ativado). Quem foi reprovado ou recusou sai da agenda e do funil, e fica registrado na aba <b>Fora</b> com a etapa em que parou.</p>
     <p><b>Salvo na nuvem:</b> cada alteração vai direto para o banco de dados no Supabase, então a agenda é a mesma em qualquer computador ou celular. Se duas pessoas estiverem com a página aberta, as duas telas se atualizam sozinhas. O indicador <b>Sincronizado</b> no topo fica vermelho se algo não conseguir ser salvo — se isso acontecer, confira a internet e recarregue a página.</p>
   </div>
 </div>
@@ -273,8 +397,10 @@ const PREFS_KEY='caju_prefs';       // som/alerta: preferência de cada máquina
 const IMPORT_FLAG='caju_importado'; // marca que a importação já foi feita aqui
 const STATUSES=['Pendente','Convidado','Confirmado','Realizada','Aprovado','Reprovado','Recusou'];
 const WD=['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+const MESES=['janeiro','fevereiro','março','abril','maio','junho','julho',
+             'agosto','setembro','outubro','novembro','dezembro'];
 
-const template=
+const DEF_CONV_ENTREVISTA=
 `Olá, {NOME}! Tudo bem?
 Agradecemos por participar do nosso processo seletivo.
 Gostaríamos de convidá-lo(a) para a próxima etapa: entrevista online, que acontecerá no dia {DATA}.
@@ -305,22 +431,83 @@ Desejamos muito sucesso na sua trajetória profissional!
 Atenciosamente,
 Equipe de Recrutamento – Grupo Caju`;
 
-let tplAprov=DEF_APROV, tplReprov=DEF_REPROV;
+const DEF_CONV_TECNICA=
+`Olá, {NOME}! Tudo bem?
+Você avançou no nosso processo seletivo e chegou a etapa de Avaliação Técnica.
+📅 Data: {DATA}
+🕒 Horário: {HORARIO}
+📍 Formato: Online (enviaremos as orientações e o material próximo ao horário).
+A avaliação olha na prática os conhecimentos ligados à rotina do cargo. Não é preciso preparação específica: queremos entender como você resolve as situações do dia a dia.
+Por gentileza, confirme sua disponibilidade respondendo a esta mensagem.
+Atenciosamente,
+Equipe de Recrutamento – Grupo Caju`;
 
-const defaults=[
-  {id:'m1', nome:'Matheus Soares',      cat:'agendado', fone:'',              date:'2026-07-23', time:'18:00', status:'Confirmado'},
-  {id:'c9', nome:'João Augusto',        cat:'analisar', fone:'5581995240705', date:'2026-07-23', time:'18:30', status:'Convidado'},
-  {id:'m2', nome:'Enzo',                cat:'agendado', fone:'',              date:'2026-07-23', time:'19:15', status:'Confirmado'},
-  {id:'c1', nome:'German Andrade',      cat:'bom',      fone:'5531992832080', date:'2026-07-23', time:'19:30', status:'Confirmado'},
-  {id:'c2', nome:'Lucas Pedroso',       cat:'bom',      fone:'5511910458624', date:'2026-07-23', time:'20:00', status:'Convidado'},
-  {id:'c4', nome:'Ramiro Pozzi',        cat:'bom',      fone:'5522997798189', date:'2026-07-23', time:'20:30', status:'Convidado'},
-  {id:'c5', nome:'Rodrigo Ferreira',    cat:'bom',      fone:'5521999340505', date:'2026-07-23', time:'20:45', status:'Confirmado'},
-  {id:'c6', nome:'Diogo Chiapin',       cat:'bom',      fone:'5579998836926', date:'2026-07-23', time:'21:00', status:'Confirmado'},
-  {id:'c3', nome:'José Augusto Surace', cat:'bom',      fone:'5515981335058', date:'2026-07-24', time:'18:30', status:'Convidado'},
-  {id:'c10',nome:'Michelly Melissa',    cat:'analisar', fone:'5531973512628', date:'2026-07-24', time:'19:00', status:'Confirmado'},
-  {id:'c7', nome:'Val Galvão',          cat:'bom',      fone:'5511958005053', date:'2026-07-24', time:'19:15', status:'Convidado'},
-  {id:'c8', nome:'Anderson Vital',      cat:'bom',      fone:'',              date:'',           time:'',      status:'Pendente'},
+const DEF_CONV_FINAL=
+`Olá, {NOME}! Tudo bem?
+Você chegou à última etapa do nosso processo seletivo, uma conversa com os sócios do Grupo Caju.
+📅 Data: {DATA}
+🕒 Horário: {HORARIO}
+📍 Formato: Online (o link será enviado próximo ao horário).
+É o momento de alinharmos expectativas, falarmos sobre a operação e sobre como você se enxerga no time.
+Por gentileza, confirme sua disponibilidade respondendo a esta mensagem.
+Atenciosamente,
+Equipe de Recrutamento – Grupo Caju`;
+
+const DEF_APROV_TECNICA=
+`Olá, {NOME}! Tudo bem?
+Você foi APROVADO(A) na Avaliação Técnica do nosso processo seletivo! 🎉
+Parabéns pelo resultado — seu desempenho nos deixou muito satisfeitos.
+Agora você avança para a etapa final: uma conversa com os sócios do Grupo Caju. Em breve entraremos em contato com a data e o horário.
+Fique atento(a) ao seu WhatsApp. Seguimos juntos!
+Atenciosamente,
+Equipe de Recrutamento – Grupo Caju`;
+
+const DEF_CONTRATADO=
+`Olá, {NOME}! Tudo bem?
+É com muita alegria que informamos: você foi o(a) escolhido(a) para a vaga! 🎉
+Obrigado pela dedicação em cada etapa do processo. Em breve nossa equipe entra em contato com as informações sobre documentação, data de início e integração.
+Seja muito bem-vindo(a) ao Grupo Caju!
+Atenciosamente,
+Equipe de Recrutamento – Grupo Caju`;
+
+/* =========================================================
+   As três etapas do processo, na ordem.
+   "proxima" é para onde o botão de avançar leva.
+   ========================================================= */
+const ETAPAS=[
+  {id:'entrevista', nome:'Entrevista',        curto:'Entrevista', proxima:'tecnica',
+   avanco:'Avançar para avaliação técnica', convite:'msg_convite_entrevista', aprov:'msg_aprovacao'},
+  {id:'tecnica',    nome:'Avaliação técnica', curto:'Técnica',    proxima:'final',
+   avanco:'Avançar para entrevista final',  convite:'msg_convite_tecnica',    aprov:'msg_aprov_tecnica'},
+  {id:'final',      nome:'Entrevista final',  curto:'Final',      proxima:'contratado',
+   avanco:'Marcar como contratado',         convite:'msg_convite_final',      aprov:'msg_contratado'},
+  {id:'contratado', nome:'Contratado',        curto:'Contratado', proxima:null,
+   avanco:null,                             convite:null,                     aprov:'msg_contratado'}
 ];
+function etapaInfo(id){return ETAPAS.find(e=>e.id===id)||ETAPAS[0];}
+
+/* Mensagens editáveis. Ficam no banco; o padrão abaixo é o que vale
+   enquanto ninguém tiver escrito uma versão própria. */
+const MSGS=[
+  {campo:'msg_convite_entrevista', rotulo:'Convite — entrevista',           padrao:DEF_CONV_ENTREVISTA},
+  {campo:'msg_convite_tecnica',    rotulo:'Convite — avaliação técnica',    padrao:DEF_CONV_TECNICA},
+  {campo:'msg_convite_final',      rotulo:'Convite — entrevista final',     padrao:DEF_CONV_FINAL},
+  {campo:'msg_aprovacao',          rotulo:'Aprovado na entrevista',         padrao:DEF_APROV},
+  {campo:'msg_aprov_tecnica',      rotulo:'Aprovado na avaliação técnica',  padrao:DEF_APROV_TECNICA},
+  {campo:'msg_contratado',         rotulo:'Contratado',                     padrao:DEF_CONTRATADO},
+  {campo:'msg_reprovacao',         rotulo:'Reprovado (serve para qualquer etapa)', padrao:DEF_REPROV}
+];
+let cfg={};                       // o que está gravado no banco
+let msgAtual=MSGS[0].campo;       // qual mensagem o editor está mostrando
+function msgInfo(campo){return MSGS.find(m=>m.campo===campo)||MSGS[0];}
+function msgDe(campo){
+  const v=cfg[campo];
+  return (v&&v.trim())?v:msgInfo(campo).padrao;
+}
+
+/* Status que ainda estão em andamento dentro de uma etapa. */
+const ATIVOS=['Pendente','Convidado','Confirmado','Realizada'];
+function estaFora(c){return c.status==='Reprovado'||c.status==='Recusou';}
 
 let soundBoot=null, alertBoot=null;
 let data=[];
@@ -358,7 +545,12 @@ function applyPrefs(){
    ========================================================= */
 function fromDb(r){
   return {id:r.id, nome:r.nome, cat:r.cat, fone:r.fone||'',
-          date:r.data||'', time:(r.hora||'').slice(0,5), status:r.status};
+          date:r.data||'', time:(r.hora||'').slice(0,5), status:r.status,
+          // etapa só falta se o 03-etapas.sql ainda não tiver sido rodado:
+          // nesse caso todo mundo é da primeira etapa, que é a verdade.
+          etapa:r.etapa||'entrevista',
+          nota:(r.nota===null||r.nota===undefined)?'':String(r.nota),
+          link:r.link||'', obs:r.obs||''};
 }
 
 /* Indicador no topo. Fica vermelho se uma gravação falhar, para
@@ -417,6 +609,7 @@ async function mostrar(session){
   if(iniciado)return;          // evita recarregar tudo ao renovar o token
   iniciado=true;
   document.getElementById('whoami').textContent=session.user.email;
+  document.getElementById('addDate').value=ymd(new Date());
   applyPrefs();
   await fetchConfig();
   await fetchAll();
@@ -441,12 +634,17 @@ async function fetchAll(){
 }
 async function fetchConfig(){
   const {data:row,error}=await sb.from('configuracoes').select('*').eq('id',1).maybeSingle();
-  if(!error&&row){
-    if(row.msg_aprovacao) tplAprov=row.msg_aprovacao;
-    if(row.msg_reprovacao) tplReprov=row.msg_reprovacao;
+  if(!error&&row)cfg=row;
+  montarEditorMsgs();
+}
+function montarEditorMsgs(){
+  const sel=document.getElementById('msgSel');
+  if(!sel.options.length){
+    sel.innerHTML=MSGS.map(m=>`<option value="${m.campo}">${m.rotulo}</option>`).join('');
   }
-  document.getElementById('msgAprov').value=tplAprov;
-  document.getElementById('msgReprov').value=tplReprov;
+  sel.value=msgAtual;
+  const txt=document.getElementById('msgTxt');
+  if(document.activeElement!==txt)txt.value=msgDe(msgAtual);
 }
 
 /* =========================================================
@@ -483,10 +681,7 @@ function subscribeLive(){
       scheduleRender();
     })
     .on('postgres_changes',{event:'*',schema:'public',table:'configuracoes'},p=>{
-      if(p.new){
-        tplAprov=p.new.msg_aprovacao||tplAprov;
-        tplReprov=p.new.msg_reprovacao||tplReprov;
-      }
+      if(p.new){cfg=p.new;montarEditorMsgs();}
     })
     .subscribe();
 }
@@ -533,9 +728,6 @@ function checkEmpty(){
         '. Importe para o Supabase e eles passam a aparecer em qualquer computador ou celular.';
     btns.push('<button class="btn" onclick="importLegacy()">⬆ Importar '+antigo.data.length+' candidatos deste navegador</button>');
   }
-  if(!data.length){
-    btns.push('<button class="btn" style="background:var(--muted)" onclick="seedDefaults()">Carregar lista inicial ('+defaults.length+')</button>');
-  }
   document.getElementById('seedTitle').textContent=titulo;
   document.getElementById('seedMsg').textContent=msg;
   document.getElementById('seedBtns').innerHTML=btns.join('');
@@ -565,25 +757,14 @@ async function importLegacy(){
   const o=legacyData();
   if(!o){showToast('Nada encontrado neste navegador',true);return;}
   if(!confirm('Importar '+o.data.length+' candidatos deste navegador para o Supabase?'))return;
-  if(typeof o.tplAprov==='string'||typeof o.tplReprov==='string'){
-    document.getElementById('msgAprov').value=o.tplAprov||tplAprov;
-    document.getElementById('msgReprov').value=o.tplReprov||tplReprov;
-    await saveMsgs(true);
-  }
+  const antigas={};
+  if(o.tplAprov)antigas.msg_aprovacao=o.tplAprov;
+  if(o.tplReprov)antigas.msg_reprovacao=o.tplReprov;
+  if(Object.keys(antigas).length)await gravarCfg(antigas,true);
   const ok=await insertMany(o.data,'Importado! Seus dados agora estão no Supabase.');
   // Marca só depois de gravar de verdade. Se falhar, o botão continua ali.
   // A gaveta antiga não é apagada: fica como cópia de segurança.
   if(ok){try{localStorage.setItem(IMPORT_FLAG,'1');}catch(e){} checkEmpty();}
-}
-function seedDefaults(){
-  if(!confirm(
-    'ATENÇÃO — use isto só se você NÃO tem dados antigos para importar.\n\n'+
-    'Esta lista traz os '+defaults.length+' candidatos originais SEM as suas atualizações '+
-    'de status. Se você ainda pretende usar o botão de importar do navegador, '+
-    'os candidatos vão ficar duplicados.\n\n'+
-    'Carregar a lista inicial mesmo assim?'
-  ))return;
-  insertMany(defaults,'Lista inicial carregada');
 }
 
 function catLabel(c){return c==='bom'?'Potencial bom':c==='analisar'?'Analisar':'Agendado';}
@@ -598,116 +779,311 @@ function dt(c){if(!c.date||!c.time)return null;
   if(!d||!t)return null;return new Date(+d[1],+d[2]-1,+d[3],+t[1],+t[2],0);}
 function keyOf(c){return (c.date||'9999-99-99')+'T'+(c.time||'99:99');}
 function sortData(){data.sort((a,b)=>keyOf(a).localeCompare(keyOf(b)));}
+function ymd(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+function minOf(t){const m=(t||'').match(/(\d{1,2}):(\d{2})/);return m?(+m[1])*60+(+m[2]):null;}
 
-function waLink(c,type){
-  let tpl=template;
-  if(type==='aprovado')tpl=tplAprov;
-  else if(type==='reprovado')tpl=tplReprov;
-  const msg=tpl.replace(/{NOME}/g,c.nome.split(' ')[0])
+/* Etiqueta do dia: "Hoje" e "Amanhã" valem mais que a data escrita,
+   porque é isso que a pessoa procura ao abrir a tela. */
+function dayLabel(ds){
+  const m=(ds||'').match(/(\d{4})-(\d{2})-(\d{2})/);
+  if(!m)return{tag:'Sem data',cls:'sem',nome:'Aguardando agendamento'};
+  const hoje=new Date(), base=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate());
+  const d=new Date(+m[1],+m[2]-1,+m[3]);
+  const nome=WD[d.getDay()]+', '+(+m[3])+' de '+MESES[+m[2]-1];
+  const dif=Math.round((d-base)/86400000);
+  if(dif===0)return{tag:'Hoje',cls:'hoje',nome};
+  if(dif===1)return{tag:'Amanhã',cls:'amanha',nome};
+  return{tag:'',cls:'',nome};
+}
+
+/* campo = uma das chaves de MSGS. Quem chama decide qual mensagem cabe
+   naquele momento do processo. */
+function waLink(c,campo){
+  const msg=msgDe(campo).replace(/{NOME}/g,c.nome.split(' ')[0])
     .replace(/{DATA}/g,fmtBR(c.date))
     .replace(/{HORARIO}/g,c.time?dispTime(c.time):'[inserir horário]');
   return 'https://wa.me/'+c.fone+'?text='+encodeURIComponent(msg);
 }
 
+/* Na Agenda interessa o andamento dos compromissos; nas outras abas
+   interessa a forma do funil. São perguntas diferentes. */
 function renderStats(){
-  const n=s=>data.filter(c=>c.status===s).length;
-  document.getElementById('stats').innerHTML=
-    `<span class="stat c">Confirmados <b>${n('Confirmado')}</b></span>`+
-    `<span class="stat v">Aguardando <b>${n('Convidado')}</b></span>`+
-    `<span class="stat p">Pendentes <b>${n('Pendente')}</b></span>`+
-    `<span class="stat">Realizadas <b>${n('Realizada')}</b></span>`+
-    `<span class="stat">Total <b>${data.length}</b></span>`;
+  const el=document.getElementById('stats');
+  if(activeTab==='agenda'){
+    const n=s=>data.filter(c=>c.status===s&&c.etapa!=='contratado').length;
+    el.innerHTML=
+      `<span class="stat c">Confirmados <b>${n('Confirmado')}</b></span>`+
+      `<span class="stat v">Aguardando <b>${n('Convidado')}</b></span>`+
+      `<span class="stat p">Pendentes <b>${n('Pendente')}</b></span>`+
+      `<span class="stat">Realizadas <b>${n('Realizada')}</b></span>`;
+  }else{
+    const q=id=>data.filter(c=>c.etapa===id&&!estaFora(c)).length;
+    el.innerHTML=ETAPAS.map(e=>`<span class="stat">${e.curto} <b>${q(e.id)}</b></span>`).join('')+
+      `<span class="stat p">Fora <b>${data.filter(estaFora).length}</b></span>`;
+  }
   updateTabCounts();
 }
 function updateTabCounts(){
-  const nAprov=data.filter(c=>c.status==='Aprovado').length;
-  const nReprov=data.filter(c=>c.status==='Reprovado').length;
-  const nAgenda=data.filter(c=>c.status!=='Aprovado'&&c.status!=='Reprovado').length;
-  document.getElementById('tab-n-agenda').textContent=nAgenda;
-  document.getElementById('tab-n-aprovados').textContent=nAprov;
-  document.getElementById('tab-n-reprovados').textContent=nReprov;
+  document.getElementById('tab-n-agenda').textContent=
+    data.filter(c=>ATIVOS.includes(c.status)&&c.etapa!=='contratado').length;
+  document.getElementById('tab-n-funil').textContent=data.filter(c=>!estaFora(c)).length;
+  document.getElementById('tab-n-fora').textContent=data.filter(estaFora).length;
 }
 
 function render(){
   sortData();
   const list=document.getElementById('list');list.innerHTML='';
-  if(activeTab==='aprovados'){renderResultList('Aprovado',list);renderStats();tick();return;}
-  if(activeTab==='reprovados'){renderResultList('Reprovado',list);renderStats();tick();return;}
-  // Aba Agenda: exclui aprovados/reprovados
-  const agenda=data.filter(c=>c.status!=='Aprovado'&&c.status!=='Reprovado');
+  if(activeTab==='funil'){renderFunil(list);renderStats();tick();return;}
+  if(activeTab==='fora'){renderFora(list);renderStats();tick();return;}
+  // Aba Agenda: tudo que tem compromisso em aberto, de qualquer etapa.
+  const agenda=data.filter(c=>ATIVOS.includes(c.status)&&c.etapa!=='contratado');
+  if(!agenda.length){
+    list.innerHTML='<div class="empty">Nenhum compromisso marcado.<br>'+
+      'Quem já foi aprovado e está esperando a próxima etapa aparece na aba <b>Funil</b>.</div>';
+    renderStats();tick();return;
+  }
   const slot={};
   agenda.forEach(c=>{if(c.date&&c.time&&c.status!=='Recusou'){const k=c.date+'T'+c.time;slot[k]=(slot[k]||0)+1;}});
-  let lastDay=null;
+
+  // A lista já vem ordenada por data/hora, então basta quebrar quando o dia vira.
+  const dias=[];
   agenda.forEach(c=>{
-    if(c.date!==lastDay){
-      const h=document.createElement('div');h.className='dayhead';
-      const cnt=agenda.filter(x=>x.date===c.date).length;
-      h.innerHTML=`${dispDate(c.date)} <span class="badge">${cnt} ${cnt===1?'entrevista':'entrevistas'}</span>`;
-      list.appendChild(h);lastDay=c.date;
-    }
-    const conflict=c.date&&c.time&&c.status!=='Recusou'&&slot[c.date+'T'+c.time]>1;
-    const row=document.createElement('div');
-    row.className='row'+(c.status==='Realizada'?' realizada':'');row.id='row-'+c.id;
-    const opts=STATUSES.map(s=>`<option ${s===c.status?'selected':''}>${s}</option>`).join('');
-    const waBtn=c.fone
-      ? `<a class="icon wa" href="${waLink(c,'convite')}" target="_blank" rel="noopener" title="Abrir convite no WhatsApp">✆</a>`
-      : `<span class="icon wa disabled" title="Sem telefone">✆</span>`;
-    row.innerHTML=`
-      <div class="when">
-        <input type="date" value="${c.date}" onchange="setDate('${c.id}',this.value)">
-        <input class="t" type="time" value="${c.time}" onchange="setTime('${c.id}',this.value)">
-      </div>
-      <div class="who">
-        <div class="name">${c.nome}</div>
-        <div class="meta"><span class="chip ${c.cat}">${catLabel(c.cat)}</span>${conflict?'<span class="conflict-badge">⚠ horário duplicado</span>':''}</div>
-        <div class="countdown" id="cd-${c.id}"></div>
-      </div>
-      <div class="confirm-cell">
-        <label class="conf ${c.status==='Confirmado'?'on':''}">
-          <input type="checkbox" ${c.status==='Confirmado'?'checked':''} onchange="setConfirm('${c.id}',this.checked)">Confirmado
-        </label>
-      </div>
-      <div class="status-cell">
-        <select class="status s-${c.status}" onchange="setStatus('${c.id}',this.value)">${opts}</select>
-      </div>
-      <div class="actions">
-        ${waBtn}
-        <button class="icon del" onclick="removeC('${c.id}')" title="Remover">✕</button>
-      </div>`;
-    list.appendChild(row);
+    const ultimo=dias[dias.length-1];
+    if(ultimo&&ultimo.date===c.date)ultimo.itens.push(c);
+    else dias.push({date:c.date,itens:[c]});
+  });
+
+  dias.forEach(dia=>{
+    const info=dayLabel(dia.date);
+    const horas=dia.itens.map(c=>c.time).filter(Boolean);
+    const faixa=horas.length?dispTime(horas[0])+(horas.length>1?' → '+dispTime(horas[horas.length-1]):''):'';
+    const n=dia.itens.length;
+
+    const sec=document.createElement('section');
+    sec.className='day';
+    if(dia.date)sec.dataset.date=dia.date;
+    sec.innerHTML=
+      '<div class="dayhead">'+
+        (info.tag?`<span class="daytag ${info.cls}">${info.tag}</span>`:'')+
+        `<span class="dayname">${info.nome}</span>`+
+        `<span class="daymeta">${n} ${n===1?'entrevista':'entrevistas'}${faixa?' · '+faixa:''}</span>`+
+      '</div><div class="rail"></div>';
+
+    const rail=sec.querySelector('.rail');
+    let anterior=null;
+    dia.itens.forEach(c=>{
+      const m=minOf(c.time);
+      // Intervalo curto é encaixe normal; a partir de 20 min já é buraco que vale mostrar.
+      if(anterior!==null&&m!==null&&m-anterior>=20){
+        const g=document.createElement('div');
+        g.className='gap'+(m-anterior>=60?' long':'');
+        g.innerHTML=`<span>${fmtDiff(m-anterior)}</span>`;
+        rail.appendChild(g);
+      }
+      if(m!==null)anterior=m;
+      rail.appendChild(buildSlot(c,slot));
+    });
+    list.appendChild(sec);
   });
   renderStats();tick();
 }
 
-function renderResultList(kind,list){
-  const isAppr=kind==='Aprovado';
-  const items=data.filter(c=>c.status===kind);
-  if(!items.length){
-    list.innerHTML=`<div class="empty">Nenhum candidato ${isAppr?'aprovado':'reprovado'} ainda.<br>Na aba <b>Agenda</b>, mude o status de um candidato para <b>${kind}</b> para que ele apareça aqui.</div>`;
+function buildSlot(c,slot){
+  const conflict=!!(c.date&&c.time&&c.status!=='Recusou'&&slot[c.date+'T'+c.time]>1);
+  const el=document.createElement('article');
+  el.className='slot s-'+c.status+(c.status==='Realizada'?' realizada':'')+(conflict?' conflict':'');
+  el.id='row-'+c.id;
+  const m=minOf(c.time);
+  if(m!==null)el.dataset.min=m;
+  const et=etapaInfo(c.etapa);
+  const opts=STATUSES.map(s=>`<option ${s===c.status?'selected':''}>${s}</option>`).join('');
+  const waBtn=c.fone
+    ? `<a class="icon wa" href="${waLink(c,et.convite)}" target="_blank" rel="noopener" title="Abrir convite de ${et.nome.toLowerCase()} no WhatsApp">💬</a>`
+    : `<span class="icon wa disabled" title="Sem telefone">💬</span>`;
+  el.innerHTML=`
+    <div class="when">
+      <input class="t" type="time" value="${c.time}" title="Mudar o horário" onchange="setTime('${c.id}',this.value)">
+      <input class="d" type="date" value="${c.date}" title="Mover para outro dia" onchange="setDate('${c.id}',this.value)">
+    </div>
+    <div class="who">
+      <div class="name">${c.nome}</div>
+      <div class="meta"><span class="etapa-chip et-${c.etapa}">${et.curto}</span><span class="chip ${c.cat}">${catLabel(c.cat)}</span>${conflict?'<span class="conflict-badge">⚠ mesmo horário</span>':''}</div>
+      <div class="countdown" id="cd-${c.id}"></div>
+    </div>
+    <div class="confirm-cell">
+      <label class="conf ${c.status==='Confirmado'?'on':''}">
+        <input type="checkbox" ${c.status==='Confirmado'?'checked':''} onchange="setConfirm('${c.id}',this.checked)">Confirmado
+      </label>
+    </div>
+    <div class="status-cell">
+      <select class="status s-${c.status}" onchange="setStatus('${c.id}',this.value)">${opts}</select>
+    </div>
+    <div class="actions">
+      ${waBtn}
+      <button class="icon del" onclick="removeC('${c.id}')" title="Remover">✕</button>
+    </div>`;
+  return el;
+}
+
+/* Marca de "agora" na trilha do dia de hoje. Move o elemento em vez de
+   redesenhar a lista: redesenhar a cada segundo roubaria o foco de quem
+   estivesse digitando um horário. */
+function positionNowLine(){
+  let linha=document.getElementById('nowline');
+  const sec=document.querySelector('.day[data-date="'+ymd(new Date())+'"]');
+  if(!sec||activeTab!=='agenda'){if(linha)linha.remove();return;}
+  if(!linha){
+    linha=document.createElement('div');
+    linha.className='nowline';linha.id='nowline';
+    linha.innerHTML='<span class="nowtime"></span>';
+  }
+  const agora=new Date();
+  linha.querySelector('.nowtime').textContent=pad(agora.getHours())+':'+pad(agora.getMinutes());
+  const min=agora.getHours()*60+agora.getMinutes();
+  const rail=sec.querySelector('.rail');
+  let alvo=null;
+  rail.querySelectorAll('.slot[data-min]').forEach(s=>{if(!alvo&&+s.dataset.min>min)alvo=s;});
+  if(alvo){if(linha.nextElementSibling!==alvo||linha.parentNode!==rail)rail.insertBefore(linha,alvo);}
+  else if(rail.lastElementChild!==linha)rail.appendChild(linha);
+}
+
+function escHtml(s){return String(s==null?'':s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function escAttr(s){return escHtml(s).replace(/"/g,'&quot;');}
+function quandoTxt(c){
+  if(!c.date)return '<span class="semdata">sem data marcada</span>';
+  return fmtBR(c.date)+(c.time?' · '+dispTime(c.time):'');
+}
+
+/* =========================================================
+   Funil — todo mundo que ainda está no processo, agrupado
+   pela etapa em que está. É aqui que se aprova, se manda a
+   mensagem e se empurra para a etapa seguinte.
+   ========================================================= */
+function renderFunil(list){
+  const ativos=data.filter(c=>!estaFora(c));
+  if(!ativos.length){
+    list.innerHTML='<div class="empty">Ninguém no processo ainda.<br>'+
+      'Use <b>+ Adicionar candidato</b> logo abaixo para começar.</div>';
     return;
   }
-  items.forEach(c=>{
-    const tpl=isAppr?'aprovado':'reprovado';
-    const opts=STATUSES.map(s=>`<option ${s===c.status?'selected':''}>${s}</option>`).join('');
-    const sendBtn=c.fone
-      ? `<a class="sendbtn ${isAppr?'ok':'no'}" href="${waLink(c,tpl)}" target="_blank" rel="noopener">✆ Enviar ${isAppr?'aprovação':'reprovação'}</a>`
-      : `<span class="sendbtn ghost" title="Cadastre o WhatsApp na aba Agenda">Sem WhatsApp</span>`;
-    const quando=c.date?`<span class="muted-when">entrevista ${fmtBR(c.date)}${c.time?' · '+dispTime(c.time):''}</span>`:'';
-    const row=document.createElement('div');
-    row.className='row result';row.id='row-'+c.id;
-    row.innerHTML=`
-      <div class="who">
-        <div class="name">${c.nome}</div>
-        <div class="meta"><span class="chip ${c.cat}">${catLabel(c.cat)}</span>${quando}</div>
+  ETAPAS.forEach(et=>{
+    const itens=ativos.filter(c=>c.etapa===et.id);
+    const sec=document.createElement('section');
+    sec.className='stage';
+    sec.innerHTML=
+      `<div class="stagehead st-${et.id}">`+
+        `<span class="stagename">${et.nome}</span>`+
+        `<span class="stagemeta">${itens.length
+          ? itens.length+(itens.length===1?' candidato':' candidatos')
+          : 'ninguém aqui'}</span>`+
+      '</div>';
+    itens.forEach(c=>sec.appendChild(buildFunilCard(c)));
+    list.appendChild(sec);
+  });
+}
+
+function buildFunilCard(c){
+  const et=etapaInfo(c.etapa);
+  const el=document.createElement('article');
+  el.className='fcard';el.id='row-'+c.id;
+  const opts=STATUSES.map(s=>`<option ${s===c.status?'selected':''}>${s}</option>`).join('');
+  const semFone='<span class="sendbtn ghost" title="Cadastre o WhatsApp na aba Agenda">Sem WhatsApp</span>';
+  const acts=[];
+
+  // Convite só enquanto faz sentido convidar: depois de Realizada, não faz.
+  if(['Pendente','Convidado','Confirmado'].includes(c.status)&&et.convite){
+    acts.push(c.fone
+      ? `<a class="sendbtn conv" href="${waLink(c,et.convite)}" target="_blank" rel="noopener">💬 Convite de ${et.curto.toLowerCase()}</a>`
+      : semFone);
+  }
+  // Aprovado: avisa o candidato e só então empurra para a próxima etapa.
+  if(c.status==='Aprovado'){
+    const rot=(c.etapa==='final'||c.etapa==='contratado')?'Enviar contratação':'Enviar aprovação';
+    acts.push(c.fone
+      ? `<a class="sendbtn ok" href="${waLink(c,et.aprov)}" target="_blank" rel="noopener">💬 ${rot}</a>`
+      : semFone);
+    if(et.proxima)acts.push(`<button class="sendbtn next" onclick="avancar('${c.id}')">${et.avanco} →</button>`);
+  }
+  if(c.etapa!=='entrevista'){
+    acts.push(`<button class="linkbtn volta" onclick="voltarEtapa('${c.id}')">↩ voltar uma etapa</button>`);
+  }
+
+  const tec = c.etapa==='tecnica' ? `
+    <div class="tecgrid">
+      <div class="tnota">
+        <label for="nota-${c.id}">Nota</label>
+        <input id="nota-${c.id}" type="number" step="0.1" min="0" placeholder="—"
+               value="${escAttr(c.nota)}" onchange="setNota('${c.id}',this.value)">
       </div>
-      <div class="result-action">${sendBtn}</div>
-      <div class="status-cell">
+      <div class="tlink">
+        <label for="link-${c.id}">Link do teste ou do material</label>
+        <input id="link-${c.id}" type="url" placeholder="https://"
+               value="${escAttr(c.link)}" onchange="setLink('${c.id}',this.value)">
+      </div>
+      ${c.link?`<a class="verlink" href="${escAttr(c.link)}" target="_blank" rel="noopener">abrir ↗</a>`:''}
+    </div>` : '';
+
+  el.innerHTML=`
+    <div class="fcard-top">
+      <div class="fcard-who">
+        <div class="name">${escHtml(c.nome)}</div>
+        <div class="fcard-sub">
+          <span class="chip ${c.cat}">${catLabel(c.cat)}</span>
+          <span>${quandoTxt(c)}</span>
+        </div>
+      </div>
+      <div class="fcard-controls">
         <select class="status s-${c.status}" onchange="setStatus('${c.id}',this.value)">${opts}</select>
+        <button class="icon del" onclick="removeC('${c.id}')" title="Remover do processo">✕</button>
       </div>
-      <div class="actions">
-        <button class="icon del" onclick="removeC('${c.id}')" title="Remover">✕</button>
-      </div>`;
-    list.appendChild(row);
+    </div>
+    ${tec}
+    <details class="anot"${c.obs?' open':''}>
+      <summary>Anotações${c.obs?'':' <span class="vazio">— nenhuma</span>'}</summary>
+      <textarea rows="3" placeholder="Como foi, pontos fortes, o que confirmar na próxima etapa…"
+                onchange="setObs('${c.id}',this.value)">${escHtml(c.obs)}</textarea>
+    </details>
+    <div class="fcard-acts">${acts.join('')}</div>`;
+  return el;
+}
+
+/* =========================================================
+   Fora — quem foi reprovado ou recusou. Fica registrado em
+   que etapa a pessoa parou, que é o dado que interessa
+   depois. Para trazer alguém de volta, basta mudar o status.
+   ========================================================= */
+function renderFora(list){
+  const fora=data.filter(estaFora);
+  if(!fora.length){
+    list.innerHTML='<div class="empty">Ninguém foi reprovado nem recusou até agora.</div>';
+    return;
+  }
+  fora.forEach(c=>{
+    const et=etapaInfo(c.etapa);
+    const opts=STATUSES.map(s=>`<option ${s===c.status?'selected':''}>${s}</option>`).join('');
+    const el=document.createElement('article');
+    el.className='fcard fora';el.id='row-'+c.id;
+    const botao=c.status!=='Reprovado' ? ''
+      : (c.fone
+        ? `<a class="sendbtn no" href="${waLink(c,'msg_reprovacao')}" target="_blank" rel="noopener">💬 Enviar reprovação</a>`
+        : '<span class="sendbtn ghost" title="Cadastre o WhatsApp na aba Agenda">Sem WhatsApp</span>');
+    el.innerHTML=`
+      <div class="fcard-top">
+        <div class="fcard-who">
+          <div class="name">${escHtml(c.nome)}</div>
+          <div class="fcard-sub">
+            <span class="etapa-chip et-${c.etapa}">${et.curto}</span>
+            <span>${c.status==='Recusou'?'Recusou':'Reprovado'} na etapa de ${et.nome.toLowerCase()}</span>
+          </div>
+        </div>
+        <div class="fcard-controls">
+          <select class="status s-${c.status}" onchange="setStatus('${c.id}',this.value)">${opts}</select>
+          <button class="icon del" onclick="removeC('${c.id}')" title="Remover do processo">✕</button>
+        </div>
+      </div>
+      ${botao?`<div class="fcard-acts">${botao}</div>`:''}`;
+    list.appendChild(el);
   });
 }
 
@@ -720,6 +1096,51 @@ function setTime(id,v){const c=data.find(x=>x.id===id);if(!c)return;
   c.time=v;beeped.delete(id);render();patchRow(id,{hora:v||null});}
 function setDate(id,v){const c=data.find(x=>x.id===id);if(!c)return;
   c.date=v;beeped.delete(id);render();patchRow(id,{data:v||null});}
+
+/* Campos da avaliação técnica. Não chamam render() de propósito: eles
+   disparam ao sair do campo, e redesenhar aqui atrapalharia quem estivesse
+   passando de um campo para o outro. */
+function setNota(id,v){const c=data.find(x=>x.id===id);if(!c)return;
+  c.nota=v;patchRow(id,{nota:v===''?null:Number(v)});}
+function setLink(id,v){const c=data.find(x=>x.id===id);if(!c)return;
+  c.link=v;patchRow(id,{link:v});}
+function setObs(id,v){const c=data.find(x=>x.id===id);if(!c)return;
+  c.obs=v;patchRow(id,{obs:v});}
+
+/* =========================================================
+   Andar no funil. O avanço é sempre um clique consciente:
+   marcar Aprovado não move ninguém, para dar tempo de mandar
+   a mensagem antes de o candidato mudar de lugar na tela.
+   ========================================================= */
+async function avancar(id){
+  const c=data.find(x=>x.id===id);if(!c)return;
+  const et=etapaInfo(c.etapa);
+  if(!et.proxima)return;
+  const prox=etapaInfo(et.proxima);
+  const aviso=et.proxima==='contratado'
+    ? c.nome+' passa a constar como contratado(a).\n\nDá para desfazer depois em "voltar uma etapa".'
+    : c.nome+' vai para: '+prox.nome+'.\n\nO status volta para Pendente e a data fica em branco, '+
+      'para você marcar o novo compromisso.';
+  if(!confirm(aviso))return;
+  const campos=et.proxima==='contratado'
+    ? {etapa:'contratado',status:'Aprovado'}
+    : {etapa:et.proxima,status:'Pendente',data:null,hora:null};
+  c.etapa=campos.etapa;c.status=campos.status;
+  if(et.proxima!=='contratado'){c.date='';c.time='';}
+  beeped.delete(id);render();
+  if(await patchRow(id,campos))showToast(c.nome+' → '+prox.nome);
+}
+
+async function voltarEtapa(id){
+  const c=data.find(x=>x.id===id);if(!c)return;
+  const i=ETAPAS.findIndex(e=>e.id===c.etapa);
+  if(i<=0)return;
+  const ant=ETAPAS[i-1];
+  if(!confirm('Voltar '+c.nome+' para '+ant.nome+'?\n\nO status vira Aprovado, que é como a pessoa '+
+              'estava quando saiu dessa etapa.'))return;
+  c.etapa=ant.id;c.status='Aprovado';render();
+  if(await patchRow(id,{etapa:ant.id,status:'Aprovado'}))showToast('Voltou para '+ant.nome);
+}
 
 async function removeC(id){
   const c=data.find(x=>x.id===id);if(!c)return;
@@ -763,6 +1184,8 @@ async function addCandidate(){
 }
 
 function fmtDiff(min){const a=Math.abs(min);
+  // Acima de um dia, contar em horas ("em 75h09") não diz nada a ninguém.
+  if(a>=1440){const d=Math.round(a/1440);return d+(d===1?' dia':' dias');}
   if(a>=60){const h=Math.floor(a/60),m=Math.round(a%60);return `${h}h${m>0?pad(m):''}`;}
   return `${Math.round(a)} min`;}
 
@@ -791,11 +1214,12 @@ function tick(){
         if(document.getElementById('soundOn').checked&&!beeped.has(c.id)){beeped.add(c.id);beep();}}else if(row)row.classList.remove('alert');}
     else if(diff<=0&&diff>-30){if(cd){cd.textContent='acontecendo agora';cd.className='countdown soon';}
       if(doAlert){if(row)row.classList.add('alert');banner.push('agora: '+c.nome+' ('+dispTime(c.time)+')');}}
-    else{if(cd){cd.textContent='horário passou';cd.className='countdown';}if(row)row.classList.remove('alert');}
+    else{if(cd){cd.textContent='já passou';cd.className='countdown';}if(row)row.classList.remove('alert');}
   });
   const b=document.getElementById('banner');
   if(banner.length){b.className='banner show';b.innerHTML=banner.map(t=>'<div class="b-row">⏰ '+t+'</div>').join('');}
   else{b.className='banner';b.innerHTML='';}
+  positionNowLine();
 }
 
 let activeTab='agenda';
@@ -806,26 +1230,41 @@ function setTab(t){
 }
 
 /* As mensagens ficam no banco: se você editar, o colega vê a mesma versão. */
-async function saveMsgs(silencioso){
-  tplAprov=document.getElementById('msgAprov').value;
-  tplReprov=document.getElementById('msgReprov').value;
+async function gravarCfg(campos,silencioso){
   setSync(true,'Salvando…');
-  const {error}=await sb.from('configuracoes')
-    .update({msg_aprovacao:tplAprov,msg_reprovacao:tplReprov}).eq('id',1);
+  const {error}=await sb.from('configuracoes').update(campos).eq('id',1);
   if(error){
     setSync(false,'Erro ao salvar');
-    showToast('Não salvou as mensagens: '+error.message,true);
-    return;
+    showToast('Não salvou a mensagem: '+error.message,true);
+    return false;
   }
+  Object.assign(cfg,campos);
   setSync(true);render();
-  if(!silencioso)showToast('Mensagens salvas');
+  if(!silencioso)showToast('Mensagem salva');
+  return true;
 }
-async function resetMsgs(){
-  if(!confirm('Restaurar as mensagens padrão de aprovação e reprovação?'))return;
-  document.getElementById('msgAprov').value=DEF_APROV;
-  document.getElementById('msgReprov').value=DEF_REPROV;
-  await saveMsgs(true);
-  showToast('Mensagens restauradas');
+function trocaMsg(){
+  const sel=document.getElementById('msgSel'), txt=document.getElementById('msgTxt');
+  // Trocar de mensagem com edição pendente apagaria o texto sem avisar.
+  if(txt.value!==msgDe(msgAtual)&&
+     !confirm('A mensagem "'+msgInfo(msgAtual).rotulo+'" tem alterações que você não salvou.\n\nDescartar?')){
+    sel.value=msgAtual;return;
+  }
+  msgAtual=sel.value;
+  txt.value=msgDe(msgAtual);
+}
+async function saveMsg(){
+  const campos={};
+  campos[msgAtual]=document.getElementById('msgTxt').value;
+  await gravarCfg(campos);
+}
+async function resetMsg(){
+  const info=msgInfo(msgAtual);
+  if(!confirm('Restaurar o texto padrão de "'+info.rotulo+'"?'))return;
+  document.getElementById('msgTxt').value=info.padrao;
+  // Guardar vazio faz a mensagem voltar a seguir o padrão do app.
+  const campos={};campos[msgAtual]='';
+  if(await gravarCfg(campos,true))showToast('Mensagem restaurada');
 }
 
 function showToast(t,isErr){
