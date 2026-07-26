@@ -197,11 +197,10 @@
   .tecgrid .tlink input{width:100%;}
   .verlink{font-size:13px;font-weight:600;color:var(--wa-dark);padding-bottom:10px;white-space:nowrap;}
 
-  .anot{margin-top:12px;}
-  .anot summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);}
-  .anot .vazio{font-weight:400;}
-  .anot textarea{width:100%;font:inherit;padding:9px;margin-top:8px;resize:vertical;
-    border:1px solid var(--line);border-radius:8px;}
+  /* O nome abre o perfil, em qualquer aba. */
+  .linkname{font:inherit;font-weight:700;font-size:16px;color:var(--ink);background:none;
+    border:none;padding:0;cursor:pointer;text-align:left;}
+  .linkname:hover{color:var(--wa-dark);text-decoration:underline;}
 
   .fcard-acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:13px;}
   .linkbtn.volta{margin-left:auto;}
@@ -215,6 +214,8 @@
   .sendbtn.conv{background:var(--card);color:var(--wa-dark);border:1px solid #bfe6cd;}
   .sendbtn.conv:hover{background:var(--confirmado-bg);}
   .sendbtn.next{background:var(--ink);color:#fff;} .sendbtn.next:hover{filter:brightness(1.35);}
+  .sendbtn.perfil-btn{background:transparent;border:1px solid var(--line);color:var(--muted);}
+  .sendbtn.perfil-btn:hover{border-color:#c4ccc7;color:var(--ink);}
   .sendbtn.ghost{background:var(--pendente-bg);color:var(--muted);cursor:default;}
   .empty{background:var(--card);border:1px dashed var(--line);border-radius:var(--radius);
     padding:26px 18px;text-align:center;color:var(--muted);font-size:14px;}
@@ -239,6 +240,52 @@
     padding:10px 18px;border-radius:24px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;max-width:90vw;text-align:center;}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
   .toast.err{background:var(--reprovado);font-weight:600;}
+
+  /* ---------- Perfil do candidato ---------- */
+  .overlay{position:fixed;inset:0;background:rgba(12,18,15,.55);backdrop-filter:blur(3px);
+    display:none;align-items:center;justify-content:center;padding:28px 16px;
+    z-index:50;overflow:hidden;}
+  .overlay.show{display:flex;}
+  /* Quem rola é o painel, não o fundo: assim o cabeçalho fixo recorta o
+     conteúdo em vez de deixar passar por cima dele. */
+  .perfil{background:var(--card);border:1px solid var(--line);border-radius:18px;
+    width:100%;max-width:780px;box-shadow:0 24px 60px rgba(12,18,15,.28);
+    max-height:calc(100vh - 56px);overflow-y:auto;}
+  .perfil-top{display:flex;align-items:flex-start;gap:14px;padding:20px 24px 16px;
+    border-bottom:1px solid var(--line);position:sticky;top:0;z-index:2;
+    background:var(--card);border-radius:18px 18px 0 0;}
+  .perfil-nome{font:700 21px/1.2 inherit;color:var(--ink);width:100%;margin-left:-7px;
+    border:1px solid transparent;background:transparent;border-radius:8px;padding:3px 6px;}
+  .perfil-nome:hover,.perfil-nome:focus{border-color:var(--line);background:var(--page);}
+  .perfil-chips{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:7px;
+    font-size:13px;color:var(--muted);}
+  .perfil-corpo{padding:4px 24px 26px;}
+
+  .pgrupo{margin-top:22px;}
+  .pgrupo h4{margin:0 0 10px;font:700 11px/1 var(--mono);letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted);}
+  .pgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(196px,1fr));gap:12px;}
+  .pcampo{display:flex;flex-direction:column;gap:4px;}
+  .pcampo span{font-size:12px;color:var(--muted);}
+  .pcampo input{font:inherit;width:100%;padding:9px 11px;color:var(--ink);
+    border:1px solid var(--line);border-radius:9px;background:var(--card);}
+  .pcampo.largo{grid-column:1/-1;}
+
+  .cv{display:flex;gap:12px;align-items:center;flex-wrap:wrap;
+    padding:14px 16px;border:1px dashed var(--line);border-radius:12px;}
+  .cv .arq{font-weight:600;font-size:14px;flex:1;min-width:150px;}
+  .cv .dica{flex-basis:100%;font-size:12px;color:var(--muted);}
+  .cv input[type=file]{font:inherit;font-size:13px;max-width:100%;}
+
+  .nota{border-left:3px solid var(--line);padding:1px 0 1px 13px;margin-bottom:15px;}
+  .nota-top{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:4px;}
+  .nota-autor{font:600 11px var(--mono);color:var(--muted);}
+  .nota p{margin:0;font-size:14px;white-space:pre-wrap;}
+  .nota-nova textarea{width:100%;font:inherit;padding:10px;resize:vertical;
+    border:1px solid var(--line);border-radius:9px;}
+  .nota-acoes{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:9px;}
+  .nota-acoes .aviso{flex:1;min-width:190px;font-size:12px;color:var(--muted);}
+  .sem-historico{font-size:14px;color:var(--muted);margin:0 0 16px;}
 
   /* Tela de login */
   #gate{max-width:380px;margin:8vh auto;background:var(--card);border:1px solid var(--line);
@@ -287,6 +334,11 @@
     .nowtime{position:static;display:block;width:auto;text-align:center;
       padding-top:6px;border-top:2px solid var(--now);}
     .daymeta{margin-left:0;width:100%;}
+    .overlay{padding:0;align-items:stretch;}
+    .perfil,.perfil-top{border-radius:0;}
+    .perfil{min-height:100vh;max-height:100vh;}
+    .perfil-corpo{padding:4px 16px 26px;}
+    .perfil-top{padding:16px 16px 14px;}
     .stagemeta{margin-left:0;width:100%;}
     .fcard-controls{margin-left:0;width:100%;}
     .fcard-controls select.status{flex:1;}
@@ -373,10 +425,16 @@
 
   <div class="foot">
     <p><b>As três etapas:</b> entrevista, avaliação técnica e entrevista final com os sócios. Marcar <b>Aprovado</b> não muda ninguém de etapa — quem muda é o botão <b>Avançar</b>, na aba Funil. A separação é de propósito: dá tempo de mandar a mensagem de aprovação antes de o candidato trocar de lugar na tela. Ao avançar, o status volta para Pendente e a data fica em branco, para você marcar o novo compromisso. Clique errado se desfaz em <b>voltar uma etapa</b>.</p>
+    <p><b>Perfil do candidato:</b> clique no nome de qualquer pessoa, em qualquer aba, para abrir a ficha — contato, endereço, origem da candidatura, experiência e currículo. Os campos salvam sozinhos ao sair de cada um. O currículo fica guardado num espaço privado: o botão de abrir gera um link que vale por uma hora e só funciona para quem está logado. No fim da ficha está o histórico: cada anotação fica carimbada com quem escreveu, quando, e em que etapa, e nenhuma sobrescreve a outra. Você só pode apagar as suas.</p>
     <p><b>Agenda:</b> mostra tudo que tem hora marcada, de qualquer etapa, com um selo dizendo qual é. Para remarcar, clique no horário ou na data à esquerda e digite o novo valor — a agenda reordena e reagrupa por dia sozinha. A bolinha na trilha muda de cor conforme o status, e o número entre dois compromissos é o intervalo entre eles. Quando faltarem 15 minutos, o compromisso acende e aparece um aviso no topo (com som, se ativado). Quem foi reprovado ou recusou sai da agenda e do funil, e fica registrado na aba <b>Fora</b> com a etapa em que parou.</p>
     <p><b>Salvo na nuvem:</b> cada alteração vai direto para o banco de dados no Supabase, então a agenda é a mesma em qualquer computador ou celular. Se duas pessoas estiverem com a página aberta, as duas telas se atualizam sozinhas. O indicador <b>Sincronizado</b> no topo fica vermelho se algo não conseguir ser salvo — se isso acontecer, confira a internet e recarregue a página.</p>
   </div>
 </div>
+<!-- Perfil do candidato. O conteúdo é montado por renderPerfil(). -->
+<div class="overlay" id="perfilBg" onclick="fecharPerfil(event)">
+  <section class="perfil" id="perfil" role="dialog" aria-modal="true" aria-label="Perfil do candidato"></section>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -511,6 +569,9 @@ function estaFora(c){return c.status==='Reprovado'||c.status==='Recusou';}
 
 let soundBoot=null, alertBoot=null;
 let data=[];
+let notas=[];        // histórico de anotações, de todos os candidatos
+let usuario=null;    // quem está logado, para assinar as anotações
+let perfilId=null;   // candidato com o perfil aberto, ou null
 const beeped=new Set();
 let liveChan=null, tickTimer=null, pendingRender=false, iniciado=false;
 
@@ -550,7 +611,18 @@ function fromDb(r){
           // nesse caso todo mundo é da primeira etapa, que é a verdade.
           etapa:r.etapa||'entrevista',
           nota:(r.nota===null||r.nota===undefined)?'':String(r.nota),
-          link:r.link||'', obs:r.obs||''};
+          link:r.link||'',
+          // Ficha. Tudo cai para vazio se o 04-perfil.sql ainda não rodou,
+          // e a tela continua funcionando sem o perfil em vez de quebrar.
+          email:r.email||'', fone_alt:r.fone_alt||'',
+          endereco:r.endereco||'', bairro:r.bairro||'', cidade:r.cidade||'',
+          origem:r.origem||'',
+          pretensao:(r.pretensao===null||r.pretensao===undefined)?'':String(r.pretensao),
+          disponibilidade:r.disponibilidade||'',
+          cargo_atual:r.cargo_atual||'', empresa_atual:r.empresa_atual||'',
+          experiencia:r.experiencia||'',
+          nascimento:r.nascimento||'', cpf:r.cpf||'',
+          curriculo:r.curriculo||''};
 }
 
 /* Indicador no topo. Fica vermelho se uma gravação falhar, para
@@ -608,11 +680,13 @@ async function mostrar(session){
   document.getElementById('app').style.display='';
   if(iniciado)return;          // evita recarregar tudo ao renovar o token
   iniciado=true;
+  usuario=session.user;
   document.getElementById('whoami').textContent=session.user.email;
   document.getElementById('addDate').value=ymd(new Date());
   applyPrefs();
   await fetchConfig();
   await fetchAll();
+  await fetchNotas();
   subscribeLive();
   render();
   tickTimer=setInterval(tick,1000);
@@ -632,6 +706,17 @@ async function fetchAll(){
   setSync(true);
   checkEmpty();
 }
+/* Se a tabela ainda não existir (04-perfil.sql não rodado), o app segue
+   sem histórico em vez de derrubar a tela inteira. */
+async function fetchNotas(){
+  const {data:rows,error}=await sb.from('anotacoes').select('*');
+  notas=(!error&&rows)?rows:[];
+}
+function notasDe(id){
+  return notas.filter(n=>n.candidato_id===id)
+              .sort((a,b)=>String(b.criado_em).localeCompare(String(a.criado_em)));
+}
+
 async function fetchConfig(){
   const {data:row,error}=await sb.from('configuracoes').select('*').eq('id',1).maybeSingle();
   if(!error&&row)cfg=row;
@@ -680,24 +765,36 @@ function subscribeLive(){
       }
       scheduleRender();
     })
+    .on('postgres_changes',{event:'*',schema:'public',table:'anotacoes'},p=>{
+      if(p.eventType==='DELETE'){notas=notas.filter(n=>n.id!==p.old.id);}
+      else{
+        const n=p.new, i=notas.findIndex(x=>x.id===n.id);
+        if(i>=0)notas[i]=n; else notas.push(n);
+      }
+      scheduleRender();
+    })
     .on('postgres_changes',{event:'*',schema:'public',table:'configuracoes'},p=>{
       if(p.new){cfg=p.new;montarEditorMsgs();}
     })
     .subscribe();
 }
-/* Não redesenha enquanto alguém está com o cursor num campo da lista:
-   isso roubaria o foco no meio da digitação. Espera o campo perder o foco. */
+/* Não redesenha enquanto alguém está com o cursor num campo da lista ou do
+   perfil: isso roubaria o foco no meio da digitação, e no perfil apagaria
+   a anotação sendo escrita. Espera o campo perder o foco. */
 function scheduleRender(){
   const a=document.activeElement;
-  if(a&&document.getElementById('list').contains(a)){
+  const dentro=a&&(document.getElementById('list').contains(a)||
+                   document.getElementById('perfil').contains(a));
+  if(dentro){
     if(!pendingRender){
       pendingRender=true;
-      a.addEventListener('blur',()=>{pendingRender=false;render();},{once:true});
+      a.addEventListener('blur',()=>{pendingRender=false;desenhaTudo();},{once:true});
     }
     return;
   }
-  render();
+  desenhaTudo();
 }
+function desenhaTudo(){render();if(perfilId)renderPerfil();}
 
 /* =========================================================
    Primeira carga: importar do navegador ou usar a lista inicial
@@ -906,7 +1003,7 @@ function buildSlot(c,slot){
       <input class="d" type="date" value="${c.date}" title="Mover para outro dia" onchange="setDate('${c.id}',this.value)">
     </div>
     <div class="who">
-      <div class="name">${c.nome}</div>
+      <button class="name linkname" onclick="abrirPerfil('${c.id}')" title="Abrir o perfil">${escHtml(c.nome)}</button>
       <div class="meta"><span class="etapa-chip et-${c.etapa}">${et.curto}</span><span class="chip ${c.cat}">${catLabel(c.cat)}</span>${conflict?'<span class="conflict-badge">⚠ mesmo horário</span>':''}</div>
       <div class="countdown" id="cd-${c.id}"></div>
     </div>
@@ -1005,6 +1102,9 @@ function buildFunilCard(c){
       : semFone);
     if(et.proxima)acts.push(`<button class="sendbtn next" onclick="avancar('${c.id}')">${et.avanco} →</button>`);
   }
+  const nn=notasDe(c.id).length;
+  acts.push(`<button class="sendbtn perfil-btn" onclick="abrirPerfil('${c.id}')">Perfil`+
+    (nn?' · '+nn+(nn===1?' anotação':' anotações'):'')+'</button>');
   if(c.etapa!=='entrevista'){
     acts.push(`<button class="linkbtn volta" onclick="voltarEtapa('${c.id}')">↩ voltar uma etapa</button>`);
   }
@@ -1039,11 +1139,6 @@ function buildFunilCard(c){
       </div>
     </div>
     ${tec}
-    <details class="anot"${c.obs?' open':''}>
-      <summary>Anotações${c.obs?'':' <span class="vazio">— nenhuma</span>'}</summary>
-      <textarea rows="3" placeholder="Como foi, pontos fortes, o que confirmar na próxima etapa…"
-                onchange="setObs('${c.id}',this.value)">${escHtml(c.obs)}</textarea>
-    </details>
     <div class="fcard-acts">${acts.join('')}</div>`;
   return el;
 }
@@ -1071,7 +1166,7 @@ function renderFora(list){
     el.innerHTML=`
       <div class="fcard-top">
         <div class="fcard-who">
-          <div class="name">${escHtml(c.nome)}</div>
+          <button class="name linkname" onclick="abrirPerfil('${c.id}')" title="Abrir o perfil">${escHtml(c.nome)}</button>
           <div class="fcard-sub">
             <span class="etapa-chip et-${c.etapa}">${et.curto}</span>
             <span>${c.status==='Recusou'?'Recusou':'Reprovado'} na etapa de ${et.nome.toLowerCase()}</span>
@@ -1085,6 +1180,253 @@ function renderFora(list){
       ${botao?`<div class="fcard-acts">${botao}</div>`:''}`;
     list.appendChild(el);
   });
+}
+
+/* =========================================================
+   Perfil do candidato — ficha, currículo e histórico.
+   Abre por cima da lista para você não perder o lugar onde
+   estava; fecha no ✕, no Esc ou clicando fora.
+   ========================================================= */
+function abrirPerfil(id){
+  perfilId=id;
+  renderPerfil();
+  document.getElementById('perfilBg').classList.add('show');
+  document.body.style.overflow='hidden';
+}
+function fecharPerfil(ev){
+  // Clique no fundo escuro fecha. Clique dentro do painel, não.
+  if(ev&&ev.target!==document.getElementById('perfilBg'))return;
+  perfilId=null;
+  document.getElementById('perfilBg').classList.remove('show');
+  document.body.style.overflow='';
+  render();
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&perfilId)fecharPerfil();});
+
+function campo(c,nome,rotulo,tipo,dica,largo){
+  return `<label class="pcampo${largo?' largo':''}"><span>${rotulo}</span>`+
+    `<input type="${tipo||'text'}" value="${escAttr(c[nome])}" placeholder="${escAttr(dica||'')}"`+
+    ` onchange="setCampo('${c.id}','${nome}',this.value)"></label>`;
+}
+
+/* Salva campo a campo, ao sair do campo. Mesmo motivo da agenda: gravar
+   pedaço por pedaço é o que deixa duas pessoas editarem sem se atropelar. */
+function setCampo(id,nome,v){
+  const c=data.find(x=>x.id===id);if(!c)return;
+  if(nome==='fone'||nome==='fone_alt')v=v.replace(/\D/g,'');
+  c[nome]=v;
+  const campos={};
+  campos[nome] = (nome==='pretensao')  ? (v===''?null:Number(v))
+               : (nome==='nascimento') ? (v||null)
+               : v;
+  patchRow(id,campos);
+  // Telefone é normalizado para só dígitos: mostra o resultado de volta.
+  if(nome==='fone'||nome==='fone_alt')renderPerfil();
+}
+
+function renderPerfil(){
+  const c=data.find(x=>x.id===perfilId);
+  const box=document.getElementById('perfil');
+  if(!c){box.innerHTML='';return;}
+  const et=etapaInfo(c.etapa);
+  const rascunho=(document.getElementById('notaTexto')||{}).value||'';
+
+  box.innerHTML=`
+    <header class="perfil-top">
+      <div style="flex:1;min-width:0">
+        <input class="perfil-nome" value="${escAttr(c.nome)}" aria-label="Nome do candidato"
+               onchange="setCampo('${c.id}','nome',this.value)">
+        <div class="perfil-chips">
+          <span class="etapa-chip et-${c.etapa}">${et.curto}</span>
+          <span class="chip ${c.cat}">${catLabel(c.cat)}</span>
+          <span>${c.status}</span><span>·</span><span>${quandoTxt(c)}</span>
+        </div>
+      </div>
+      <button class="icon" onclick="fecharPerfil()" title="Fechar (Esc)">✕</button>
+    </header>
+    <div class="perfil-corpo">
+      <div class="pgrupo"><h4>Contato</h4><div class="pgrid">
+        ${campo(c,'fone','WhatsApp (com DDD, só números)','text','5531999998888')}
+        ${campo(c,'email','E-mail','email','nome@email.com')}
+        ${campo(c,'fone_alt','Telefone alternativo','text','opcional')}
+      </div></div>
+
+      <div class="pgrupo"><h4>Onde mora</h4><div class="pgrid">
+        ${campo(c,'endereco','Endereço','text','Rua e número',true)}
+        ${campo(c,'bairro','Bairro','text','')}
+        ${campo(c,'cidade','Cidade','text','')}
+      </div></div>
+
+      <div class="pgrupo"><h4>Candidatura</h4><div class="pgrid">
+        ${campo(c,'origem','Veio de onde','text','indicação, anúncio, LinkedIn…')}
+        ${campo(c,'pretensao','Pretensão salarial (R$)','number','')}
+        ${campo(c,'disponibilidade','Disponível para começar','text','imediata, 30 dias…')}
+      </div></div>
+
+      <div class="pgrupo"><h4>Experiência</h4><div class="pgrid">
+        ${campo(c,'cargo_atual','Último cargo','text','')}
+        ${campo(c,'empresa_atual','Última empresa','text','')}
+        ${campo(c,'experiencia','Tempo na função','text','6 anos')}
+      </div></div>
+
+      <div class="pgrupo"><h4>Dados pessoais</h4><div class="pgrid">
+        ${campo(c,'nascimento','Data de nascimento','date','')}
+        ${campo(c,'cpf','CPF','text','só faz falta na contratação')}
+      </div></div>
+
+      <div class="pgrupo"><h4>Currículo</h4>${blocoCurriculo(c)}</div>
+      <div class="pgrupo"><h4>Histórico</h4>${blocoHistorico(c)}</div>
+    </div>`;
+
+  const txt=document.getElementById('notaTexto');
+  if(txt)txt.value=rascunho;
+  if(c.curriculo)preparaLinkCurriculo(c);
+}
+
+function blocoCurriculo(c){
+  const seletor='<input type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp"'+
+                ' onchange="enviarCurriculo(this)">';
+  if(!c.curriculo){
+    return '<div class="cv"><span class="arq">Nenhum currículo anexado</span>'+seletor+
+      '<span class="dica">PDF, Word ou imagem, até 10 MB. O arquivo fica num espaço privado: '+
+      'sem login ninguém alcança, nem com a chave pública do site.</span></div>';
+  }
+  return '<div class="cv">'+
+    `<span class="arq">📄 ${escHtml(c.curriculo.split('/').pop())}</span>`+
+    '<a class="sendbtn conv" id="linkCurriculo" href="#" target="_blank" rel="noopener">Abrir</a>'+
+    seletor+
+    '<button class="linkbtn" onclick="removerCurriculo()">remover</button>'+
+    '<span class="dica">Enviar outro arquivo substitui este. O link de abertura vale por uma hora.</span>'+
+    '</div>';
+}
+
+function blocoHistorico(c){
+  const lista=notasDe(c.id);
+  const itens=lista.length ? lista.map(n=>{
+    const et=etapaInfo(n.etapa);
+    const meu=usuario&&n.autor_id===usuario.id;
+    return `<article class="nota">
+      <div class="nota-top">
+        <span class="etapa-chip et-${n.etapa}">${et.curto}</span>
+        <span class="nota-autor">${escHtml(n.autor_nome||'sem autor')} · ${dataHora(n.criado_em)}</span>
+        ${meu?`<button class="linkbtn" onclick="removerNota('${n.id}')">apagar</button>`:''}
+      </div>
+      <p>${escHtml(n.texto)}</p>
+    </article>`;
+  }).join('') : '<p class="sem-historico">Nada anotado ainda.</p>';
+
+  return itens+
+    '<div class="nota-nova"><textarea id="notaTexto" rows="3" placeholder="'+
+    'O que você observou nesta conversa, o que confirmar na próxima…"></textarea>'+
+    '<div class="nota-acoes"><span class="aviso">Fica registrada em <b>'+
+    etapaInfo(c.etapa).nome+'</b>, com seu nome e a data. Anotação não se sobrescreve.</span>'+
+    '<button class="btn" onclick="addNota()">Adicionar anotação</button></div></div>';
+}
+function dataHora(iso){
+  const d=new Date(iso);
+  if(isNaN(d.getTime()))return '';
+  return pad(d.getDate())+'/'+pad(d.getMonth()+1)+' às '+pad(d.getHours())+'h'+pad(d.getMinutes());
+}
+
+async function addNota(){
+  const c=data.find(x=>x.id===perfilId);if(!c)return;
+  const el=document.getElementById('notaTexto');
+  const texto=el.value.trim();
+  if(!texto){showToast('Escreva alguma coisa antes de adicionar');el.focus();return;}
+  setSync(true,'Salvando…');
+  const {data:rows,error}=await sb.from('anotacoes').insert({
+    candidato_id:c.id, etapa:c.etapa, texto:texto,
+    autor_id:usuario?usuario.id:null, autor_nome:usuario?usuario.email:''
+  }).select();
+  if(error){
+    setSync(false,'Erro ao salvar');
+    showToast('Não salvou a anotação: '+error.message,true);
+    return;
+  }
+  setSync(true);
+  // o aviso de tempo real pode chegar antes daqui — daí não duplica
+  if(rows&&rows[0]&&!notas.some(n=>n.id===rows[0].id))notas.push(rows[0]);
+  el.value='';
+  renderPerfil();
+  showToast('Anotação adicionada');
+}
+
+async function removerNota(nid){
+  const n=notas.find(x=>x.id===nid);if(!n)return;
+  if(!confirm('Apagar esta anotação? Não dá para recuperar.'))return;
+  const backup=notas;
+  notas=notas.filter(x=>x.id!==nid);renderPerfil();
+  setSync(true,'Salvando…');
+  const {error}=await sb.from('anotacoes').delete().eq('id',nid);
+  if(error){
+    notas=backup;renderPerfil();
+    setSync(false,'Erro ao salvar');
+    showToast('Não apagou: '+error.message,true);
+    return;
+  }
+  setSync(true);showToast('Anotação apagada');
+}
+
+/* =========================================================
+   Currículo. O arquivo vai para um bucket privado; o link de
+   leitura é assinado e temporário, gerado ao abrir o perfil —
+   assim o botão Abrir é um link de verdade e o navegador não
+   trata como pop-up.
+   ========================================================= */
+async function preparaLinkCurriculo(c){
+  const a=document.getElementById('linkCurriculo');
+  if(!a)return;
+  a.textContent='Abrir';
+  const {data:d,error}=await sb.storage.from('curriculos').createSignedUrl(c.curriculo,3600);
+  const ainda=document.getElementById('linkCurriculo');
+  if(!ainda||ainda!==a)return;   // o perfil já foi redesenhado ou fechado
+  if(error||!d){a.textContent='Link indisponível';a.removeAttribute('href');return;}
+  a.href=d.signedUrl;
+}
+
+async function enviarCurriculo(input){
+  const c=data.find(x=>x.id===perfilId);
+  if(!c||!input.files||!input.files[0])return;
+  const arq=input.files[0];
+  if(arq.size>10*1024*1024){
+    showToast('O arquivo passa de 10 MB',true);input.value='';return;
+  }
+  const ext=(arq.name.match(/\.[A-Za-z0-9]+$/)||[''])[0].toLowerCase();
+  const caminho=c.id+'/curriculo'+ext;
+  setSync(true,'Enviando…');
+  const {error}=await sb.storage.from('curriculos')
+    .upload(caminho,arq,{upsert:true,contentType:arq.type||undefined});
+  input.value='';
+  if(error){
+    setSync(false,'Erro ao enviar');
+    showToast('Não enviou o currículo: '+error.message,true);
+    return;
+  }
+  // Trocar de PDF para Word mudaria o caminho e deixaria o antigo órfão.
+  if(c.curriculo&&c.curriculo!==caminho){
+    await sb.storage.from('curriculos').remove([c.curriculo]);
+  }
+  c.curriculo=caminho;
+  setSync(true);
+  await patchRow(c.id,{curriculo:caminho});
+  renderPerfil();showToast('Currículo anexado');
+}
+
+async function removerCurriculo(){
+  const c=data.find(x=>x.id===perfilId);
+  if(!c||!c.curriculo)return;
+  if(!confirm('Remover o currículo de '+c.nome+'? O arquivo é apagado de vez.'))return;
+  setSync(true,'Salvando…');
+  const {error}=await sb.storage.from('curriculos').remove([c.curriculo]);
+  if(error){
+    setSync(false,'Erro ao salvar');
+    showToast('Não removeu: '+error.message,true);
+    return;
+  }
+  c.curriculo='';
+  setSync(true);
+  await patchRow(c.id,{curriculo:''});
+  renderPerfil();showToast('Currículo removido');
 }
 
 function setStatus(id,v){const c=data.find(x=>x.id===id);if(!c)return;
@@ -1104,8 +1446,6 @@ function setNota(id,v){const c=data.find(x=>x.id===id);if(!c)return;
   c.nota=v;patchRow(id,{nota:v===''?null:Number(v)});}
 function setLink(id,v){const c=data.find(x=>x.id===id);if(!c)return;
   c.link=v;patchRow(id,{link:v});}
-function setObs(id,v){const c=data.find(x=>x.id===id);if(!c)return;
-  c.obs=v;patchRow(id,{obs:v});}
 
 /* =========================================================
    Andar no funil. O avanço é sempre um clique consciente:
