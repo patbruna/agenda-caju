@@ -185,6 +185,16 @@
   .fcard-sub{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:4px;
     font-size:13px;color:var(--muted);}
   .semdata{font-style:italic;}
+  /* Marcar data e horário direto no cartão: é aqui que a falta aparece,
+     logo depois de avançar alguém de etapa. */
+  .quando{display:inline-flex;align-items:center;gap:6px;}
+  .quando .rot{font:700 10px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);}
+  .quando input{font:inherit;font-size:13px;padding:5px 7px;color:var(--ink);
+    border:1px solid var(--line);border-radius:7px;background:var(--card);
+    font-variant-numeric:tabular-nums;}
+  .quando.vazio input{border-color:#ecd9a6;background:var(--convidado-bg);}
+  .quando.vazio .rot{color:var(--convidado);}
+  .dica-campo{margin:9px 0 0;font-size:12px;color:var(--muted);}
   .fcard-controls{margin-left:auto;display:flex;gap:8px;align-items:center;}
   .fcard-controls select.status{width:auto;min-width:132px;}
 
@@ -431,6 +441,7 @@
 
   <div class="foot">
     <p><b>As três etapas:</b> entrevista, avaliação técnica e entrevista final com os sócios. Marcar <b>Aprovado</b> não muda ninguém de etapa — quem muda é o botão <b>Avançar</b>, na aba Funil. A separação é de propósito: dá tempo de mandar a mensagem de aprovação antes de o candidato trocar de lugar na tela. Ao avançar, o status volta para Pendente e a data fica em branco, para você marcar o novo compromisso. Clique errado se desfaz em <b>voltar uma etapa</b>.</p>
+    <p><b>Onde se marca a data:</b> em três lugares, o que for mais perto de onde você estiver. No cartão do <b>Funil</b>, nos campos ao lado do nome — ficam amarelos enquanto estiverem vazios. No <b>Perfil</b>, no primeiro bloco. E na <b>Agenda</b>, no horário à esquerda de cada compromisso. Avançar alguém de etapa limpa data e horário de propósito, porque a etapa nova tem compromisso novo — por isso a pessoa reaparece no funil pedindo agendamento. Enquanto não tiver data, os botões de convite e de e-mail ficam travados, já que o texto deles cita o dia e a hora.</p>
     <p><b>Mensagens:</b> cada etapa tem seu convite curto de WhatsApp e, quando as instruções são longas, um modelo de e-mail com assunto próprio. O botão <b>Instruções por e-mail</b> aparece no funil para quem está na etapa e tem e-mail cadastrado no perfil: ele abre seu cliente de e-mail com destinatário e assunto prontos, e copia o texto já preenchido com o nome, a data e o horário daquele candidato. Se o modelo ainda tiver algum trecho entre colchetes, o envio trava e o app diz quais faltam — é o que impede um <b>[PRAZO] dias úteis</b> de chegar num candidato. Tudo se edita em <b>Mensagens de WhatsApp e e-mail</b>, no fim da página.</p>
     <p><b>Perfil do candidato:</b> clique no nome de qualquer pessoa, em qualquer aba, para abrir a ficha — contato, endereço, origem da candidatura, experiência e currículo. Os campos salvam sozinhos ao sair de cada um. O currículo fica guardado num espaço privado: o botão de abrir gera um link que vale por uma hora e só funciona para quem está logado. No fim da ficha está o histórico: cada anotação fica carimbada com quem escreveu, quando, e em que etapa, e nenhuma sobrescreve a outra. Você só pode apagar as suas.</p>
     <p><b>Agenda:</b> mostra tudo que tem hora marcada, de qualquer etapa, com um selo dizendo qual é. Para remarcar, clique no horário ou na data à esquerda e digite o novo valor — a agenda reordena e reagrupa por dia sozinha. A bolinha na trilha muda de cor conforme o status, e o número entre dois compromissos é o intervalo entre eles. Quando faltarem 15 minutos, o compromisso acende e aparece um aviso no topo (com som, se ativado). Quem foi reprovado ou recusou sai da agenda e do funil, e fica registrado na aba <b>Fora</b> com a etapa em que parou.</p>
@@ -1015,6 +1026,16 @@ function preencher(tpl,c){
     .replace(/{HORARIO}/g,c.time?dispTime(c.time):'[inserir horário]');
 }
 
+/* O convite cita a data e o horário. Sem eles marcados, o texto sairia
+   com lacuna — melhor travar o botão do que mandar a alguém que a
+   conversa "acontecerá no dia [data]". */
+function faltaAgendar(c,campo){
+  const t=msgDe(campo);
+  if(/{DATA(_EXTENSO)?}/.test(t)&&!c.date)return true;
+  if(/{HORARIO}/.test(t)&&!c.time)return true;
+  return false;
+}
+
 /* Sobras entre colchetes que o modelo não preencheu. Existe para que
    "[PRAZO] dias úteis" nunca chegue num candidato. */
 function pendencias(txt){
@@ -1214,11 +1235,12 @@ function buildFunilCard(c){
   const semFone='<span class="sendbtn ghost" title="Cadastre o WhatsApp na aba Agenda">Sem WhatsApp</span>';
   const acts=[];
 
+  const semData='<span class="sendbtn ghost" title="O texto cita a data e o horário. Marque em Quando, acima.">Marque a data primeiro</span>';
   // Convite só enquanto faz sentido convidar: depois de Realizada, não faz.
   if(['Pendente','Convidado','Confirmado'].includes(c.status)&&et.convite){
-    acts.push(c.fone
-      ? `<a class="sendbtn conv" href="${waLink(c,et.convite)}" target="_blank" rel="noopener">💬 Convite de ${et.curto.toLowerCase()}</a>`
-      : semFone);
+    acts.push(!c.fone ? semFone
+      : faltaAgendar(c,et.convite) ? semData
+      : `<a class="sendbtn conv" href="${waLink(c,et.convite)}" target="_blank" rel="noopener">💬 Convite de ${et.curto.toLowerCase()}</a>`);
   }
   // Aprovado: avisa o candidato e só então empurra para a próxima etapa.
   if(c.status==='Aprovado'){
@@ -1231,9 +1253,10 @@ function buildFunilCard(c){
   // Instruções longas por e-mail, quando a etapa tem modelo escrito.
   if(et.email&&msgDe(et.email).trim()&&
      ['Pendente','Convidado','Confirmado'].includes(c.status)){
-    acts.push(c.email
-      ? `<button class="sendbtn email" onclick="enviarEmailEtapa('${c.id}')">✉ Instruções por e-mail</button>`
-      : '<span class="sendbtn ghost" title="Cadastre o e-mail no perfil do candidato">Sem e-mail</span>');
+    acts.push(!c.email
+      ? '<span class="sendbtn ghost" title="Cadastre o e-mail no perfil do candidato">Sem e-mail</span>'
+      : faltaAgendar(c,et.email) ? semData
+      : `<button class="sendbtn email" onclick="enviarEmailEtapa('${c.id}')">✉ Instruções por e-mail</button>`);
   }
   const nn=notasDe(c.id).length;
   acts.push(`<button class="sendbtn perfil-btn" onclick="abrirPerfil('${c.id}')">Perfil`+
@@ -1260,10 +1283,16 @@ function buildFunilCard(c){
   el.innerHTML=`
     <div class="fcard-top">
       <div class="fcard-who">
-        <div class="name">${escHtml(c.nome)}</div>
+        <button class="name linkname" onclick="abrirPerfil('${c.id}')" title="Abrir o perfil">${escHtml(c.nome)}</button>
         <div class="fcard-sub">
           <span class="chip ${c.cat}">${catLabel(c.cat)}</span>
-          <span>${quandoTxt(c)}</span>
+          <span class="quando${c.date?'':' vazio'}">
+            <span class="rot">Quando</span>
+            <input type="date" value="${c.date}" title="Data desta etapa"
+                   onchange="setDate('${c.id}',this.value)">
+            <input type="time" value="${c.time}" title="Horário desta etapa"
+                   onchange="setTime('${c.id}',this.value)">
+          </span>
         </div>
       </div>
       <div class="fcard-controls">
@@ -1378,6 +1407,14 @@ function renderPerfil(){
       <button class="icon" onclick="fecharPerfil()" title="Fechar (Esc)">✕</button>
     </header>
     <div class="perfil-corpo">
+      <div class="pgrupo"><h4>Agendamento — ${et.nome}</h4><div class="pgrid">
+        <label class="pcampo"><span>Data</span>
+          <input type="date" value="${escAttr(c.date)}" onchange="setDate('${c.id}',this.value)"></label>
+        <label class="pcampo"><span>Horário</span>
+          <input type="time" value="${escAttr(c.time)}" onchange="setTime('${c.id}',this.value)"></label>
+      </div>
+      <p class="dica-campo">É desta data e deste horário que saem o convite de WhatsApp, o e-mail de instruções e a posição da pessoa na Agenda. Avançar de etapa limpa os dois de propósito: a etapa nova tem compromisso novo.</p></div>
+
       <div class="pgrupo"><h4>Contato</h4><div class="pgrid">
         ${campo(c,'fone','WhatsApp (com DDD, só números)','text','5531999998888')}
         ${campo(c,'email','E-mail','email','nome@email.com')}
@@ -1567,10 +1604,13 @@ function setStatus(id,v){const c=data.find(x=>x.id===id);if(!c)return;
 function setConfirm(id,checked){const c=data.find(x=>x.id===id);if(!c)return;
   if(checked)c.status='Confirmado';else if(c.status==='Confirmado')c.status='Convidado';
   render();patchRow(id,{status:c.status});}
+/* Data e horário podem ser mudados na agenda, no cartão do funil e no
+   perfil. desenhaTudo() redesenha os três, senão um deles fica exibindo
+   o horário antigo. */
 function setTime(id,v){const c=data.find(x=>x.id===id);if(!c)return;
-  c.time=v;beeped.delete(id);render();patchRow(id,{hora:v||null});}
+  c.time=v;beeped.delete(id);desenhaTudo();patchRow(id,{hora:v||null});}
 function setDate(id,v){const c=data.find(x=>x.id===id);if(!c)return;
-  c.date=v;beeped.delete(id);render();patchRow(id,{data:v||null});}
+  c.date=v;beeped.delete(id);desenhaTudo();patchRow(id,{data:v||null});}
 
 /* Campos da avaliação técnica. Não chamam render() de propósito: eles
    disparam ao sair do campo, e redesenhar aqui atrapalharia quem estivesse
