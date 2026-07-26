@@ -214,6 +214,8 @@
   .sendbtn.conv{background:var(--card);color:var(--wa-dark);border:1px solid #bfe6cd;}
   .sendbtn.conv:hover{background:var(--confirmado-bg);}
   .sendbtn.next{background:var(--ink);color:#fff;} .sendbtn.next:hover{filter:brightness(1.35);}
+  .sendbtn.email{background:var(--realizada-bg);color:var(--realizada);border:1px solid #c3d6ec;}
+  .sendbtn.email:hover{filter:brightness(.97);}
   .sendbtn.perfil-btn{background:transparent;border:1px solid var(--line);color:var(--muted);}
   .sendbtn.perfil-btn:hover{border-color:#c4ccc7;color:var(--ink);}
   .sendbtn.ghost{background:var(--pendente-bg);color:var(--muted);cursor:default;}
@@ -412,10 +414,14 @@
   </details>
 
   <details class="addbox">
-    <summary>✎ Mensagens de WhatsApp</summary>
-    <p style="font-size:12px;color:var(--muted);margin:10px 0 10px;">Cada etapa tem seu próprio convite e seu próprio aviso de resultado. Use <b>{NOME}</b> para o primeiro nome, <b>{DATA}</b> e <b>{HORARIO}</b> para o compromisso marcado. As mensagens são as mesmas para você e para o resto da equipe.</p>
+    <summary>✎ Mensagens de WhatsApp e e-mail</summary>
+    <p style="font-size:12px;color:var(--muted);margin:10px 0 10px;">Cada etapa tem seu convite, seu aviso de resultado e, quando as instruções são longas, um modelo de e-mail com assunto próprio. Marcadores: <b>{NOME}</b> primeiro nome, <b>{NOME_COMPLETO}</b> nome inteiro, <b>{DATA}</b> data curta, <b>{DATA_EXTENSO}</b> data por extenso, <b>{HORARIO}</b> horário — todos vêm do compromisso marcado para aquele candidato. Trechos entre colchetes travam o envio até você preenchê-los. As mensagens são as mesmas para toda a equipe.</p>
     <label style="font-size:12px;color:var(--muted);">Qual mensagem</label><br>
     <select id="msgSel" class="msgsel" onchange="trocaMsg()"></select>
+    <div id="msgAssuntoWrap" style="display:none;margin-top:10px;">
+      <label for="msgAssunto" style="font-size:12px;color:var(--muted);">Assunto do e-mail</label>
+      <input id="msgAssunto" type="text" style="width:100%;font:inherit;padding:9px 11px;border:1px solid var(--line);border-radius:9px;margin-top:4px;">
+    </div>
     <textarea id="msgTxt" rows="9" style="width:100%;font:inherit;padding:9px;border:1px solid var(--line);border-radius:8px;margin-top:10px;resize:vertical;"></textarea>
     <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
       <button class="btn" onclick="saveMsg()">Salvar mensagem</button>
@@ -425,6 +431,7 @@
 
   <div class="foot">
     <p><b>As três etapas:</b> entrevista, avaliação técnica e entrevista final com os sócios. Marcar <b>Aprovado</b> não muda ninguém de etapa — quem muda é o botão <b>Avançar</b>, na aba Funil. A separação é de propósito: dá tempo de mandar a mensagem de aprovação antes de o candidato trocar de lugar na tela. Ao avançar, o status volta para Pendente e a data fica em branco, para você marcar o novo compromisso. Clique errado se desfaz em <b>voltar uma etapa</b>.</p>
+    <p><b>Mensagens:</b> cada etapa tem seu convite curto de WhatsApp e, quando as instruções são longas, um modelo de e-mail com assunto próprio. O botão <b>Instruções por e-mail</b> aparece no funil para quem está na etapa e tem e-mail cadastrado no perfil: ele abre seu cliente de e-mail com destinatário e assunto prontos, e copia o texto já preenchido com o nome, a data e o horário daquele candidato. Se o modelo ainda tiver algum trecho entre colchetes, o envio trava e o app diz quais faltam — é o que impede um <b>[PRAZO] dias úteis</b> de chegar num candidato. Tudo se edita em <b>Mensagens de WhatsApp e e-mail</b>, no fim da página.</p>
     <p><b>Perfil do candidato:</b> clique no nome de qualquer pessoa, em qualquer aba, para abrir a ficha — contato, endereço, origem da candidatura, experiência e currículo. Os campos salvam sozinhos ao sair de cada um. O currículo fica guardado num espaço privado: o botão de abrir gera um link que vale por uma hora e só funciona para quem está logado. No fim da ficha está o histórico: cada anotação fica carimbada com quem escreveu, quando, e em que etapa, e nenhuma sobrescreve a outra. Você só pode apagar as suas.</p>
     <p><b>Agenda:</b> mostra tudo que tem hora marcada, de qualquer etapa, com um selo dizendo qual é. Para remarcar, clique no horário ou na data à esquerda e digite o novo valor — a agenda reordena e reagrupa por dia sozinha. A bolinha na trilha muda de cor conforme o status, e o número entre dois compromissos é o intervalo entre eles. Quando faltarem 15 minutos, o compromisso acende e aparece um aviso no topo (com som, se ativado). Quem foi reprovado ou recusou sai da agenda e do funil, e fica registrado na aba <b>Fora</b> com a etapa em que parou.</p>
     <p><b>Salvo na nuvem:</b> cada alteração vai direto para o banco de dados no Supabase, então a agenda é a mesma em qualquer computador ou celular. Se duas pessoas estiverem com a página aberta, as duas telas se atualizam sozinhas. O indicador <b>Sincronizado</b> no topo fica vermelho se algo não conseguir ser salvo — se isso acontecer, confira a internet e recarregue a página.</p>
@@ -528,39 +535,130 @@ Seja muito bem-vindo(a) ao Grupo Caju!
 Atenciosamente,
 Equipe de Recrutamento – Grupo Caju`;
 
+/* Instruções da avaliação técnica. Vai por e-mail porque não cabe em
+   link de WhatsApp. Os trechos entre colchetes são de propósito: o botão
+   de envio se recusa a abrir enquanto sobrar algum, para não sair
+   "[PRAZO] dias úteis" para um candidato. */
+const DEF_EMAIL_TECNICA_ASSUNTO=
+`Avaliação técnica — Processo seletivo Executivo de Back | Grupo Caju`;
+
+const DEF_EMAIL_TECNICA=
+`PROCESSO SELETIVO — EXECUTIVO DE BACK
+Grupo Caju | Avaliação Técnica
+
+------------------------------------------------------------
+
+Candidato(a): {NOME_COMPLETO}
+Data da avaliação: {DATA_EXTENSO}
+Horário de liberação: {HORARIO} — o link fica ativo por 60 minutos e é encerrado automaticamente.
+
+------------------------------------------------------------
+
+1. DO QUE SE TRATA
+
+Você está na etapa de avaliação técnica do processo seletivo para a posição de Executivo de Back do Grupo Caju. Esta etapa mede conhecimento aplicado e postura profissional. Não é uma prova sobre a vaga nem sobre a empresa: é sobre o ofício.
+
+2. FORMATO
+
+São 41 questões distribuídas em sete blocos:
+
+- CMV e controle de custos
+- Fichas técnicas e porcionamento
+- Recebimento, estoque e segurança alimentar
+- Conhecimentos culinários
+- KPIs e leitura de indicadores
+- Gestão de equipe e liderança
+- Valores e postura profissional
+
+Trinta e três questões são objetivas, de resposta única, e oito são abertas. Nas questões abertas, responda com o máximo de detalhe. Queremos entender como você pensa e executa, não se você conhece a definição do conceito.
+
+Há questões de cálculo. Tenha papel, caneta e calculadora simples à mão.
+
+3. COMO ACESSAR
+
+O link será enviado para o e-mail e o WhatsApp cadastrados no horário indicado acima. Você pode responder pelo computador ou pelo celular, mas recomendamos o computador pelo tempo e pelo volume de digitação das questões abertas.
+
+Garanta antes: conexão estável, bateria carregada e um lugar sem interrupção por uma hora.
+
+4. REGRAS
+
+A avaliação é individual e sem consulta. Não é permitido usar material de apoio, buscadores, ferramentas de inteligência artificial ou auxílio de terceiros.
+
+Vale registrar com transparência por que isso importa aqui: as respostas desta etapa serão retomadas e aprofundadas na etapa seguinte, presencialmente ou por videochamada. Cada resposta aberta será objeto de reperguntas específicas. Divergência relevante entre o que foi escrito e o que for sustentado ao vivo elimina o candidato do processo.
+
+Dito isso, não espere perfeição de si mesmo. Errar uma questão técnica não elimina ninguém. Responder algo que você não sabe sustentar, sim.
+
+5. PRÓXIMAS ETAPAS
+
+- Avaliação técnica — formulário online, 60 min — {DATA}
+- Banca técnica e prática — videochamada com exercícios ao vivo — [DATA DA BANCA]
+- Etapa final — encontro presencial na unidade — [DATA DA ETAPA FINAL]
+
+Os candidatos aprovados na avaliação técnica serão comunicados em até [PRAZO] dias úteis, com a data e as instruções da banca. Todos os participantes recebem retorno, aprovados ou não.
+
+A etapa final é presencial. As despesas de deslocamento e hospedagem dos candidatos finalistas que residem fora do Distrito Federal são custeadas pelo Grupo Caju.
+
+6. AUSÊNCIA E IMPREVISTOS
+
+Não comparecer à janela de resposta sem aviso prévio encerra a participação no processo. Se houver qualquer impedimento, comunique ANTES do horário de liberação pelo contato abaixo. Imprevistos acontecem e serão tratados com razoabilidade — o que não funciona é o silêncio.
+
+7. DÚVIDAS
+
+[NOME DO RESPONSÁVEL] — [TELEFONE / E-MAIL]
+
+Dúvidas sobre o processo podem ser enviadas a qualquer momento. Dúvidas sobre o conteúdo das questões, não.
+
+------------------------------------------------------------
+Grupo Caju — [UNIDADE / MARCA]`;
+
 /* =========================================================
    As três etapas do processo, na ordem.
    "proxima" é para onde o botão de avançar leva.
    ========================================================= */
 const ETAPAS=[
   {id:'entrevista', nome:'Entrevista',        curto:'Entrevista', proxima:'tecnica',
-   avanco:'Avançar para avaliação técnica', convite:'msg_convite_entrevista', aprov:'msg_aprovacao'},
+   avanco:'Avançar para avaliação técnica', convite:'msg_convite_entrevista', aprov:'msg_aprovacao',
+   email:null,            emailAssunto:null},
   {id:'tecnica',    nome:'Avaliação técnica', curto:'Técnica',    proxima:'final',
-   avanco:'Avançar para entrevista final',  convite:'msg_convite_tecnica',    aprov:'msg_aprov_tecnica'},
+   avanco:'Avançar para entrevista final',  convite:'msg_convite_tecnica',    aprov:'msg_aprov_tecnica',
+   email:'email_tecnica', emailAssunto:'email_tecnica_assunto'},
   {id:'final',      nome:'Entrevista final',  curto:'Final',      proxima:'contratado',
-   avanco:'Marcar como contratado',         convite:'msg_convite_final',      aprov:'msg_contratado'},
+   avanco:'Marcar como contratado',         convite:'msg_convite_final',      aprov:'msg_contratado',
+   email:'email_final',   emailAssunto:'email_final_assunto'},
   {id:'contratado', nome:'Contratado',        curto:'Contratado', proxima:null,
-   avanco:null,                             convite:null,                     aprov:'msg_contratado'}
+   avanco:null,                             convite:null,                     aprov:'msg_contratado',
+   email:null,            emailAssunto:null}
 ];
 function etapaInfo(id){return ETAPAS.find(e=>e.id===id)||ETAPAS[0];}
 
 /* Mensagens editáveis. Ficam no banco; o padrão abaixo é o que vale
    enquanto ninguém tiver escrito uma versão própria. */
 const MSGS=[
-  {campo:'msg_convite_entrevista', rotulo:'Convite — entrevista',           padrao:DEF_CONV_ENTREVISTA},
-  {campo:'msg_convite_tecnica',    rotulo:'Convite — avaliação técnica',    padrao:DEF_CONV_TECNICA},
-  {campo:'msg_convite_final',      rotulo:'Convite — entrevista final',     padrao:DEF_CONV_FINAL},
-  {campo:'msg_aprovacao',          rotulo:'Aprovado na entrevista',         padrao:DEF_APROV},
-  {campo:'msg_aprov_tecnica',      rotulo:'Aprovado na avaliação técnica',  padrao:DEF_APROV_TECNICA},
-  {campo:'msg_contratado',         rotulo:'Contratado',                     padrao:DEF_CONTRATADO},
-  {campo:'msg_reprovacao',         rotulo:'Reprovado (serve para qualquer etapa)', padrao:DEF_REPROV}
+  {campo:'msg_convite_entrevista', rotulo:'WhatsApp — convite de entrevista',        padrao:DEF_CONV_ENTREVISTA},
+  {campo:'msg_convite_tecnica',    rotulo:'WhatsApp — convite de avaliação técnica', padrao:DEF_CONV_TECNICA},
+  {campo:'msg_convite_final',      rotulo:'WhatsApp — convite de entrevista final',  padrao:DEF_CONV_FINAL},
+  {campo:'msg_aprovacao',          rotulo:'WhatsApp — aprovado na entrevista',       padrao:DEF_APROV},
+  {campo:'msg_aprov_tecnica',      rotulo:'WhatsApp — aprovado na avaliação técnica',padrao:DEF_APROV_TECNICA},
+  {campo:'msg_contratado',         rotulo:'WhatsApp — contratado',                   padrao:DEF_CONTRATADO},
+  {campo:'msg_reprovacao',         rotulo:'WhatsApp — reprovado (qualquer etapa)',   padrao:DEF_REPROV},
+  // Entradas com "assunto" são e-mail: o editor mostra um campo a mais.
+  {campo:'email_tecnica', rotulo:'E-mail — instruções da avaliação técnica',
+   padrao:DEF_EMAIL_TECNICA, assunto:'email_tecnica_assunto',
+   padraoAssunto:DEF_EMAIL_TECNICA_ASSUNTO},
+  {campo:'email_final',   rotulo:'E-mail — instruções da entrevista final',
+   padrao:'', assunto:'email_final_assunto',
+   padraoAssunto:'Entrevista final — Processo seletivo Executivo de Back | Grupo Caju'}
 ];
 let cfg={};                       // o que está gravado no banco
 let msgAtual=MSGS[0].campo;       // qual mensagem o editor está mostrando
 function msgInfo(campo){return MSGS.find(m=>m.campo===campo)||MSGS[0];}
 function msgDe(campo){
   const v=cfg[campo];
-  return (v&&v.trim())?v:msgInfo(campo).padrao;
+  if(v&&v.trim())return v;
+  const corpo=MSGS.find(m=>m.campo===campo);
+  if(corpo)return corpo.padrao;
+  const assunto=MSGS.find(m=>m.assunto===campo);
+  return assunto?(assunto.padraoAssunto||''):'';
 }
 
 /* Status que ainda estão em andamento dentro de uma etapa. */
@@ -728,6 +826,10 @@ function montarEditorMsgs(){
     sel.innerHTML=MSGS.map(m=>`<option value="${m.campo}">${m.rotulo}</option>`).join('');
   }
   sel.value=msgAtual;
+  const info=msgInfo(msgAtual);
+  const ass=document.getElementById('msgAssunto');
+  document.getElementById('msgAssuntoWrap').style.display=info.assunto?'':'none';
+  if(info.assunto&&document.activeElement!==ass)ass.value=msgDe(info.assunto);
   const txt=document.getElementById('msgTxt');
   if(document.activeElement!==txt)txt.value=msgDe(msgAtual);
 }
@@ -893,13 +995,37 @@ function dayLabel(ds){
   return{tag:'',cls:'',nome};
 }
 
+/* "terça-feira, 28 de julho de 2026" — num documento formal, 28/07/2026
+   fica seco demais. */
+function dataExtenso(ds){
+  const m=(ds||'').match(/(\d{4})-(\d{2})-(\d{2})/);
+  if(!m)return '[data a definir]';
+  const d=new Date(+m[1],+m[2]-1,+m[3]);
+  return WD[d.getDay()].toLowerCase()+', '+(+m[3])+' de '+MESES[+m[2]-1]+' de '+m[1];
+}
+
+/* Troca os marcadores pelo dado do candidato. {NOME} é o primeiro nome,
+   para saudação; {NOME_COMPLETO} é para documento. */
+function preencher(tpl,c){
+  return String(tpl||'')
+    .replace(/{NOME_COMPLETO}/g,c.nome)
+    .replace(/{NOME}/g,c.nome.split(' ')[0])
+    .replace(/{DATA_EXTENSO}/g,dataExtenso(c.date))
+    .replace(/{DATA}/g,fmtBR(c.date))
+    .replace(/{HORARIO}/g,c.time?dispTime(c.time):'[inserir horário]');
+}
+
+/* Sobras entre colchetes que o modelo não preencheu. Existe para que
+   "[PRAZO] dias úteis" nunca chegue num candidato. */
+function pendencias(txt){
+  const achados=String(txt).match(/\[[^\]\n]{2,40}\]/g);
+  return achados?Array.from(new Set(achados)):[];
+}
+
 /* campo = uma das chaves de MSGS. Quem chama decide qual mensagem cabe
    naquele momento do processo. */
 function waLink(c,campo){
-  const msg=msgDe(campo).replace(/{NOME}/g,c.nome.split(' ')[0])
-    .replace(/{DATA}/g,fmtBR(c.date))
-    .replace(/{HORARIO}/g,c.time?dispTime(c.time):'[inserir horário]');
-  return 'https://wa.me/'+c.fone+'?text='+encodeURIComponent(msg);
+  return 'https://wa.me/'+c.fone+'?text='+encodeURIComponent(preencher(msgDe(campo),c));
 }
 
 /* Na Agenda interessa o andamento dos compromissos; nas outras abas
@@ -1101,6 +1227,13 @@ function buildFunilCard(c){
       ? `<a class="sendbtn ok" href="${waLink(c,et.aprov)}" target="_blank" rel="noopener">💬 ${rot}</a>`
       : semFone);
     if(et.proxima)acts.push(`<button class="sendbtn next" onclick="avancar('${c.id}')">${et.avanco} →</button>`);
+  }
+  // Instruções longas por e-mail, quando a etapa tem modelo escrito.
+  if(et.email&&msgDe(et.email).trim()&&
+     ['Pendente','Convidado','Confirmado'].includes(c.status)){
+    acts.push(c.email
+      ? `<button class="sendbtn email" onclick="enviarEmailEtapa('${c.id}')">✉ Instruções por e-mail</button>`
+      : '<span class="sendbtn ghost" title="Cadastre o e-mail no perfil do candidato">Sem e-mail</span>');
   }
   const nn=notasDe(c.id).length;
   acts.push(`<button class="sendbtn perfil-btn" onclick="abrirPerfil('${c.id}')">Perfil`+
@@ -1569,6 +1702,47 @@ function setTab(t){
   render();
 }
 
+/* =========================================================
+   Instruções por e-mail.
+   Abre o cliente de e-mail com destinatário, assunto e texto já
+   preenchidos, para você conferir e enviar do seu próprio endereço —
+   assim a resposta do candidato volta para você e o envio fica na sua
+   caixa de enviados. O texto também vai para a área de transferência,
+   porque link mailto muito comprido é cortado por alguns clientes.
+   ========================================================= */
+async function enviarEmailEtapa(id){
+  const c=data.find(x=>x.id===id);
+  if(!c)return;
+  const et=etapaInfo(c.etapa);
+  if(!et.email)return;
+  if(!c.email){showToast('Este candidato não tem e-mail no perfil',true);return;}
+
+  const corpo=preencher(msgDe(et.email),c);
+  const assunto=preencher(msgDe(et.emailAssunto),c);
+
+  const faltando=pendencias(assunto+'\n'+corpo);
+  if(faltando.length){
+    showToast('O modelo ainda tem trechos por preencher: '+faltando.join(' ')+
+      ' — abra "Mensagens de WhatsApp e e-mail" no rodapé e complete antes de enviar.',true);
+    return;
+  }
+
+  // A cópia precisa acontecer ainda dentro do clique, senão o navegador nega.
+  let copiou=false;
+  try{await navigator.clipboard.writeText(corpo);copiou=true;}catch(e){}
+
+  const cabe=corpo.length<=1500;
+  window.location.href='mailto:'+encodeURIComponent(c.email)+
+    '?subject='+encodeURIComponent(assunto)+
+    (cabe?'&body='+encodeURIComponent(corpo):'');
+
+  showToast(cabe
+    ? 'E-mail aberto, já preenchido. Confira antes de enviar.'
+    : (copiou
+       ? 'E-mail aberto com destinatário e assunto. O texto é longo demais para o link, então está copiado: cole com Ctrl+V.'
+       : 'E-mail aberto. Não consegui copiar o texto — abra "Mensagens" no rodapé e copie de lá.'));
+}
+
 /* As mensagens ficam no banco: se você editar, o colega vê a mesma versão. */
 async function gravarCfg(campos,silencioso){
   setSync(true,'Salvando…');
@@ -1583,28 +1757,35 @@ async function gravarCfg(campos,silencioso){
   if(!silencioso)showToast('Mensagem salva');
   return true;
 }
+function editorSujo(){
+  const info=msgInfo(msgAtual);
+  if(document.getElementById('msgTxt').value!==msgDe(msgAtual))return true;
+  return !!info.assunto&&document.getElementById('msgAssunto').value!==msgDe(info.assunto);
+}
 function trocaMsg(){
-  const sel=document.getElementById('msgSel'), txt=document.getElementById('msgTxt');
+  const sel=document.getElementById('msgSel');
   // Trocar de mensagem com edição pendente apagaria o texto sem avisar.
-  if(txt.value!==msgDe(msgAtual)&&
+  if(editorSujo()&&
      !confirm('A mensagem "'+msgInfo(msgAtual).rotulo+'" tem alterações que você não salvou.\n\nDescartar?')){
     sel.value=msgAtual;return;
   }
   msgAtual=sel.value;
-  txt.value=msgDe(msgAtual);
+  montarEditorMsgs();
 }
 async function saveMsg(){
+  const info=msgInfo(msgAtual);
   const campos={};
   campos[msgAtual]=document.getElementById('msgTxt').value;
+  if(info.assunto)campos[info.assunto]=document.getElementById('msgAssunto').value;
   await gravarCfg(campos);
 }
 async function resetMsg(){
   const info=msgInfo(msgAtual);
   if(!confirm('Restaurar o texto padrão de "'+info.rotulo+'"?'))return;
-  document.getElementById('msgTxt').value=info.padrao;
   // Guardar vazio faz a mensagem voltar a seguir o padrão do app.
   const campos={};campos[msgAtual]='';
-  if(await gravarCfg(campos,true))showToast('Mensagem restaurada');
+  if(info.assunto)campos[info.assunto]='';
+  if(await gravarCfg(campos,true)){montarEditorMsgs();showToast('Mensagem restaurada');}
 }
 
 function showToast(t,isErr){
