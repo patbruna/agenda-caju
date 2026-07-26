@@ -299,6 +299,25 @@
   .nota-acoes .aviso{flex:1;min-width:190px;font-size:12px;color:var(--muted);}
   .sem-historico{font-size:14px;color:var(--muted);margin:0 0 16px;}
 
+  /* ---------- Exportar agenda ---------- */
+  .exportar-btn{margin-left:auto;}
+  .exp-bloco{margin-top:18px;}
+  .exp-bloco h4{margin:0 0 9px;font:700 11px/1 var(--mono);letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted);}
+  .exp-ops{display:flex;gap:8px;flex-wrap:wrap;}
+  .exp-op{display:inline-flex;align-items:center;gap:7px;font-size:14px;cursor:pointer;
+    padding:8px 13px;border:1px solid var(--line);border-radius:10px;background:var(--card);
+    user-select:none;}
+  .exp-op input{width:16px;height:16px;accent-color:var(--wa);}
+  .exp-op.on{border-color:#bfe0cc;background:var(--confirmado-bg);color:var(--confirmado);font-weight:600;}
+  .exp-preview{margin:0;padding:15px 17px;background:var(--page);border:1px solid var(--line);
+    border-radius:12px;font:13px/1.55 var(--mono);white-space:pre-wrap;word-break:break-word;
+    max-height:340px;overflow-y:auto;color:var(--ink);}
+  .exp-vazio{color:var(--muted);font-style:italic;}
+  .exp-acoes{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:15px;}
+  .exp-conta{flex:1;min-width:150px;font:600 12px var(--mono);color:var(--muted);}
+  .exp-conta.longo{color:var(--alert);}
+
   /* Tela de login */
   #gate{max-width:380px;margin:8vh auto;background:var(--card);border:1px solid var(--line);
     border-radius:var(--radius);padding:28px 26px;}
@@ -406,6 +425,7 @@
     <button class="tab on" data-tab="agenda" onclick="setTab('agenda')">📅 Agenda <span class="n" id="tab-n-agenda">0</span></button>
     <button class="tab" data-tab="funil" onclick="setTab('funil')">🧭 Funil <span class="n" id="tab-n-funil">0</span></button>
     <button class="tab t-reprov" data-tab="fora" onclick="setTab('fora')">🚫 Fora <span class="n" id="tab-n-fora">0</span></button>
+    <button class="tab exportar-btn" onclick="abrirExport()" title="Montar um recado com a agenda">📤 Exportar</button>
   </div>
 
   <div class="stats" id="stats"></div>
@@ -448,6 +468,11 @@
     <p><b>Salvo na nuvem:</b> cada alteração vai direto para o banco de dados no Supabase, então a agenda é a mesma em qualquer computador ou celular. Se duas pessoas estiverem com a página aberta, as duas telas se atualizam sozinhas. O indicador <b>Sincronizado</b> no topo fica vermelho se algo não conseguir ser salvo — se isso acontecer, confira a internet e recarregue a página.</p>
   </div>
 </div>
+<!-- Exportar a agenda como recado de WhatsApp. Montado por renderExport(). -->
+<div class="overlay" id="exportBg" onclick="fecharExport(event)">
+  <section class="perfil" id="exportPanel" role="dialog" aria-modal="true" aria-label="Exportar agenda"></section>
+</div>
+
 <!-- Perfil do candidato. O conteúdo é montado por renderPerfil(). -->
 <div class="overlay" id="perfilBg" onclick="fecharPerfil(event)">
   <section class="perfil" id="perfil" role="dialog" aria-modal="true" aria-label="Perfil do candidato"></section>
@@ -1345,6 +1370,161 @@ function renderFora(list){
 }
 
 /* =========================================================
+   Exportar a agenda como recado de WhatsApp.
+   Sai só nome, horário, etapa e situação. Telefone, e-mail e
+   endereço ficam de fora de propósito: esse texto costuma ir
+   para grupo, e dado de candidato não deve viajar junto.
+   ========================================================= */
+const STATUS_CURTO={Pendente:'sem convite', Convidado:'aguardando confirmação',
+                    Confirmado:'confirmado', Realizada:'realizada'};
+let expFiltro={periodo:'semana', agrupar:'dia', semData:false,
+               etapas:{entrevista:true, tecnica:true, final:true}};
+
+function abrirExport(){
+  document.getElementById('exportBg').classList.add('show');
+  document.body.style.overflow='hidden';
+  renderExport();
+}
+function fecharExport(ev){
+  if(ev&&ev.target!==document.getElementById('exportBg'))return;
+  document.getElementById('exportBg').classList.remove('show');
+  document.body.style.overflow='';
+}
+function expSet(chave,valor){
+  if(chave==='etapa')expFiltro.etapas[valor]=!expFiltro.etapas[valor];
+  else if(chave==='semData')expFiltro.semData=!expFiltro.semData;
+  else expFiltro[chave]=valor;
+  renderExport();
+}
+
+function expSelecao(){
+  const h0=ymd(new Date());
+  const fim=new Date();fim.setDate(fim.getDate()+7);
+  const f7=ymd(fim);
+  const base=data.filter(c=>ATIVOS.includes(c.status)&&c.etapa!=='contratado'&&
+                            expFiltro.etapas[c.etapa]);
+  let comData=base.filter(c=>c.date);
+  if(expFiltro.periodo==='hoje')comData=comData.filter(c=>c.date===h0);
+  else if(expFiltro.periodo==='semana')comData=comData.filter(c=>c.date>=h0&&c.date<=f7);
+  return {comData:comData, semData:expFiltro.semData?base.filter(c=>!c.date):[]};
+}
+
+function expRotuloPeriodo(){
+  const hoje=ymd(new Date());
+  if(expFiltro.periodo==='hoje')return '_Hoje, '+fmtBR(hoje)+'_';
+  if(expFiltro.periodo==='semana'){
+    const f=new Date();f.setDate(f.getDate()+7);
+    return '_De '+fmtBR(hoje)+' a '+fmtBR(ymd(f))+'_';
+  }
+  return '_Tudo que está marcado_';
+}
+
+function expLinha(c,mostraEtapa){
+  const pedacos=[];
+  // Agrupado por etapa a data precisa vir na linha; por dia, o cabeçalho já diz.
+  if(c.date&&expFiltro.agrupar==='etapa')pedacos.push(fmtBR(c.date).slice(0,5));
+  if(c.time)pedacos.push(dispTime(c.time));
+  pedacos.push(c.nome);
+  return '• '+pedacos.join(' · ')+
+    (mostraEtapa?' ('+etapaInfo(c.etapa).curto.toLowerCase()+')':'')+
+    ' — '+(STATUS_CURTO[c.status]||c.status.toLowerCase());
+}
+
+function textoExport(){
+  const sel=expSelecao();
+  const vaga=(document.querySelector('h1').textContent.split('—')[1]||'').trim();
+  const partes=['*PROCESSO SELETIVO'+(vaga?' · '+vaga.toUpperCase():'')+'*\n'+expRotuloPeriodo()];
+
+  if(!sel.comData.length&&!sel.semData.length)
+    return partes.concat(['Nada marcado nesse recorte.']).join('\n\n');
+
+  if(expFiltro.agrupar==='dia'){
+    const dias=[];
+    sel.comData.forEach(c=>{
+      const u=dias[dias.length-1];
+      if(u&&u.k===c.date)u.itens.push(c); else dias.push({k:c.date,itens:[c]});
+    });
+    dias.forEach(g=>{
+      const i=dayLabel(g.k);
+      partes.push('*'+(i.tag?i.tag.toUpperCase()+' · ':'')+i.nome.toUpperCase()+'*\n'+
+        g.itens.map(c=>expLinha(c,true)).join('\n'));
+    });
+  }else{
+    ETAPAS.forEach(et=>{
+      const itens=sel.comData.filter(c=>c.etapa===et.id);
+      if(itens.length)partes.push('*'+et.nome.toUpperCase()+'*\n'+
+        itens.map(c=>expLinha(c,false)).join('\n'));
+    });
+  }
+
+  if(sel.semData.length)
+    partes.push('*AINDA SEM DATA*\n'+sel.semData.map(c=>expLinha(c,expFiltro.agrupar==='dia')).join('\n'));
+
+  const a=new Date();
+  partes.push('_'+pad(a.getDate())+'/'+pad(a.getMonth()+1)+' às '+
+    pad(a.getHours())+'h'+pad(a.getMinutes())+'_');
+  return partes.join('\n\n');
+}
+
+function expRadio(chave,valor,rotulo){
+  const on=expFiltro[chave]===valor;
+  return `<label class="exp-op${on?' on':''}"><input type="radio" ${on?'checked':''}`+
+    ` onchange="expSet('${chave}','${valor}')">${rotulo}</label>`;
+}
+function expCheck(chave,valor,rotulo,on){
+  return `<label class="exp-op${on?' on':''}"><input type="checkbox" ${on?'checked':''}`+
+    ` onchange="expSet('${chave}',${valor?"'"+valor+"'":'null'})">${escHtml(rotulo)}</label>`;
+}
+
+function renderExport(){
+  const txt=textoExport();
+  const sel=expSelecao();
+  const total=sel.comData.length+sel.semData.length;
+  const longo=txt.length>1800;   // acima disso o link do WhatsApp começa a falhar
+  document.getElementById('exportPanel').innerHTML=`
+    <header class="perfil-top">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:19px;">Exportar agenda</div>
+        <div class="perfil-chips"><span>Um recado pronto para mandar no WhatsApp</span></div>
+      </div>
+      <button class="icon" onclick="fecharExport()" title="Fechar (Esc)">✕</button>
+    </header>
+    <div class="perfil-corpo">
+      <div class="exp-bloco"><h4>Período</h4><div class="exp-ops">
+        ${expRadio('periodo','hoje','Hoje')}
+        ${expRadio('periodo','semana','Próximos 7 dias')}
+        ${expRadio('periodo','tudo','Tudo que está marcado')}
+      </div></div>
+      <div class="exp-bloco"><h4>Etapas</h4><div class="exp-ops">
+        ${ETAPAS.filter(e=>e.id!=='contratado')
+                .map(e=>expCheck('etapa',e.id,e.nome,expFiltro.etapas[e.id])).join('')}
+        ${expCheck('semData',null,'Incluir quem ainda não tem data',expFiltro.semData)}
+      </div></div>
+      <div class="exp-bloco"><h4>Agrupar por</h4><div class="exp-ops">
+        ${expRadio('agrupar','dia','Dia')}
+        ${expRadio('agrupar','etapa','Etapa')}
+      </div></div>
+      <div class="exp-bloco"><h4>Como vai ficar</h4>
+        <pre class="exp-preview">${escHtml(txt)}</pre>
+        <div class="exp-acoes">
+          <span class="exp-conta${longo?' longo':''}">${total} ${total===1?'pessoa':'pessoas'} · ${txt.length} caracteres${longo?' · longo demais para o link, prefira copiar':''}</span>
+          <button class="btn" onclick="copiarExport()">Copiar texto</button>
+          <a class="sendbtn conv" href="https://wa.me/?text=${encodeURIComponent(txt)}" target="_blank" rel="noopener">💬 Abrir no WhatsApp</a>
+        </div>
+      </div>
+    </div>`;
+}
+
+async function copiarExport(){
+  try{
+    await navigator.clipboard.writeText(textoExport());
+    showToast('Texto copiado. É só colar na conversa.');
+  }catch(e){
+    showToast('Não consegui copiar. Selecione o texto da pré-visualização e copie à mão.',true);
+  }
+}
+
+/* =========================================================
    Perfil do candidato — ficha, currículo e histórico.
    Abre por cima da lista para você não perder o lugar onde
    estava; fecha no ✕, no Esc ou clicando fora.
@@ -1363,7 +1543,11 @@ function fecharPerfil(ev){
   document.body.style.overflow='';
   render();
 }
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&perfilId)fecharPerfil();});
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape')return;
+  if(perfilId)fecharPerfil();
+  else if(document.getElementById('exportBg').classList.contains('show'))fecharExport();
+});
 
 function campo(c,nome,rotulo,tipo,dica,largo){
   return `<label class="pcampo${largo?' largo':''}"><span>${rotulo}</span>`+
