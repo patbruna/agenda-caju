@@ -107,21 +107,25 @@ end $$;
 -- 4) Marca a hora em que o candidato abriu o formulário
 --    Grava só a primeira vez, para responder "ele apareceu?".
 -- ---------------------------------------------------------------
+-- Em SQL puro, sem plpgsql: o UPDATE só encontra a linha se a janela
+-- estiver aberta, então a checagem e a gravação são a mesma coisa.
+-- Comparação com >= e <= em vez de BETWEEN, que não aceita
+-- "at time zone" solto entre os seus dois operandos.
 create or replace function public.avaliacao_registrar_abertura(p_token uuid)
 returns void
-language plpgsql
+language sql
 volatile
 security definer
 set search_path = public
 as $$
-begin
   update public.candidatos
      set avaliacao_abertura = coalesce(avaliacao_abertura, now())
    where token = p_token
-     and data is not null and hora is not null
-     and now() between (data + hora) at time zone 'America/Sao_Paulo'
-                   and ((data + hora) at time zone 'America/Sao_Paulo') + interval '60 minutes';
-end $$;
+     and data is not null
+     and hora is not null
+     and now() >= ((data + hora) at time zone 'America/Sao_Paulo')
+     and now() <= ((data + hora) at time zone 'America/Sao_Paulo') + interval '60 minutes';
+$$;
 
 -- ---------------------------------------------------------------
 -- 5) Quem pode chamar
