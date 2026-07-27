@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Avaliação Técnica — Grupo Caju</title>
+<style>
+  :root{
+    --page:#eceff0; --card:#fff; --ink:#16211c; --muted:#65756c; --line:#dbe1dd;
+    --wa:#1fa855; --wa-dark:#178a45;
+    --alert:#e07a00; --alert-bg:#fff3e0;
+    --erro:#b23a2b; --erro-bg:#fbe9e6;
+    --mono:ui-monospace,"SF Mono","Cascadia Mono","Roboto Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box;}
+  :focus-visible{outline:2px solid var(--wa-dark);outline-offset:2px;}
+  @media(prefers-reduced-motion:reduce){*{animation-duration:.001ms !important;
+    animation-iteration-count:1 !important;transition-duration:.001ms !important;}}
+  body{margin:0;background:var(--page);color:var(--ink);padding:32px 16px 60px;
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.55;}
+  .wrap{max-width:560px;margin:0 auto;}
+  .eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--wa-dark);font-weight:700;margin-bottom:6px;}
+  h1{font-size:25px;margin:0 0 20px;font-weight:700;letter-spacing:-.02em;}
+  .cartao{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:26px 24px;}
+  .saudacao{font-size:17px;font-weight:700;margin:0 0 4px;}
+  .quando{font-size:14px;color:var(--muted);margin:0 0 20px;}
+
+  .relogio{font:700 44px/1 var(--mono);letter-spacing:-.03em;font-variant-numeric:tabular-nums;}
+  .rot{font:700 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;
+    color:var(--muted);margin-bottom:8px;}
+  .faixa{border-radius:12px;padding:18px 20px;margin-bottom:20px;}
+  .faixa.espera{background:var(--page);border:1px solid var(--line);}
+  .faixa.aberto{background:#e7f4ec;border:1px solid #bfe0cc;}
+  .faixa.aberto .relogio{color:var(--wa-dark);}
+  .faixa.fim{background:var(--erro-bg);border:1px solid #eec4bd;color:var(--erro);}
+  .faixa.aviso{background:var(--alert-bg);border:1px solid #f2d19a;color:#8a4b00;}
+
+  .btn{display:block;width:100%;text-align:center;text-decoration:none;
+    font:inherit;font-weight:700;font-size:16px;padding:15px 20px;border:none;
+    border-radius:12px;background:var(--wa);color:#fff;cursor:pointer;}
+  .btn:hover{background:var(--wa-dark);}
+  .regras{margin:22px 0 0;padding-top:18px;border-top:1px solid var(--line);
+    font-size:13px;color:var(--muted);}
+  .regras b{color:var(--ink);}
+  .regras ul{margin:8px 0 0;padding-left:18px;}
+  .regras li{margin-bottom:5px;}
+  .rodape{margin-top:22px;text-align:center;font-size:12px;color:var(--muted);}
+  .carregando{text-align:center;padding:12vh 0;color:var(--muted);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Grupo Caju · Recrutamento</div>
+  <h1>Avaliação técnica</h1>
+  <div id="conteudo" class="carregando">Carregando…</div>
+  <p class="rodape">Em caso de problema, responda a mensagem que você recebeu da equipe de recrutamento.</p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* ---------------------------------------------------------------
+   Página pública. A chave abaixo é a "publishable", feita para
+   ficar no navegador: sozinha ela não abre tabela nenhuma. Tudo o
+   que esta página consegue fazer são as duas funções do
+   06-portao-avaliacao.sql, que devolvem só o primeiro nome de um
+   candidato e o estado da janela dele.
+   --------------------------------------------------------------- */
+const SB_URL='https://usjunqrcdbmrqerpxydt.supabase.co';
+const SB_KEY='sb_publishable_6LDiddFi26QnQk_Ptw4sNA_docgmMG7';
+const sb=window.supabase.createClient(SB_URL,SB_KEY);
+
+const WD=['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
+const MESES=['janeiro','fevereiro','março','abril','maio','junho','julho',
+             'agosto','setembro','outubro','novembro','dezembro'];
+const token=new URLSearchParams(location.search).get('c')||'';
+
+let estado=null;      // última resposta do banco
+let desvio=0;         // diferença entre o relógio do banco e o daqui
+let tickTimer=null;
+
+function pad(n){return String(n).padStart(2,'0');}
+function agoraServidor(){return new Date(Date.now()+desvio);}
+
+function porExtenso(iso){
+  const d=new Date(iso);
+  return WD[d.getDay()]+', '+d.getDate()+' de '+MESES[d.getMonth()]+
+         ', às '+pad(d.getHours())+'h'+pad(d.getMinutes());
+}
+function contagem(ms){
+  const s=Math.max(0,Math.floor(ms/1000));
+  const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), r=s%60;
+  return (h>0?pad(h)+':':'')+pad(m)+':'+pad(r);
+}
+
+const REGRAS=
+  '<div class="regras"><b>Antes de começar, confira:</b>'+
+  '<ul>'+
+  '<li>Uma hora sem interrupção, conexão estável e bateria carregada.</li>'+
+  '<li>Papel, caneta e calculadora simples à mão — há questões de cálculo.</li>'+
+  '<li>Recomendamos o computador: são 41 questões, oito delas abertas.</li>'+
+  '<li>A avaliação é individual e sem consulta. As respostas abertas serão '+
+  'retomadas e aprofundadas na etapa seguinte.</li>'+
+  '</ul></div>';
+
+async function buscar(){
+  if(!token){desenhar({estado:'desconhecido'});return;}
+  const {data,error}=await sb.rpc('avaliacao_status',{p_token:token});
+  if(error){
+    document.getElementById('conteudo').innerHTML=
+      '<div class="cartao"><div class="faixa fim"><b>Não consegui verificar seu acesso.</b><br>'+
+      'Recarregue a página em alguns instantes. Se continuar, avise a equipe.</div></div>';
+    return;
+  }
+  estado=data;
+  if(data.agora)desvio=new Date(data.agora).getTime()-Date.now();
+  desenhar(data);
+}
+
+function desenhar(d){
+  const box=document.getElementById('conteudo');
+  box.className='';
+  const ola=d.nome?`<p class="saudacao">Olá, ${d.nome}!</p>`:'';
+
+  if(d.estado==='desconhecido'){
+    box.innerHTML='<div class="cartao"><div class="faixa fim">'+
+      '<b>Este link não é válido.</b><br>Confira se você copiou o endereço inteiro '+
+      'da mensagem que recebeu. Se o problema continuar, responda àquela mensagem.</div></div>';
+    return;
+  }
+  if(d.estado==='encerrado_processo'){
+    box.innerHTML='<div class="cartao">'+ola+'<div class="faixa fim">'+
+      'Não há avaliação pendente para você neste momento.</div></div>';
+    return;
+  }
+  if(d.estado==='sem_formulario'||d.estado==='sem_horario'){
+    box.innerHTML='<div class="cartao">'+ola+'<div class="faixa aviso">'+
+      '<b>Sua avaliação ainda não foi liberada.</b><br>'+
+      'A equipe vai confirmar a data e o horário pelo WhatsApp e pelo e-mail. '+
+      'Guarde este link: é por aqui que ela abre.</div>'+REGRAS+'</div>';
+    return;
+  }
+
+  const abre=new Date(d.abre_em), fecha=new Date(d.fecha_em);
+  const quando=`<p class="quando">Sua avaliação é ${porExtenso(d.abre_em)}, `+
+               `e fica aberta por 60 minutos.</p>`;
+
+  if(d.estado==='aguardando'){
+    box.innerHTML='<div class="cartao">'+ola+quando+
+      '<div class="faixa espera"><div class="rot">Abre em</div>'+
+      '<div class="relogio" id="relogio">--:--</div></div>'+REGRAS+'</div>';
+  }else if(d.estado==='aberto'){
+    box.innerHTML='<div class="cartao">'+ola+quando+
+      '<div class="faixa aberto"><div class="rot">Tempo restante</div>'+
+      '<div class="relogio" id="relogio">--:--</div></div>'+
+      `<a class="btn" href="${d.url}" target="_blank" rel="noopener" onclick="registrar()">Abrir o formulário</a>`+
+      REGRAS+'</div>';
+  }else{
+    box.innerHTML='<div class="cartao">'+ola+
+      '<div class="faixa fim"><b>A janela desta avaliação foi encerrada.</b><br>'+
+      'Ela esteve aberta '+porExtenso(d.abre_em)+', por 60 minutos.</div>'+
+      '<p class="quando" style="margin-top:16px">Se houve algum imprevisto, responda a '+
+      'mensagem que você recebeu da equipe. Imprevistos são tratados com razoabilidade.</p></div>';
+  }
+  relogio(abre,fecha);
+}
+
+/* O contador anda com o relógio do banco, não com o do computador de
+   quem abriu. Ao virar a hora, pergunta de novo ao servidor em vez de
+   decidir sozinho: é o servidor que manda. */
+function relogio(abre,fecha){
+  if(tickTimer)clearInterval(tickTimer);
+  const el=()=>document.getElementById('relogio');
+  const passo=()=>{
+    const e=el(); if(!e)return;
+    const agora=agoraServidor();
+    if(estado.estado==='aguardando'){
+      if(agora>=abre){buscar();return;}
+      e.textContent=contagem(abre-agora);
+    }else if(estado.estado==='aberto'){
+      if(agora>=fecha){buscar();return;}
+      e.textContent=contagem(fecha-agora);
+    }
+  };
+  passo();
+  tickTimer=setInterval(passo,1000);
+}
+
+async function registrar(){
+  try{await sb.rpc('avaliacao_registrar_abertura',{p_token:token});}catch(e){}
+}
+
+buscar();
+// Rede oscila e aba dormindo atrasa o contador: reconfere de tempos em tempos.
+setInterval(buscar,60000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)buscar();});
+</script>
+</body>
+</html>

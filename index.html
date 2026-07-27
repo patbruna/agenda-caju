@@ -444,6 +444,20 @@
   </details>
 
   <details class="addbox">
+    <summary>🔗 Endereço dos formulários</summary>
+    <p style="font-size:12px;color:var(--muted);margin:10px 0 12px;">Cole aqui o endereço do Google Forms de cada etapa. O candidato nunca vê este endereço direto: ele recebe um link pessoal que só revela o formulário dentro da janela dele. Enquanto o campo estiver vazio, o link pessoal avisa que a avaliação ainda não foi liberada.</p>
+    <div style="display:flex;flex-direction:column;gap:11px;">
+      <label style="font-size:12px;color:var(--muted);">Avaliação técnica
+        <input id="formTecnica" type="url" placeholder="https://docs.google.com/forms/…"
+               style="display:block;width:100%;font:inherit;padding:9px 11px;border:1px solid var(--line);border-radius:9px;margin-top:4px;color:var(--ink);"></label>
+      <label style="font-size:12px;color:var(--muted);">Entrevista final
+        <input id="formFinal" type="url" placeholder="opcional, para quando existir"
+               style="display:block;width:100%;font:inherit;padding:9px 11px;border:1px solid var(--line);border-radius:9px;margin-top:4px;color:var(--ink);"></label>
+      <div><button class="btn" onclick="salvarForms()">Salvar endereços</button></div>
+    </div>
+  </details>
+
+  <details class="addbox">
     <summary>✎ Mensagens de WhatsApp e e-mail</summary>
     <p style="font-size:12px;color:var(--muted);margin:10px 0 10px;">Cada etapa tem seu convite, seu aviso de resultado e, quando as instruções são longas, um modelo de e-mail com assunto próprio. Marcadores: <b>{NOME}</b> primeiro nome, <b>{NOME_COMPLETO}</b> nome inteiro, <b>{DATA}</b> data curta, <b>{DATA_EXTENSO}</b> data por extenso, <b>{HORARIO}</b> horário — todos vêm do compromisso marcado para aquele candidato. Trechos entre colchetes travam o envio até você preenchê-los. As mensagens são as mesmas para toda a equipe.</p>
     <label style="font-size:12px;color:var(--muted);">Qual mensagem</label><br>
@@ -461,6 +475,7 @@
 
   <div class="foot">
     <p><b>As três etapas:</b> entrevista, avaliação técnica e entrevista final com os sócios. Marcar <b>Aprovado</b> não muda ninguém de etapa — quem muda é o botão <b>Avançar</b>, na aba Funil. A separação é de propósito: dá tempo de mandar a mensagem de aprovação antes de o candidato trocar de lugar na tela. Ao avançar, o status volta para Pendente e a data fica em branco, para você marcar o novo compromisso. Clique errado se desfaz em <b>voltar uma etapa</b>.</p>
+    <p><b>Portão da avaliação:</b> cada candidato tem um link pessoal, que já vai dentro do convite e do e-mail e também pode ser copiado no perfil. Nele o candidato vê a contagem regressiva até o horário <i>dele</i>; no horário, o formulário é liberado; sessenta minutos depois, encerra. Quem confere a hora é o banco de dados, não o relógio do computador do candidato, e o endereço do formulário só entra na resposta com a janela aberta. Cole o endereço do Google Forms em <b>Endereço dos formulários</b>, aqui embaixo — enquanto estiver vazio, o link avisa que a avaliação ainda não foi liberada. O perfil registra se e quando a pessoa abriu.</p>
     <p><b>Onde se marca a data:</b> em três lugares, o que for mais perto de onde você estiver. No cartão do <b>Funil</b>, nos campos ao lado do nome — ficam amarelos enquanto estiverem vazios. No <b>Perfil</b>, no primeiro bloco. E na <b>Agenda</b>, no horário à esquerda de cada compromisso. Avançar alguém de etapa limpa data e horário de propósito, porque a etapa nova tem compromisso novo — por isso a pessoa reaparece no funil pedindo agendamento. Enquanto não tiver data, os botões de convite e de e-mail ficam travados, já que o texto deles cita o dia e a hora.</p>
     <p><b>Mensagens:</b> cada etapa tem seu convite curto de WhatsApp e, quando as instruções são longas, um modelo de e-mail com assunto próprio. O botão <b>Instruções por e-mail</b> aparece no funil para quem está na etapa e tem e-mail cadastrado no perfil: ele abre seu cliente de e-mail com destinatário e assunto prontos, e copia o texto já preenchido com o nome, a data e o horário daquele candidato. Se o modelo ainda tiver algum trecho entre colchetes, o envio trava e o app diz quais faltam — é o que impede um <b>[PRAZO] dias úteis</b> de chegar num candidato. Tudo se edita em <b>Mensagens de WhatsApp e e-mail</b>, no fim da página.</p>
     <p><b>Perfil do candidato:</b> clique no nome de qualquer pessoa, em qualquer aba, para abrir a ficha — contato, endereço, origem da candidatura, experiência e currículo. Os campos salvam sozinhos ao sair de cada um. O currículo fica guardado num espaço privado: o botão de abrir gera um link que vale por uma hora e só funciona para quem está logado. No fim da ficha está o histórico: cada anotação fica carimbada com quem escreveu, quando, e em que etapa, e nenhuma sobrescreve a outra. Você só pode apagar as suas.</p>
@@ -537,7 +552,9 @@ const DEF_CONV_TECNICA=
 Você avançou no nosso processo seletivo e chegou a etapa de Avaliação Técnica.
 📅 Data: {DATA}
 🕒 Horário: {HORARIO}
-📍 Formato: Online (enviaremos as orientações e o material próximo ao horário).
+📍 Formato: Online, nesta página, que é só sua:
+{LINK_AVALIACAO}
+Guarde o endereço. Antes da hora ele mostra a contagem regressiva; no horário, libera o formulário; depois de 60 minutos, encerra.
 A avaliação olha na prática os conhecimentos ligados à rotina do cargo. Não é preciso preparação específica: queremos entender como você resolve as situações do dia a dia.
 Por gentileza, confirme sua disponibilidade respondendo a esta mensagem.
 Atenciosamente,
@@ -612,7 +629,13 @@ Há questões de cálculo. Tenha papel, caneta e calculadora simples à mão.
 
 3. COMO ACESSAR
 
-O link será enviado para o e-mail e o WhatsApp cadastrados no horário indicado acima. Você pode responder pelo computador ou pelo celular, mas recomendamos o computador pelo tempo e pelo volume de digitação das questões abertas.
+Sua avaliação abre sozinha no horário acima, nesta página:
+
+{LINK_AVALIACAO}
+
+Guarde este endereço: ele é só seu. Antes da hora, mostra a contagem regressiva. No horário, libera o formulário. Passados os 60 minutos, encerra. Não é preciso esperar nenhum outro aviso.
+
+Você pode responder pelo computador ou pelo celular, mas recomendamos o computador pelo tempo e pelo volume de digitação das questões abertas.
 
 Garanta antes: conexão estável, bateria carregada e um lugar sem interrupção por uma hora.
 
@@ -756,7 +779,8 @@ function fromDb(r){
           cargo_atual:r.cargo_atual||'', empresa_atual:r.empresa_atual||'',
           experiencia:r.experiencia||'',
           nascimento:r.nascimento||'', cpf:r.cpf||'',
-          curriculo:r.curriculo||''};
+          curriculo:r.curriculo||'',
+          token:r.token||'', avaliacao_abertura:r.avaliacao_abertura||''};
 }
 
 /* Indicador no topo. Fica vermelho se uma gravação falhar, para
@@ -855,6 +879,19 @@ async function fetchConfig(){
   const {data:row,error}=await sb.from('configuracoes').select('*').eq('id',1).maybeSingle();
   if(!error&&row)cfg=row;
   montarEditorMsgs();
+  montarFormsUrls();
+}
+function montarFormsUrls(){
+  const t=document.getElementById('formTecnica'), f=document.getElementById('formFinal');
+  if(t&&document.activeElement!==t)t.value=cfg.form_tecnica_url||'';
+  if(f&&document.activeElement!==f)f.value=cfg.form_final_url||'';
+}
+async function salvarForms(){
+  await gravarCfg({
+    form_tecnica_url:document.getElementById('formTecnica').value.trim(),
+    form_final_url:document.getElementById('formFinal').value.trim()
+  },true);
+  showToast('Endereços salvos');
 }
 function montarEditorMsgs(){
   const sel=document.getElementById('msgSel');
@@ -1040,10 +1077,19 @@ function dataExtenso(ds){
   return WD[d.getDay()].toLowerCase()+', '+(+m[3])+' de '+MESES[+m[2]-1]+' de '+m[1];
 }
 
+/* Endereço pessoal do portão da avaliação. Antes da hora mostra a
+   contagem regressiva; no horário libera o formulário; depois de 60
+   minutos, encerra. Quem confere a hora é o banco. */
+function linkAvaliacao(c){
+  if(!c.token)return '[link indisponível — rode o 06-portao-avaliacao.sql]';
+  return location.origin+'/avaliacao.html?c='+c.token;
+}
+
 /* Troca os marcadores pelo dado do candidato. {NOME} é o primeiro nome,
    para saudação; {NOME_COMPLETO} é para documento. */
 function preencher(tpl,c){
   return String(tpl||'')
+    .replace(/{LINK_AVALIACAO}/g,linkAvaliacao(c))
     .replace(/{NOME_COMPLETO}/g,c.nome)
     .replace(/{NOME}/g,c.nome.split(' ')[0])
     .replace(/{DATA_EXTENSO}/g,dataExtenso(c.date))
@@ -1597,7 +1643,8 @@ function renderPerfil(){
         <label class="pcampo"><span>Horário</span>
           <input type="time" value="${escAttr(c.time)}" onchange="setTime('${c.id}',this.value)"></label>
       </div>
-      <p class="dica-campo">É desta data e deste horário que saem o convite de WhatsApp, o e-mail de instruções e a posição da pessoa na Agenda. Avançar de etapa limpa os dois de propósito: a etapa nova tem compromisso novo.</p></div>
+      <p class="dica-campo">É desta data e deste horário que saem o convite de WhatsApp, o e-mail de instruções, a posição da pessoa na Agenda e a janela do formulário. Avançar de etapa limpa os dois de propósito: a etapa nova tem compromisso novo.</p>
+      ${blocoLinkAvaliacao(c)}</div>
 
       <div class="pgrupo"><h4>Contato</h4><div class="pgrid">
         ${campo(c,'fone','WhatsApp (com DDD, só números)','text','5531999998888')}
@@ -1635,6 +1682,27 @@ function renderPerfil(){
   const txt=document.getElementById('notaTexto');
   if(txt)txt.value=rascunho;
   if(c.curriculo)preparaLinkCurriculo(c);
+}
+
+/* Link pessoal do portão, só nas etapas que têm formulário. */
+function blocoLinkAvaliacao(c){
+  if(c.etapa!=='tecnica'&&c.etapa!=='final')return '';
+  if(!c.token)return '<p class="dica-campo">O link pessoal aparece aqui depois que o '+
+    '<b>06-portao-avaliacao.sql</b> for rodado no Supabase.</p>';
+  const abriu=c.avaliacao_abertura
+    ? '<b>Abriu o formulário em '+dataHora(c.avaliacao_abertura)+'.</b>'
+    : 'Ainda não abriu o formulário.';
+  return '<div class="cv" style="margin-top:14px">'+
+    `<span class="arq" style="font:600 12px var(--mono);word-break:break-all">${escHtml(linkAvaliacao(c))}</span>`+
+    `<button class="sendbtn conv" onclick="copiarLink('${c.id}')">Copiar link</button>`+
+    '<span class="dica">'+abriu+' Este endereço é pessoal e já vai dentro do convite e do e-mail. '+
+    'Antes da hora mostra a contagem regressiva, no horário libera o formulário, e fecha 60 minutos depois.</span>'+
+    '</div>';
+}
+async function copiarLink(id){
+  const c=data.find(x=>x.id===id);if(!c)return;
+  try{await navigator.clipboard.writeText(linkAvaliacao(c));showToast('Link copiado');}
+  catch(e){showToast('Não consegui copiar o link',true);}
 }
 
 function blocoCurriculo(c){
