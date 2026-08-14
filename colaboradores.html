@@ -333,6 +333,24 @@
     body{background:#fff;padding:0;}
     .tabs,.bar,.filtros,.navlinks,.modal,.toast,.acoes,.foot{display:none !important;}
   }
+  /* Linha de documento da admissão. A linha inteira é clicável porque
+     é <label>: em conferência de 22 itens, mirar a caixinha cansa. */
+  .admdoc{display:flex;align-items:center;gap:11px;padding:9px 12px;cursor:pointer;
+    border:1px solid var(--linha,#dbe1dd);border-radius:10px;margin-bottom:6px;
+    background:#fff;transition:background .15s,border-color .15s;}
+  .admdoc:hover{border-color:#c4ccc7;}
+  .admdoc.ok{background:#e7f4ec;border-color:#bfe0cc;}
+  .admdoc input[type=checkbox]{width:17px;height:17px;accent-color:#1fa855;flex:none;}
+  .admdoc .num{font:700 11px ui-monospace,Consolas,monospace;color:#65756c;flex:none;}
+  .admdoc.ok .num{color:#178a45;}
+  .admdoc .nome{flex:1;min-width:0;font-size:14px;}
+  .admdoc .anexo{flex:none;display:flex;align-items:center;gap:6px;font-size:13px;}
+  .admdoc .anexo a{max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  @media(max-width:640px){
+    .admdoc{flex-wrap:wrap;}
+    .admdoc .nome{flex-basis:calc(100% - 60px);}
+    .admdoc .anexo{width:100%;justify-content:flex-end;}
+  }
 </style>
 </head>
 <body>
@@ -411,6 +429,9 @@
       <button class="tab" data-aba="cadastro" onclick="setAba('cadastro')">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><circle cx="9" cy="11" r="2.4"/><path d="M5 17c.6-1.8 2.2-2.6 4-2.6s3.4.8 4 2.6M15 9h4M15 13h3"/></svg>
         Cadastro <span class="n" id="n-cadastro">0</span></button>
+      <button class="tab" data-aba="admissao" onclick="setAba('admissao')" id="tab-admissao">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13l2 2 4-4"/></svg>
+        Admissão <span class="n" id="n-admissao">0</span></button>
 
       <div class="grp">Administrar</div>
       <button class="tab" data-aba="importar" onclick="setAba('importar')" id="tab-importar">
@@ -609,6 +630,15 @@
   </div>
 
   <!-- ============ IMPORTAR ============ -->
+  <!-- Conferência dos 22 documentos de admissão. O conteúdo é montado
+       por renderAdmissao(); o campo de arquivo fica escondido e é
+       acionado pelo botão "Anexar" de cada linha. -->
+  <div class="painel" id="pn-admissao">
+    <div id="admBox"></div>
+    <input type="file" id="admFile" style="display:none"
+           onchange="admEnviarArquivo(this)">
+  </div>
+
   <div class="painel" id="pn-importar">
     <div class="aviso">
       <b>Nada é gravado sem a sua confirmação.</b> A planilha é lida dentro do seu navegador; o módulo

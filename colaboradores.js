@@ -271,6 +271,8 @@ function rotuloPerfil(p) {
 }
 
 function aplicarPermissoes() {
+  // Documento de admissão é RG, CPF e papel de dependente: só RH e admin.
+  el('tab-admissao').style.display = admEhRh() ? '' : 'none';
   el('tab-importar').style.display = ctx.pode_importar ? '' : 'none';
   el('tab-config').style.display = ctx.pode_config ? '' : 'none';
   el('btnNovo').style.display = ctx.pode_criar ? '' : 'none';
@@ -307,6 +309,8 @@ async function recarregar() {
     perfis = p.error ? [] : (p.data || []);
     preencherConfig();
   }
+
+  await carregarAdmissao();
 
   setSync(true);
   atualizarUnidades();
@@ -418,6 +422,10 @@ function render() {
     return Core.situacaoCadastro(c).contatoIncompleto;
   }).length;
 
+  var nAdm = el('n-admissao');
+  if (nAdm) nAdm.textContent = admPessoasDe('conferencia').length;
+
+  if (abaAtiva === 'admissao') renderAdmissao();
   if (abaAtiva === 'notificacoes') renderNotificacoes(notifs, cont);
   if (abaAtiva === 'colaboradores') renderColaboradores();
   if (abaAtiva === 'experiencia') renderExperiencia();
@@ -2274,3 +2282,280 @@ window.addEventListener('focus', function () {
 });
 
 boot();
+
+/* ============================================================
+   Admissão — conferência dos 22 documentos
+   Acrescentado ao módulo sem alterar nada do que já existia.
+   Só RH e admin: são RG, CPF, papéis de dependentes e certidão
+   de nascimento. O banco confere de novo, então esconder a aba
+   é conforto, não proteção.
+   ============================================================ */
+var DOCS_ADM = [
+  'Contrato de trabalho', 'Atestado admissional', 'Ficha de admissão', 'RG e CPF',
+  'Carteira de trabalho', 'PIS', 'Conta salário', 'Documentos dos dependentes',
+  'Comprovante de escolaridade', 'Título de eleitor + quitação eleitoral',
+  'Comprovante de residência', 'Reservista', 'Contrato de trabalho assinado',
+  'Declaração de salário-família', 'Declaração de IR', 'Currículo',
+  'Certidão de nascimento do colaborador', 'Foto 3x4', 'Ficha de proposta de emprego',
+  'Ficha de registro', 'Autodeclaração étnica', 'Nada consta'
+];
+var ADM_BALDE = 'documentos-admissao';
+var ADM_LIMITE = 15 * 1024 * 1024;
+
+var admStatus = {};      // colaborador_id -> 'conferencia' | 'admitido'
+var admDocs = {};        // colaborador_id -> { doc_index: linha }
+var admPessoa = null;    // quem está aberto no painel
+var admSit = 'conferencia';
+var admEmailTimer = null;
+var admEnviando = {};    // doc_index -> true enquanto sobe
+
+function admEhRh() { return ctx.perfil === 'admin' || ctx.perfil === 'rh'; }
+
+async function carregarAdmissao() {
+  if (!admEhRh()) return;
+  var a = await sb.from('colab_admissao').select('*');
+  var d = await sb.from('colab_admissao_docs').select('*');
+  admStatus = {};
+  (a.data || []).forEach(function (r) { admStatus[r.colaborador_id] = r.status; });
+  admDocs = {};
+  (d.data || []).forEach(function (r) {
+    if (!admDocs[r.colaborador_id]) admDocs[r.colaborador_id] = {};
+    admDocs[r.colaborador_id][r.doc_index] = r;
+  });
+}
+
+/* Quem não tem linha em colab_admissao está em conferência. É o padrão
+   e é o que faz a tela não quebrar antes de o 08 rodar. */
+function admSituacaoDe(id) { return admStatus[id] || 'conferencia'; }
+function admDocDe(id, i) { return (admDocs[id] || {})[i] || {}; }
+function admConferidos(id) {
+  var m = admDocs[id] || {}, n = 0, k;
+  for (k in m) { if (m[k].conferido) n++; }
+  return n;
+}
+function admPessoasDe(sit) {
+  return colabs.filter(function (c) { return admSituacaoDe(c.id) === sit; })
+    .sort(function (x, y) { return String(x.nome).localeCompare(String(y.nome), 'pt-BR'); });
+}
+function admEmailValido(v) {
+  return v === '' || /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
+}
+function admPessoaAtual(lista) {
+  var achados = lista.filter(function (c) { return c.id === admPessoa; });
+  return achados.length ? achados[0] : null;
+}
+
+function renderAdmissao() {
+  var box = el('admBox');
+  if (!box) return;
+  if (!admEhRh()) {
+    box.innerHTML = '<div class="caixa" style="padding:18px 20px;">' +
+      '<p>A conferência de documentos de admissão é restrita ao RH e à administração, ' +
+      'porque envolve RG, CPF, papéis de dependentes e certidão de nascimento.</p></div>';
+    return;
+  }
+
+  var emConf = admPessoasDe('conferencia');
+  var admitidos = admPessoasDe('admitido');
+  var lista = admSit === 'conferencia' ? emConf : admitidos;
+  if (!admPessoaAtual(lista)) admPessoa = lista.length ? lista[0].id : null;
+
+  var html = '<div class="tabs" style="margin-bottom:10px;">' +
+    admSubAba('conferencia', 'Em conferência', emConf.length) +
+    admSubAba('admitido', 'Admitidos', admitidos.length) + '</div>';
+
+  if (!lista.length) {
+    box.innerHTML = html + '<div class="caixa" style="padding:18px 20px;"><p>' +
+      (admSit === 'conferencia'
+        ? 'Ninguém em conferência. Cadastre o colaborador na aba <b>Cadastro</b> — todo mundo começa aqui.'
+        : 'Ninguém admitido ainda.') + '</p></div>';
+    return;
+  }
+
+  html += '<div class="tabs" style="margin-bottom:12px;">' + lista.map(function (c) {
+    var n = admConferidos(c.id);
+    return '<button class="tab' + (c.id === admPessoa ? ' on' : '') + '"' +
+      ' onclick="admAbrir(\'' + c.id + '\')">' + esc(c.nome) +
+      ' <span class="n">' + n + '/22' + (n === 22 ? ' ✓' : '') + '</span></button>';
+  }).join('') + '</div>';
+
+  box.innerHTML = html + admPainelPessoa(admPessoaAtual(lista));
+}
+
+function admSubAba(sit, rotulo, n) {
+  return '<button class="tab' + (admSit === sit ? ' on' : '') + '"' +
+    ' onclick="admTrocarSituacao(\'' + sit + '\')">' + rotulo +
+    ' <span class="n">' + n + '</span></button>';
+}
+
+function admPainelPessoa(c) {
+  if (!c) return '';
+  var n = admConferidos(c.id), pct = Math.round(n / 22 * 100);
+  var completo = n === 22, admitido = admSituacaoDe(c.id) === 'admitido';
+
+  var h = '<div class="caixa" style="padding:18px 20px;">' +
+    '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">' +
+      '<h3 style="margin:0;font-size:19px;">' + esc(c.nome) + '</h3>' +
+      (admitido ? '<span class="chip ok">✓ Admitido</span>' : '') +
+      (completo && !admitido ? '<span class="chip ok">✓ Pronto para admissão</span>' : '') +
+    '</div>';
+
+  h += '<div class="campo" style="max-width:340px;margin-top:12px;">' +
+    '<label for="admEmail">E-mail do colaborador</label>' +
+    '<input id="admEmail" type="email" value="' + esc(c.email || '') + '"' +
+    ' oninput="admEmailDigitou(this)" placeholder="nome@email.com"></div>';
+
+  h += '<div style="margin-top:14px;">' +
+    '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px;">' +
+      '<span>' + n + ' de 22 documentos conferidos</span><span>' + pct + '%</span></div>' +
+    '<div style="height:9px;border-radius:9px;background:#dbe1dd;overflow:hidden;">' +
+      '<div style="height:100%;width:' + pct + '%;border-radius:9px;background:' +
+      (completo ? '#178a45' : '#1fa855') + ';transition:width .25s;"></div></div></div>';
+
+  h += '<div style="margin-top:16px;">' + DOCS_ADM.map(function (nome, i) {
+    return admLinhaDoc(c.id, i, nome);
+  }).join('') + '</div>';
+
+  h += '<div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:16px;">' +
+    (admitido
+      ? '<button class="btn sec" onclick="admDefinirSituacao(\'' + c.id + '\',\'conferencia\')">↩ Voltar para Em conferência</button>'
+      : '<button class="btn" onclick="admDefinirSituacao(\'' + c.id + '\',\'admitido\')">✓ Marcar como admitido</button>') +
+    '</div>';
+
+  return h + '</div>';
+}
+
+function admLinhaDoc(id, i, nome) {
+  var d = admDocDe(id, i), marcado = !!d.conferido;
+  var num = (i + 1 < 10 ? '0' : '') + (i + 1);
+  var anexo;
+  if (d.arquivo_path) {
+    anexo = '<a href="#" onclick="admVer(\'' + id + '\',' + i + ');return false;">' +
+      esc(d.arquivo_nome || 'arquivo') + '</a>' +
+      ' <button class="btn min" title="Remover anexo" onclick="admRemoverAnexo(\'' + id + '\',' + i + ')">✕</button>';
+  } else if (admEnviando[i]) {
+    anexo = '<span class="suave">enviando…</span>';
+  } else {
+    anexo = '<button class="btn min" onclick="admEscolher(' + i + ')">Anexar</button>';
+  }
+  return '<label class="admdoc' + (marcado ? ' ok' : '') + '">' +
+    '<input type="checkbox"' + (marcado ? ' checked' : '') +
+      ' onchange="admMarcar(\'' + id + '\',' + i + ',this.checked)">' +
+    '<span class="num">' + num + '</span>' +
+    '<span class="nome">' + esc(nome) + '</span>' +
+    '<span class="anexo">' + anexo + '</span></label>';
+}
+
+/* ---- ações ---- */
+function admTrocarSituacao(s) { admSit = s; admPessoa = null; renderAdmissao(); }
+function admAbrir(id) { admPessoa = id; renderAdmissao(); }
+function admEscolher(i) {
+  var inp = el('admFile');
+  inp.dataset.doc = i;
+  inp.click();
+}
+
+async function admMarcar(id, i, valor) {
+  var r = await chamar('colab_admissao_marcar', { p_id: id, p_doc: i, p_conferido: valor });
+  if (!r.ok) { renderAdmissao(); return; }
+  if (!admDocs[id]) admDocs[id] = {};
+  if (!admDocs[id][i]) admDocs[id][i] = { doc_index: i };
+  admDocs[id][i].conferido = valor;
+  renderAdmissao();
+}
+
+function admEmailDigitou(inp) {
+  var v = inp.value.trim();
+  inp.style.borderColor = admEmailValido(v) ? '' : '#b23a2b';
+  if (admEmailTimer) clearTimeout(admEmailTimer);
+  if (!admEmailValido(v)) return;
+  var id = admPessoa;
+  admEmailTimer = setTimeout(function () { admSalvarEmail(id, v); }, 700);
+}
+async function admSalvarEmail(id, v) {
+  var achados = colabs.filter(function (x) { return x.id === id; });
+  if (!achados.length) return;
+  var c = achados[0];
+  var r = await chamar('colab_atualizar_contato',
+    { p_id: id, p_email: v, p_telefone: c.telefone || null }, 'E-mail salvo');
+  if (r.ok) c.email = v;
+}
+
+async function admDefinirSituacao(id, s) {
+  var r = await chamar('colab_admissao_status', { p_id: id, p_status: s },
+    s === 'admitido' ? 'Admissão concluída' : 'Voltou para conferência');
+  if (!r.ok) return;
+  admStatus[id] = s;
+  admSit = s;              // leva o usuário junto para a aba de destino
+  admPessoa = id;
+  renderAdmissao();
+}
+
+var ADM_ACENTOS = new RegExp('[\\u0300-\\u036f]', 'g');
+
+/* Nome de arquivo sem acento nem espaço: caminho de balde não é lugar
+   para caractere estranho. */
+function admLimparNome(s) {
+  return String(s || 'arquivo').normalize('NFD').replace(ADM_ACENTOS, '')
+    .replace(/[^A-Za-z0-9._-]/g, '_').replace(/_+/g, '_').slice(-80);
+}
+
+async function admEnviarArquivo(inp) {
+  var i = parseInt(inp.dataset.doc, 10), id = admPessoa;
+  var f = inp.files && inp.files[0];
+  inp.value = '';
+  if (!f || isNaN(i) || !id) return;
+  if (f.size > ADM_LIMITE) {
+    showToast('O arquivo passa de 15 MB. Comprima ou divida antes de anexar.', true);
+    return;
+  }
+  admEnviando[i] = true; renderAdmissao();
+  setSync(true, 'Enviando…');
+
+  var caminho = id + '/' + i + '_' + Date.now() + '_' + admLimparNome(f.name);
+  var up = await sb.storage.from(ADM_BALDE).upload(caminho, f, { upsert: false });
+  if (up.error) {
+    admEnviando[i] = false; renderAdmissao();
+    setSync(false, 'Erro ao enviar');
+    showToast(limparErro(up.error.message), true);
+    return;
+  }
+
+  var r = await chamar('colab_admissao_anexo',
+    { p_id: id, p_doc: i, p_path: caminho, p_nome: f.name }, 'Documento anexado');
+  admEnviando[i] = false;
+  if (!r.ok) {
+    // o vínculo não gravou: não deixa o arquivo órfão no balde
+    await sb.storage.from(ADM_BALDE).remove([caminho]);
+    renderAdmissao();
+    return;
+  }
+  // r.dados traz o caminho do arquivo anterior, que acabou de ser substituído
+  if (r.dados) await sb.storage.from(ADM_BALDE).remove([r.dados]);
+  if (!admDocs[id]) admDocs[id] = {};
+  if (!admDocs[id][i]) admDocs[id][i] = { doc_index: i };
+  admDocs[id][i].arquivo_path = caminho;
+  admDocs[id][i].arquivo_nome = f.name;
+  renderAdmissao();
+}
+
+/* Balde privado: o arquivo só abre por link assinado, que expira. */
+async function admVer(id, i) {
+  var d = admDocDe(id, i);
+  if (!d.arquivo_path) return;
+  var s = await sb.storage.from(ADM_BALDE).createSignedUrl(d.arquivo_path, 120);
+  if (s.error || !s.data) { showToast('Não consegui abrir o arquivo.', true); return; }
+  window.open(s.data.signedUrl, '_blank', 'noopener');
+}
+
+async function admRemoverAnexo(id, i) {
+  if (!confirm('Remover o anexo de "' + DOCS_ADM[i] + '"? O arquivo é apagado de vez.')) return;
+  var r = await chamar('colab_admissao_anexo_remover', { p_id: id, p_doc: i }, 'Anexo removido');
+  if (!r.ok) return;
+  if (r.dados) await sb.storage.from(ADM_BALDE).remove([r.dados]);
+  if (admDocs[id] && admDocs[id][i]) {
+    admDocs[id][i].arquivo_path = null;
+    admDocs[id][i].arquivo_nome = null;
+  }
+  renderAdmissao();
+}
