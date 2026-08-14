@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Testes — Gestão de Colaboradores</title>
+<style>
+  :root{--page:#eceff0;--card:#fff;--ink:#16211c;--muted:#65756c;--line:#dbe1dd;
+        --ok:#178a45;--ok-bg:#e7f4ec;--erro:#b23a2b;--erro-bg:#fbe9e6;--radius:14px;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--page);color:var(--ink);padding:26px 16px 80px;
+       font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.5;}
+  .wrap{max-width:1000px;margin:0 auto;}
+  .eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ok);font-weight:700;}
+  h1{font-size:24px;margin:4px 0 2px;}
+  p.sub{color:var(--muted);margin:0 0 18px;font-size:14px;}
+  .placar{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 18px;position:sticky;top:0;
+          background:var(--page);padding:10px 0;z-index:5;border-bottom:1px solid var(--line);}
+  .pill{font-size:14px;font-weight:700;padding:8px 16px;border-radius:22px;background:var(--card);
+        border:1px solid var(--line);}
+  .pill.ok{color:var(--ok);background:var(--ok-bg);border-color:#bfe0cc;}
+  .pill.erro{color:var(--erro);background:var(--erro-bg);border-color:#eec4bd;}
+  .grupo{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+         margin-bottom:12px;overflow:hidden;}
+  .grupo h2{font-size:15px;margin:0;padding:12px 16px;background:#f6f8f7;border-bottom:1px solid var(--line);
+            display:flex;align-items:center;gap:10px;}
+  .grupo h2 .n{font-size:12px;font-weight:600;color:var(--muted);}
+  .grupo h2 .falhou{color:var(--erro);font-size:12px;font-weight:700;}
+  .t{display:grid;grid-template-columns:22px 1fr auto;gap:10px;padding:6px 16px;font-size:13px;
+     border-top:1px solid #f2f5f3;align-items:start;}
+  .t.f{background:var(--erro-bg);}
+  .t .ic{font-weight:700;}
+  .t.p .ic{color:var(--ok);} .t.f .ic{color:var(--erro);}
+  .t .det{color:var(--erro);font-size:12px;font-family:ui-monospace,Consolas,monospace;
+          grid-column:2/-1;white-space:pre-wrap;word-break:break-word;}
+  .t .val{color:var(--muted);font-size:12px;font-family:ui-monospace,Consolas,monospace;}
+  .arq{background:var(--card);border:1px dashed var(--line);border-radius:var(--radius);
+       padding:16px;margin-bottom:16px;}
+  .arq label{font-weight:600;font-size:14px;}
+  .arq p{font-size:13px;color:var(--muted);margin:6px 0 10px;}
+  .esconder .t.p{display:none;}
+  .toggle{font-size:13px;color:var(--muted);cursor:pointer;user-select:none;display:flex;
+          align-items:center;gap:7px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Grupo Caju · Colaboradores</div>
+  <h1>Testes das regras do módulo</h1>
+  <p class="sub">Roda direto no navegador, sem banco e sem login: exercita apenas
+     <b>colaboradores-core.js</b>, onde estão as contas de dia, a máquina de status do contrato,
+     a validação de CPF e telefone, a leitura da planilha e a geração das notificações.</p>
+
+  <div class="placar" id="placar"></div>
+
+  <div class="arq">
+    <label for="arq">Conferir contra uma planilha de verdade (opcional)</label>
+    <p>Escolha a planilha da folha (por exemplo <code>nazo sul.xls</code>). O arquivo é lido
+       <b>dentro do navegador</b> — nada é enviado para nenhum servidor. Os testes abaixo
+       recontam CPFs, telefones, e-mails e a duplicidade numa reimportação.</p>
+    <input type="file" id="arq" accept=".xls,.xlsx,.xlsm,.csv">
+    <label class="toggle" style="margin-top:12px;">
+      <input type="checkbox" id="soFalhas"> Mostrar somente as falhas
+    </label>
+  </div>
+
+  <div id="saida"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="colaboradores-core.js"></script>
+<script>
+'use strict';
+var C = window.CoreColab;
+
+/* ---------------- mini-arcabouço de teste ---------------- */
+var grupos = [], atual = null, passou = 0, falhou = 0;
+
+function grupo(nome) { atual = { nome: nome, testes: [] }; grupos.push(atual); }
+
+function ok(desc, cond, detalhe) {
+  var bom = !!cond;
+  atual.testes.push({ desc: desc, ok: bom, det: bom ? '' : (detalhe || '') });
+  if (bom) passou++; else falhou++;
+}
+
+function igual(desc, obtido, esperado) {
+  var a = JSON.stringify(obtido), b = JSON.stringify(esperado);
+  ok(desc, a === b, 'obtido:   ' + a + '\nesperado: ' + b);
+}
+
+function render() {
+  var s = document.getElementById('saida');
+  s.innerHTML = grupos.map(function (g) {
+    var f = g.testes.filter(function (t) { return !t.ok; }).length;
+    return '<div class="grupo"><h2>' + esc(g.nome) +
+      '<span class="n">' + g.testes.length + ' testes</span>' +
+      (f ? '<span class="falhou">' + f + ' falhou</span>' : '') + '</h2>' +
+      g.testes.map(function (t) {
+        return '<div class="t ' + (t.ok ? 'p' : 'f') + '">' +
+          '<div class="ic">' + (t.ok ? '✓' : '✕') + '</div>' +
+          '<div>' + esc(t.desc) + '</div><div></div>' +
+          (t.ok ? '' : '<div class="det">' + esc(t.det) + '</div>') +
+          '</div>';
+      }).join('') + '</div>';
+  }).join('');
+  document.getElementById('placar').innerHTML =
+    '<span class="pill ok">✓ ' + passou + ' passaram</span>' +
+    '<span class="pill ' + (falhou ? 'erro' : '') + '">' + (falhou ? '✕ ' : '') + falhou + ' falharam</span>' +
+    '<span class="pill">' + (passou + falhou) + ' no total</span>';
+}
+function esc(s) {
+  return String(s).replace(/[&<>"]/g, function (c) {
+    return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c];
+  });
+}
+document.getElementById('soFalhas').addEventListener('change', function () {
+  document.body.classList.toggle('esconder', this.checked);
+});
+
+
+/* =================================================================
+   1) ARITMÉTICA DE DATAS
+   Conferida contra um somador ingênuo que anda um dia por vez usando a
+   tabela de dias do mês. É devagar, mas é obviamente certo — e é
+   independente da conta em UTC que o módulo usa de verdade.
+   ================================================================= */
+function somaDiasLento(iso, n) {
+  var p = C.partes(iso), a = p.ano, m = p.mes, d = p.dia;
+  for (var i = 0; i < n; i++) {
+    d++;
+    if (d > C.diasNoMes(a, m)) { d = 1; m++; if (m > 12) { m = 1; a++; } }
+  }
+  return C.montaIso(a, m, d);
+}
+
+grupo('1. Datas — soma de dias corridos conferida dia a dia');
+(function () {
+  var falhas = [], total = 0;
+  for (var ano = 2019; ano <= 2029; ano++) {
+    for (var mes = 1; mes <= 12; mes++) {
+      var ult = C.diasNoMes(ano, mes);
+      // Todo dia de todo mês nas pontas (1, 2, penúltimo e último).
+      [1, 2, ult - 1, ult].forEach(function (dia) {
+        if (dia < 1) return;
+        var iso = C.montaIso(ano, mes, dia);
+        [29, 60, 89].forEach(function (n) {
+          total++;
+          var r = C.somaDias(iso, n), e = somaDiasLento(iso, n);
+          if (r !== e) falhas.push(iso + '+' + n + ' = ' + r + ' (esperado ' + e + ')');
+        });
+      });
+    }
+  }
+  ok('somaDias bate com a contagem dia a dia em ' + total + ' combinações (2019–2029, pontas de todos os meses)',
+     falhas.length === 0, falhas.slice(0, 8).join('\n'));
+
+  ok('difDias é o inverso de somaDias em 4.000 casos', (function () {
+    for (var i = 0; i < 4000; i++) {
+      var base = C.deNumDia(18000 + i);
+      if (C.difDias(base, C.somaDias(base, 89)) !== 89) return false;
+    }
+    return true;
+  })());
+})();
+
+grupo('2. Datas — anos bissextos e datas que não existem');
+igual('2024 é bissexto', C.ehBissexto(2024), true);
+igual('2026 não é bissexto', C.ehBissexto(2026), false);
+igual('2000 é bissexto (divisível por 400)', C.ehBissexto(2000), true);
+igual('1900 não é bissexto (divisível por 100, não por 400)', C.ehBissexto(1900), false);
+igual('fevereiro de 2024 tem 29 dias', C.diasNoMes(2024, 2), 29);
+igual('fevereiro de 2026 tem 28 dias', C.diasNoMes(2026, 2), 28);
+igual('31/02 é recusado', C.isoValido('2026-02-31'), false);
+igual('29/02/2026 é recusado (ano comum)', C.isoValido('2026-02-29'), false);
+igual('29/02/2024 é aceito', C.isoValido('2024-02-29'), true);
+igual('31/04 é recusado', C.isoValido('2026-04-31'), false);
+igual('mês 13 é recusado', C.isoValido('2026-13-01'), false);
+
+grupo('3. Datas — leitura do que vem da planilha');
+igual('03/08/2026 em texto brasileiro', (C.parseData('03/08/2026') || {}).iso, '2026-08-03');
+igual('2026-08-03 em ISO', (C.parseData('2026-08-03') || {}).iso, '2026-08-03');
+igual('3/8/2026 sem zero à esquerda', (C.parseData('3/8/2026') || {}).iso, '2026-08-03');
+igual('03-08-2026 com hífen', (C.parseData('03-08-2026') || {}).iso, '2026-08-03');
+igual('31/02/2026 é recusado, não "corrigido"', C.parseData('31/02/2026'), null);
+igual('objeto Date', (C.parseData(new Date(2026, 7, 3)) || {}).iso, '2026-08-03');
+igual('serial do Excel 46237', (C.parseData(46237) || {}).iso, C.serialParaIso(46237));
+igual('serial 45000 confere com 30/07/2023', C.serialParaIso(45000), '2023-03-15');
+igual('vazio devolve nulo', C.parseData(''), null);
+ok('ano de 2 dígitos avisa em vez de decidir calado',
+   (C.parseData('03/08/26') || {}).aviso, JSON.stringify(C.parseData('03/08/26')));
+igual('03/08/26 vira 2026', (C.parseData('03/08/26') || {}).iso, '2026-08-03');
+igual('12/04/94 vira 1994', (C.parseData('12/04/94') || {}).iso, '1994-04-12');
+
+
+/* =================================================================
+   2) CONTRATO DE EXPERIÊNCIA
+   ================================================================= */
+grupo('4. Experiência — 30 e 90 dias, com a admissão como dia 1');
+(function () {
+  function conf(adm, fim1, fim2) {
+    var e = C.experiencia(adm);
+    igual('admissão ' + C.isoParaBr(adm) + ' → fim do 1º período ' + C.isoParaBr(fim1), e.fimP1, fim1);
+    igual('admissão ' + C.isoParaBr(adm) + ' → 90º dia ' + C.isoParaBr(fim2), e.fimP2, fim2);
+    igual('admissão ' + C.isoParaBr(adm) + ': 1º período tem exatamente 30 dias',
+          C.difDias(adm, e.fimP1) + 1, 30);
+    igual('admissão ' + C.isoParaBr(adm) + ': contrato tem exatamente 90 dias',
+          C.difDias(adm, e.fimP2) + 1, 90);
+    igual('admissão ' + C.isoParaBr(adm) + ': 2º período começa no 31º dia',
+          C.diaDoContrato(adm, e.inicioP2), 31);
+    igual('admissão ' + C.isoParaBr(adm) + ': 2º período soma 60 dias',
+          C.difDias(e.inicioP2, e.fimP2) + 1, 60);
+  }
+  // Fim de mês, fevereiro de 28 e de 29, meses de 30 e 31, virada de ano.
+  conf('2026-01-31', '2026-03-01', '2026-04-30');   // fev de 28
+  conf('2024-01-31', '2024-02-29', '2024-04-29');   // fev de 29
+  conf('2026-01-30', '2026-02-28', '2026-04-29');
+  conf('2026-02-28', '2026-03-29', '2026-05-28');
+  conf('2024-02-29', '2024-03-29', '2024-05-28');   // admitido em 29/02
+  conf('2026-04-30', '2026-05-29', '2026-07-28');   // mês de 30
+  conf('2026-03-31', '2026-04-29', '2026-06-28');   // mês de 31
+  conf('2025-12-15', '2026-01-13', '2026-03-14');   // virada de ano
+  conf('2025-12-31', '2026-01-29', '2026-03-30');   // último dia do ano
+  conf('2023-12-31', '2024-01-29', '2024-03-29');   // virada para bissexto
+  conf('2026-08-01', '2026-08-30', '2026-10-29');
+})();
+igual('sem data de admissão não há período calculado', C.experiencia(''), null);
+igual('data de admissão inválida não gera período', C.experiencia('2026-02-30'), null);
+
+grupo('5. Experiência — máquina de status');
+(function () {
+  var cfg = { dias_aviso_p1: 7, dias_aviso_p2: 7 };
+  var adm = '2026-06-01';
+  var e = C.experiencia(adm);            // fimP1 30/06, inicioP2 01/07, fimP2 29/08
+  igual('fim do 1º período de 01/06/2026', e.fimP1, '2026-06-30');
+  igual('90º dia de 01/06/2026', e.fimP2, '2026-08-29');
+
+  function st(extra, hoje) {
+    var c = { data_admissao: adm };
+    Object.keys(extra || {}).forEach(function (k) { c[k] = extra[k]; });
+    return C.contratoStatus(c, cfg, hoje);
+  }
+  igual('no dia da admissão: 1º período em andamento', st({}, '2026-06-01'), 'p1_andamento');
+  igual('8 dias antes do fim do 1º período: ainda em andamento', st({}, '2026-06-22'), 'p1_andamento');
+  igual('exatamente 7 dias antes: já aguardando decisão', st({}, '2026-06-23'), 'p1_aguardando');
+  igual('no último dia do 1º período: aguardando decisão', st({}, '2026-06-30'), 'p1_aguardando');
+  igual('depois do 30º dia sem decisão: segue aguardando', st({}, '2026-07-10'), 'p1_aguardando');
+  igual('reprovado no 1º período', st({ p1_decisao: 'reprovado' }, '2026-06-25'), 'reprovado_p1');
+  igual('aprovado e renovação não confirmada', st({ p1_decisao: 'aprovado' }, '2026-06-28'), 'renovacao_aprovada');
+  igual('renovação confirmada, no 31º dia: 2º período em andamento',
+        st({ p1_decisao: 'aprovado', renovacao_confirmada_em: '2026-06-28T10:00:00Z' }, '2026-07-01'), 'p2_andamento');
+  igual('8 dias antes do 90º dia: 2º período em andamento',
+        st({ p1_decisao: 'aprovado', renovacao_confirmada_em: '2026-06-28T10:00:00Z' }, '2026-08-21'), 'p2_andamento');
+  igual('7 dias antes do 90º dia: aguardando decisão final',
+        st({ p1_decisao: 'aprovado', renovacao_confirmada_em: '2026-06-28T10:00:00Z' }, '2026-08-22'), 'p2_aguardando');
+  igual('passou do 90º dia sem decisão: aguardando decisão final',
+        st({ p1_decisao: 'aprovado', renovacao_confirmada_em: '2026-06-28T10:00:00Z' }, '2026-09-05'), 'p2_aguardando');
+  igual('efetivado', st({ p1_decisao: 'aprovado', renovacao_confirmada_em: 'x', p2_decisao: 'efetivado' }, '2026-09-01'), 'efetivado');
+  igual('reprovado no 2º período', st({ p1_decisao: 'aprovado', renovacao_confirmada_em: 'x', p2_decisao: 'encerrado' }, '2026-09-01'), 'reprovado_p2');
+  igual('encerrado avulso', st({ data_encerramento: '2026-07-15' }, '2026-08-01'), 'encerrado');
+  igual('sem admissão', C.contratoStatus({ data_admissao: null }, cfg, '2026-08-03'), 'sem_admissao');
+
+  igual('antecedência configurável: com 15 dias, avisa 15 dias antes',
+        C.contratoStatus({ data_admissao: adm }, { dias_aviso_p1: 15 }, '2026-06-15'), 'p1_aguardando');
+  igual('antecedência configurável: com 15 dias, 16 antes ainda está em andamento',
+        C.contratoStatus({ data_admissao: adm }, { dias_aviso_p1: 15 }, '2026-06-14'), 'p1_andamento');
+  igual('antecedência 0: só cobra no último dia',
+        C.contratoStatus({ data_admissao: adm }, { dias_aviso_p1: 0 }, '2026-06-29'), 'p1_andamento');
+  igual('antecedência 0: cobra no 30º dia',
+        C.contratoStatus({ data_admissao: adm }, { dias_aviso_p1: 0 }, '2026-06-30'), 'p1_aguardando');
+
+  // Todos os nove status do escopo existem e têm rótulo.
+  ['p1_andamento','p1_aguardando','renovacao_aprovada','p2_andamento','p2_aguardando',
+   'efetivado','reprovado_p1','reprovado_p2','encerrado'].forEach(function (s) {
+    ok('status "' + s + '" tem rótulo definido', !!(C.STATUS_CONTRATO[s] || {}).rotulo);
+  });
+})();
+
+grupo('6. Experiência — atraso e renovação não confirmada');
+(function () {
+  var cfg = { dias_aviso_p1: 7, dias_aviso_p2: 7 };
+  var r = C.contratoResumo({ data_admissao: '2026-06-01' }, cfg, '2026-07-10');
+  igual('decisão do 1º período em atraso é marcada como atrasada', r.atrasado, true);
+  igual('quantos dias passaram do 30º dia', r.diasParaFimP1, -10);
+
+  var r2 = C.contratoResumo({ data_admissao: '2026-06-01', p1_decisao: 'aprovado' }, cfg, '2026-06-28');
+  igual('renovação aprovada antes do 30º dia ainda não é atraso', r2.atrasado, false);
+  var r3 = C.contratoResumo({ data_admissao: '2026-06-01', p1_decisao: 'aprovado' }, cfg, '2026-07-05');
+  igual('renovação não confirmada depois do 30º dia é atraso', r3.atrasado, true);
+  igual('renovação não confirmada não faz o 2º período correr', r3.status, 'renovacao_aprovada');
+
+  // Admissão antiga (o arquivo real tem gente de 2020).
+  var r4 = C.contratoResumo({ data_admissao: '2020-09-10' }, cfg, '2026-08-03');
+  igual('admissão de 2020 sem decisão: cobrada como pendente', r4.status, 'p1_aguardando');
+  igual('admissão de 2020 aparece como atrasada', r4.atrasado, true);
+  igual('admissão de 2020: dia do contrato hoje', r4.diaAtual, C.difDias('2020-09-10', '2026-08-03') + 1);
+
+  // Caso real da planilha: admitida em 07/05/2026, em 03/08/2026 está no
+  // 89º dia — o 90º e último cai em 04/08/2026.
+  var r5 = C.contratoResumo({ data_admissao: '2026-05-07', p1_decisao: 'aprovado',
+                              renovacao_confirmada_em: 'x' }, cfg, '2026-08-03');
+  igual('admissão 07/05/2026: 90º dia é 04/08/2026', r5.fimP2, '2026-08-04');
+  igual('em 03/08/2026 essa pessoa está no 89º dia do contrato', r5.diaAtual, 89);
+  igual('na véspera do 90º dia o status é aguardando decisão final', r5.status, 'p2_aguardando');
+  igual('e falta 1 dia', r5.diasParaFimP2, 1);
+  igual('na véspera ainda não é atraso', r5.atrasado, false);
+  igual('no dia seguinte ao 90º já é atraso',
+        C.contratoResumo({ data_admissao: '2026-05-07', p1_decisao: 'aprovado',
+                           renovacao_confirmada_em: 'x' }, cfg, '2026-08-05').atrasado, true);
+})();
+
+grupo('7. Experiência — ações oferecidas pela tela');
+(function () {
+  var cfg = { dias_aviso_p1: 7, dias_aviso_p2: 7 }, adm = '2026-06-01';
+  var a1 = C.acoesContrato({ data_admissao: adm }, cfg, '2026-06-25');
+  igual('aguardando 1º período: só decisão do 1º período', [a1.p1, a1.renovar, a1.p2], [true, false, false]);
+  var a2 = C.acoesContrato({ data_admissao: adm, p1_decisao: 'aprovado' }, cfg, '2026-06-28');
+  igual('aprovado sem renovar: só confirmar renovação', [a2.p1, a2.renovar, a2.p2], [false, true, false]);
+  var a3 = C.acoesContrato({ data_admissao: adm, p1_decisao: 'aprovado', renovacao_confirmada_em: 'x' }, cfg, '2026-08-25');
+  igual('2º período: só decisão final', [a3.p1, a3.renovar, a3.p2], [false, false, true]);
+  var a4 = C.acoesContrato({ data_admissao: adm, p1_decisao: 'reprovado' }, cfg, '2026-08-25');
+  igual('reprovado: nenhuma decisão a tomar', [a4.p1, a4.renovar, a4.p2, a4.encerrar], [false, false, false, false]);
+})();
+
+
+/* =================================================================
+   3) CPF, TELEFONE, E-MAIL
+   ================================================================= */
+grupo('7b. Experiência — regularização do histórico na implantação');
+(function () {
+  var cfg = { dias_aviso_p1: 7, dias_aviso_p2: 7 }, hoje = '2026-08-03';
+  function p(o) {
+    var c = { id: 'x', nome: 'X', situacao: 'Ativo', data_admissao: '2020-09-10' };
+    Object.keys(o || {}).forEach(function (k) { c[k] = o[k]; });
+    return C.candidatosRegularizacao([c], cfg, hoje).length;
+  }
+  igual('admissão de 2020 sem decisão entra na regularização', p({}), 1);
+  igual('quem tem decisão do 1º período fica fora', p({ p1_decisao: 'aprovado' }), 0);
+  igual('quem já foi efetivado fica fora', p({ p1_decisao: 'aprovado', p2_decisao: 'efetivado' }), 0);
+  igual('quem foi reprovado fica fora', p({ p1_decisao: 'reprovado' }), 0);
+  igual('quem tem encerramento registrado fica fora', p({ data_encerramento: '2021-01-01' }), 0);
+  igual('inativo fica fora', p({ situacao: 'Inativo' }), 0);
+  igual('sem data de admissão fica fora', p({ data_admissao: null }), 0);
+
+  // A margem protege quem venceu há pouco: é pendência real, não histórico.
+  igual('90º dia ainda no futuro: fica fora', p({ data_admissao: '2026-05-07' }), 0);
+  igual('90º dia há 21 dias: fica fora com a margem de 30', p({ data_admissao: '2026-04-15' }), 0);
+  igual('90º dia há 21 dias: entra se a margem for 0',
+        C.candidatosRegularizacao([{ id: 'x', nome: 'X', situacao: 'Ativo',
+          data_admissao: '2026-04-15' }], cfg, hoje, 0).length, 1);
+  igual('90º dia há 60 dias: entra com a margem de 30',
+        p({ data_admissao: '2026-02-01' }), 1);
+
+  // Depois da regularização, a cobrança some.
+  var antes = C.gerarNotificacoes([{ id: 'x', nome: 'X', situacao: 'Ativo',
+    data_admissao: '2020-09-10', data_nascimento: null, folga_status: 'nao_analisada',
+    telefone: '5561999998888', email: 'a@b.com', tem_cpf: true, cpf: '52998224725' }],
+    cfg, hoje, [], hoje).filter(function (n) { return /^p[12]/.test(n.tipo); }).length;
+  var depois = C.gerarNotificacoes([{ id: 'x', nome: 'X', situacao: 'Ativo',
+    data_admissao: '2020-09-10', p1_decisao: 'aprovado', renovacao_confirmada_em: 'x',
+    p2_decisao: 'efetivado', data_nascimento: null, folga_status: 'nao_analisada',
+    telefone: '5561999998888', email: 'a@b.com', tem_cpf: true, cpf: '52998224725' }],
+    cfg, hoje, [], hoje).filter(function (n) { return /^p[12]/.test(n.tipo); }).length;
+  igual('antes da regularização há cobrança de contrato', antes, 1);
+  igual('depois da regularização a cobrança some', depois, 0);
+})();
+
+grupo('8. CPF');
+igual('CPF válido conhecido', C.cpfValido('529.982.247-25'), true);
+igual('CPF com dígito verificador errado', C.cpfValido('529.982.247-26'), false);
+igual('CPF com todos os dígitos iguais', C.cpfValido('111.111.111-11'), false);
+igual('CPF de zeros', C.cpfValido('000.000.000-00'), false);
+igual('CPF com 10 dígitos', C.cpfValido('5299822472'), false);
+igual('CPF com 12 dígitos', C.cpfValido('5299822472512'), false);
+igual('CPF vazio', C.cpfValido(''), false);
+igual('CPF só com dígitos', C.cpfValido('52998224725'), true);
+igual('formatação do CPF', C.cpfFormatado('52998224725'), '529.982.247-25');
+igual('máscara mostra só o final', C.cpfMascarado('52998224725'), '***.***.247-25');
+igual('máscara de CPF incompleto fica vazia', C.cpfMascarado('529982'), '');
+(function () {
+  // Os quatro CPFs reais que apareceram na amostra da planilha.
+  ['123.456.789-09','111.444.777-35','222.333.444-05','333.555.777-82'].forEach(function (c) {
+    igual('CPF real da planilha é válido: ' + c, C.cpfValido(c), true);
+  });
+})();
+
+grupo('9. Telefone — padrão WhatsApp e os defeitos que vêm da folha');
+(function () {
+  function t(v) { return C.analisarTelefone(v); }
+  igual('celular com DDD entre parênteses', [t('(65)991234567').tipo, t('(65)991234567').digitos],
+        ['movel', '5565991234567']);
+  igual('celular já com o 55', t('5561987654321').digitos, '5561987654321');
+  igual('celular com parêntese sem fechar (defeito real da planilha)',
+        t('(61987654321').digitos, '5561987654321');
+  igual('celular com hífen', t('(61)99999-9999').digitos, '5561999999999');
+  igual('zero de operadora é descartado', t('061999999999').digitos, '5561999999999');
+  igual('campo vazio', t('').tipo, 'vazio');
+  igual('só o DDD não serve', t('(61)').tipo, 'invalido');
+  igual('telefone fixo é aceito mas avisado', [t('(61)3333-4444').tipo, t('(61)3333-4444').whatsapp],
+        ['fixo', false]);
+  igual('celular de 8 dígitos: falta o nono, com sugestão',
+        [t('(61)95551234').tipo, t('(61)95551234').sugestao], ['incompleto', '5561995551234']);
+  igual('celular de 8 dígitos não é dado como pronto', t('(61)95551234').ok, false);
+  igual('número sem DDD', t('995551234').tipo, 'sem_ddd');
+  igual('DDD que não existe', t('(20)999999999').tipo, 'invalido');
+  igual('9 dígitos que não começam com 9', t('(61)899999999').tipo, 'invalido');
+  igual('exibição do celular', C.exibirTelefone('5561999998888'), '(61) 99999-8888');
+  igual('exibição do fixo', C.exibirTelefone('556133334444'), '(61) 3333-4444');
+  igual('entre dois campos, fica com o celular pronto',
+        C.melhorTelefone(['(61)', '(61)995551234']).digitos, '5561995551234');
+  igual('entre fixo e celular, fica com o celular',
+        C.melhorTelefone(['(61)33334444', '(61)995551234']).digitos, '5561995551234');
+  igual('se só há o de 8 dígitos, devolve a pendência, não um número inventado',
+        C.melhorTelefone(['', '(61)95551234']).tipo, 'incompleto');
+  igual('nada informado nos dois campos', C.melhorTelefone(['', '']).tipo, 'vazio');
+})();
+
+grupo('10. E-mail');
+['MARCOSLIMA15@EXEMPLO.COM','lucia.silva55@exemplo.com','a.b-c_d@sub.dominio.com.br'].forEach(function (e) {
+  igual('válido: ' + e, C.emailValido(e), true);
+});
+['sem-arroba.com','dois@@arrobas.com','sem@dominio','com espaco@x.com','@sodominio.com','x@y.c']
+  .forEach(function (e) { igual('inválido: ' + (e || '(vazio)'), C.emailValido(e), false); });
+igual('e-mail vazio é inválido', C.emailValido(''), false);
+igual('normalização baixa a caixa', C.normalizarEmail('  X@Y.COM '), 'x@y.com');
+
+grupo('11. Nomes');
+igual('primeiro nome de nome em maiúsculas', C.primeiroNome('ADRIANA DA SILVA SOUZA'), 'Adriana');
+igual('primeiro nome preserva capitalização já correta', C.primeiroNome('Bruna Patricio'), 'Bruna');
+igual('nome apresentável trata as preposições',
+      C.nomeApresentavel('CARLOS ANTONIO RIBEIRO DE JESUS'), 'Carlos Antonio Ribeiro de Jesus');
+igual('chave de comparação ignora acento e caixa',
+      C.chaveNome('José da Silva') === C.chaveNome('JOSE DA SILVA'), true);
+igual('chave de comparação ignora espaço duplicado',
+      C.chaveNome('Ana  Maria') === C.chaveNome('Ana Maria'), true);
+
+
+/* =================================================================
+   4) ANIVERSÁRIO E FOLGA
+   ================================================================= */
+grupo('12. Aniversário — inclusive quem nasceu em 29 de fevereiro');
+igual('29/02 em ano comum é tratado como 28/02', C.aniversarioNoAno('2000-02-29', 2026), '2026-02-28');
+igual('29/02 em ano bissexto fica em 29/02', C.aniversarioNoAno('2000-02-29', 2028), '2028-02-29');
+igual('o adiamento de 29/02 é sinalizado', C.ehAniversarioAdiado('2000-02-29', 2026), true);
+igual('em ano bissexto não há adiamento', C.ehAniversarioAdiado('2000-02-29', 2028), false);
+igual('quem nasceu em 28/02 não é marcado como adiado', C.ehAniversarioAdiado('2000-02-28', 2026), false);
+igual('aniversário comum', C.aniversarioNoAno('1994-04-12', 2026), '2026-04-12');
+igual('próximo aniversário quando ainda vai chegar',
+      C.proximoAniversario('1994-09-15', '2026-08-03'), '2026-09-15');
+igual('próximo aniversário quando já passou vai para o ano seguinte',
+      C.proximoAniversario('1994-04-12', '2026-08-03'), '2027-04-12');
+igual('aniversário é hoje: faltam 0 dias',
+      C.diasParaAniversario('1994-08-03', '2026-08-03'), 0);
+igual('nascido em 29/02: em 2026 o próximo aniversário é 28/02/2027',
+      C.proximoAniversario('2000-02-29', '2026-08-03'), '2027-02-28');
+igual('idade que completa', C.idadeQueFaz('1994-04-12', 2026), 32);
+(function () {
+  var lista = [
+    { id: 1, nome: 'ZARA', data_nascimento: '2000-02-29' },
+    { id: 2, nome: 'ANA',  data_nascimento: '1990-02-10' },
+    { id: 3, nome: 'BIA',  data_nascimento: '1990-03-01' },
+    { id: 4, nome: 'CAIO', data_nascimento: null }
+  ];
+  var fev = C.aniversariantesDoMes(lista, 2026, 2, '2026-02-01');
+  igual('aniversariantes de fevereiro: 2 pessoas', fev.length, 2);
+  igual('quem nasceu em 29/02 continua em fevereiro no ano comum',
+        fev.map(function (x) { return x.colaborador.nome; }), ['ANA', 'ZARA']);
+  igual('e com a data ajustada para 28/02', fev[1].aniversario, '2026-02-28');
+  igual('e marcado como adiado', fev[1].adiado, true);
+  igual('quem não tem data de nascimento fica fora', fev.filter(function (x) {
+    return x.colaborador.nome === 'CAIO'; }).length, 0);
+  igual('ordenado por dia do mês', fev.map(function (x) { return x.dia; }), [10, 28]);
+  igual('mês seguinte a dezembro vira janeiro do ano que vem',
+        C.mesSeguinte(2026, 12), { ano: 2027, mes: 1 });
+  igual('mês seguinte comum', C.mesSeguinte(2026, 8), { ano: 2026, mes: 9 });
+})();
+
+grupo('13. Folga de aniversário — competência mensal e conflitos');
+(function () {
+  var c = { id: 'a', nome: 'ANA', data_nascimento: '1990-08-20', unidade: 'NAZO SUL' };
+  igual('folga no mesmo mês do aniversário é aceita',
+        C.validarFolga(c, '2026-08-05', 2026, false).ok, true);
+  igual('folga no dia do aniversário é aceita',
+        C.validarFolga(c, '2026-08-20', 2026, false).ok, true);
+  igual('folga no último dia do mês do aniversário é aceita',
+        C.validarFolga(c, '2026-08-31', 2026, false).ok, true);
+  var fora = C.validarFolga(c, '2026-09-01', 2026, false);
+  igual('folga fora da competência é recusada', fora.ok, false);
+  ok('e a recusa explica o motivo', /agosto/.test(fora.erros.join(' ')), fora.erros.join(' '));
+  var exc = C.validarFolga(c, '2026-09-01', 2026, true);
+  igual('fora da competência com exceção autorizada é aceita', exc.ok, true);
+  ok('mas fica avisado como exceção', exc.avisos.length > 0, JSON.stringify(exc));
+  igual('sem data de nascimento não dá para conferir competência',
+        C.validarFolga({ id: 'b', nome: 'X', data_nascimento: null }, '2026-08-05', 2026, false).ok, false);
+  igual('folga em fevereiro para quem nasceu em 29/02 é aceita',
+        C.validarFolga({ id: 'c', nome: 'Z', data_nascimento: '2000-02-29' }, '2026-02-10', 2026, false).ok, true);
+  igual('competência confere apenas o mês', C.folgaNaCompetencia('1990-08-20', '2026-08-31'), true);
+  igual('competência recusa mês diferente', C.folgaNaCompetencia('1990-08-20', '2026-07-31'), false);
+
+  var lista = [
+    { id: 'a', nome: 'ANA', unidade: 'NAZO SUL', folga_data: '2026-08-05', folga_status: 'agendada' },
+    { id: 'b', nome: 'BIA', unidade: 'NAZO SUL', folga_data: '2026-08-05', folga_status: 'agendada' },
+    { id: 'c', nome: 'CID', unidade: 'ITAIM',    folga_data: '2026-08-05', folga_status: 'agendada' },
+    { id: 'd', nome: 'DEA', unidade: 'NAZO SUL', folga_data: '2026-08-05', folga_status: 'recusada' }
+  ];
+  var conf = C.conflitosFolga(lista, lista[0], '2026-08-05');
+  igual('conflito na mesma data e unidade aponta 1 pessoa', conf.length, 1);
+  igual('e é a pessoa certa', conf[0].nome, 'BIA');
+  igual('outra unidade não conta como conflito',
+        conf.filter(function (x) { return x.nome === 'CID'; }).length, 0);
+  igual('folga recusada não conta como conflito',
+        conf.filter(function (x) { return x.nome === 'DEA'; }).length, 0);
+  igual('todos os 8 status de folga do escopo existem',
+        Object.keys(C.FOLGA_STATUS).length, 8);
+  ['nao_analisada','aguardando_aprovacao','aprovada','agendada','realizada','recusada',
+   'nao_se_aplica','reagendada_excepcional'].forEach(function (s) {
+    ok('status de folga "' + s + '" tem rótulo', !!(C.FOLGA_STATUS[s] || {}).rotulo);
+  });
+})();
+
+grupo('14. Mensagem de aniversário');
+(function () {
+  var c = { nome: 'ADRIANA DA SILVA SOUZA', unidade: 'NAZO SUL' };
+  var m = C.montarMsgAniversario(C.MSG_ANIV_PADRAO, c);
+  ok('usa o primeiro nome', m.indexOf('Olá, Adriana!') === 0, m.slice(0, 40));
+  ok('não sobra nenhum campo entre chaves', m.indexOf('{') < 0, m);
+  ok('mantém o texto do modelo', /feliz aniversário/.test(m));
+  var p = C.montarMsgAniversario('Oi {PRIMEIRO_NOME}, {IDADE} anos na {UNIDADE}!', c, { idade: 32 });
+  igual('modelo personalizado', p, 'Oi Adriana, 32 anos na NAZO SUL!');
+  igual('link do WhatsApp aponta para o número cadastrado',
+        C.linkWhatsapp('5561999998888', 'oi').indexOf('https://wa.me/5561999998888?text=oi'), 0);
+  igual('sem telefone não há link', C.linkWhatsapp('', 'oi'), null);
+})();
+
+
+/* =================================================================
+   5) TERMO DE ENCERRAMENTO
+   ================================================================= */
+grupo('15. Termo de encerramento');
+(function () {
+  var cfg = { empresa_nome: 'NFE COMERCIO DE ALIMENTOS LTDA', empresa_cidade: 'Brasília',
+              resp_nome: 'Bruna Patricio', resp_cargo: 'Coordenadora de RH', termo_modelo: '' };
+  var c = { nome: 'MARCOS ANTONIO PEREIRA LIMA', cpf: '12345678909',
+            data_admissao: '2026-03-10', data_encerramento: '2026-06-07',
+            p1_obs: 'SEGREDO: gestor achou o desempenho fraco', p2_obs: 'OBSERVACAO INTERNA' };
+  var t = C.montarTermo(c, cfg, { dataEmissao: '2026-06-07' });
+
+  ok('nome do colaborador entra no termo', /Marcos Antonio Pereira Lima/.test(t.texto));
+  ok('CPF entra formatado', /123\.456\.789-09/.test(t.texto), t.texto);
+  ok('data de admissão entra em formato brasileiro', /10\/03\/2026/.test(t.texto));
+  ok('data do encerramento entra', /07\/06\/2026/.test(t.texto));
+  ok('nome da empresa entra', /NFE COMERCIO DE ALIMENTOS LTDA/.test(t.texto));
+  ok('cidade entra', /Brasília/.test(t.texto));
+  ok('data de emissão entra escrita', /7 de junho de 2026/.test(t.texto), t.texto);
+  ok('responsável e cargo entram', /Bruna Patricio/.test(t.texto) && /Coordenadora de RH/.test(t.texto));
+  ok('as duas vias são mencionadas', /duas vias/.test(t.texto));
+
+  // O ponto que o escopo faz questão: a observação interna não vaza.
+  ok('a observação interna do gestor NÃO aparece no termo',
+     t.texto.indexOf('SEGREDO') < 0 && t.texto.indexOf('OBSERVACAO INTERNA') < 0, t.texto);
+  ok('nenhum campo dinâmico ficou sem preencher',
+     C.TERMO_CAMPOS.every(function (campo) { return t.texto.indexOf(campo) < 0; }),
+     C.TERMO_CAMPOS.filter(function (campo) { return t.texto.indexOf(campo) >= 0; }).join(', '));
+  igual('termo completo quando a configuração está preenchida', t.completo, true);
+  ok('vem com a ressalva de que é modelo operacional',
+     /MODELO OPERACIONAL/.test(t.ressalva) && /jur[íi]dica/.test(t.ressalva));
+
+  var vazio = C.montarTermo(c, {}, { dataEmissao: '2026-06-07' });
+  igual('sem configuração o termo é marcado como incompleto', vazio.completo, false);
+  ok('e diz o que falta', vazio.camposFaltando.length >= 4, JSON.stringify(vazio.camposFaltando));
+  ok('deixa linha para preencher à mão em vez de sair em branco',
+     /_{8,}/.test(vazio.texto));
+
+  var semCpf = C.montarTermo({ nome: 'X Y', cpf: null, data_admissao: '2026-01-01',
+                               data_encerramento: '2026-04-01' }, cfg, { dataEmissao: '2026-04-01' });
+  ok('sem CPF o termo avisa em vez de imprimir vazio',
+     semCpf.camposFaltando.indexOf('CPF do colaborador') >= 0, JSON.stringify(semCpf.camposFaltando));
+
+  var modelo = C.montarTermo(c, { termo_modelo: 'Modelo próprio: [NOME COMPLETO] / [CPF]',
+                                  empresa_nome: 'E', empresa_cidade: 'C', resp_nome: 'R', resp_cargo: 'Q' },
+                             { dataEmissao: '2026-06-07' });
+  igual('modelo editado pelo administrador é respeitado',
+        modelo.texto, 'Modelo próprio: Marcos Antonio Pereira Lima / 123.456.789-09');
+})();
+
+
+/* =================================================================
+   6) IMPORTAÇÃO
+   ================================================================= */
+grupo('16. Importação — de-para automático das colunas');
+(function () {
+  // Layout padrão de funcionário (o "arquivo_padrao_funcionario"),
+  // com quebras de linha e observações dentro do cabeçalho.
+  var cab = ['MATRICULA *','NOME *','DATA DE ADMISSÃO *\n(FORMATO DD/MM/AAAA)',
+             'CPF *\n(APENAS CPF VÁLIDO)','RG','NOME DA MAE *',
+             'DATA DE EMISSÃO DO RG (FORMATO DD/MM/AAAA)','ORGAO EMISSOR RG','UF EMISSOR RG',
+             'DATA DE NASCIMENTO *\n(FORMATO DD/MM/AAAA)','SEXO *','ESTADO CIVIL *',
+             'DATA DE CASAMENTO**','NATURALIDADE','NACIONALIDADE','EMAIL','CEP *','NUMERO *',
+             'COMPLEMENTO','LOGRADOURO *','BAIRRO *','CIDADE *','UF *','DDD RESIDENCIAL',
+             'TEL RESIDENCIAL','DDD CELULAR','TEL CELULAR'];
+  var m = C.mapearColunas(cab);
+  igual('acha a coluna do nome', m.nome, 1);
+  igual('acha o CPF apesar da observação no cabeçalho', m.cpf, 3);
+  igual('acha o nome da mãe', m.nome_mae, 5);
+  igual('acha a admissão', m.data_admissao, 2);
+  igual('acha o nascimento e não confunde com a emissão do RG', m.data_nascimento, 9);
+  igual('não confunde data de casamento com nada', [m.data_admissao, m.data_nascimento], [2, 9]);
+  igual('acha o e-mail', m.email, 15);
+  igual('separa DDD CELULAR de TEL CELULAR', [m.ddd, m.telefone], [25, 26]);
+  igual('acha a matrícula', m.matricula, 0);
+
+  var cab2 = ['NOME','CPF','DATA_NASCIMENTO','SEXO','EMAIL','CELULAR'];
+  var m2 = C.mapearColunas(cab2);
+  igual('layout enxuto: nome/cpf/nascimento/email/celular',
+        [m2.nome, m2.cpf, m2.data_nascimento, m2.email, m2.telefone], [0, 1, 2, 4, 5]);
+  ok('nenhuma coluna é usada para dois campos', (function () {
+    var vals = Object.keys(m).map(function (k) { return m[k]; });
+    return vals.length === new Set(vals).size;
+  })());
+
+  var cab3 = ['Nome do Funcionário','Unidade','Whatsapp','E-mail','Dt Admissão','Dt Nasc','Nº CPF'];
+  var m3 = C.mapearColunas(cab3);
+  igual('cabeçalhos abreviados e com acento',
+        [m3.nome, m3.unidade, m3.telefone, m3.email, m3.data_admissao, m3.data_nascimento, m3.cpf],
+        [0, 1, 2, 3, 4, 5, 6]);
+})();
+
+grupo('17. Importação — leitura do relatório da folha (Rel090)');
+(function () {
+  var det = C.lerDetalheFolha(
+    'Rua das Acacias - Residencial Modelo (São - Brasília - DF - CEP: 70000-100 - ' +
+    'Fones:  / (65)991234567 - E-Mail: MARCOSLIMA15@EXEMPLO.COM\n' +
+    'Nome da Mãe: HELENA PEREIRA LIMA - CTPS: 1234567 8909-DF');
+  igual('extrai o celular', det.telefones, ['(65)991234567']);
+  igual('extrai o e-mail', det.email, 'MARCOSLIMA15@EXEMPLO.COM');
+  igual('extrai o nome da mãe sem levar a CTPS', det.nome_mae, 'HELENA PEREIRA LIMA');
+
+  var d2 = C.lerDetalheFolha('X - Fones: (61) / (61)95551234 - E-Mail: AS12@EXEMPLO.COM\n' +
+                             'Nome da Mãe: MARGARIDA SOUZA - CTPS: 1112223 33335-DF');
+  igual('dois campos de telefone, um só com DDD', d2.telefones, ['(61)95551234']);
+  igual('e o nome da mãe sai limpo', d2.nome_mae, 'MARGARIDA SOUZA');
+
+  var d3 = C.lerDetalheFolha('Y - Fones:  / (61987654321 - E-Mail: CARLOS@EXEMPLO.COM\n' +
+                             'Nome da Mãe: ORLANDA FLORINDA RIBEIRO - CTPS: 44455 00066-GO');
+  igual('parêntese sem fechar não atrapalha', d3.telefones, ['(61987654321']);
+  igual('telefone quebrado ainda vira número válido',
+        C.melhorTelefone(d3.telefones).digitos, '5561987654321');
+
+  var d4 = C.lerDetalheFolha('Z - Fones:  /  - E-Mail: lucia.silva55@exemplo.com\n' +
+                             'Nome da Mãe: LUCIA MARIA DA SILVA - CTPS: 3334445 0077-DF');
+  igual('sem telefone nenhum', d4.telefones, []);
+  igual('e-mail em minúsculas', d4.email, 'lucia.silva55@exemplo.com');
+  igual('nome da mãe presente mesmo sem telefone', d4.nome_mae, 'LUCIA MARIA DA SILVA');
+
+  // Relatório inteiro, no formato exato do arquivo.
+  var matriz = [
+    ['LISTAGEM DE FUNCIONÁRIOS - 01 = ENDEREÇOS','','','','','','','','','','','','Data: 03/08/2026'],
+    ['','','','','','','','','','','','','Pág.: 1'],
+    [],
+    ['Empresa: 073 - NFE COMERCIO DE ALIMENTOS LTDA','','','','','','','','','','','','Rel090'],
+    [],
+    ['Matr.','Nome do Funcionário','','','','','','','CPF','','Data Adm.','','Data Mov.','','Data Nasc.'],
+    [],
+    ['101','MARCOS ANTONIO PEREIRA LIMA','','','','','','','123.456.789-09','','10/03/2026','','','','15/09/2003'],
+    ['','Rua das Acacias - Brasília - DF - CEP: 70000-100 - Fones:  / (65)991234567 - E-Mail: MARCOSLIMA15@EXEMPLO.COM\nNome da Mãe: HELENA PEREIRA LIMA - CTPS: 1234567 8909-DF'],
+    [], [], [], [],
+    ['102','ADRIANA DA SILVA SOUZA','','','','','','','111.444.777-35','','04/07/2026','','01/02/2026','','12/04/1994'],
+    ['','10 - Bairro Modelo - Brasília - DF - CEP: 70000-200 - Fones: (61) / (61)95551234 - E-Mail: AS12CONTATO@EXEMPLO.COM\nNome da Mãe: MARGARIDA SOUZA DOS SANTOS - CTPS: 1112223 33335-DF'],
+    [], [], [], []
+  ];
+  var lay = C.detectarLayout(matriz);
+  igual('o layout de relatório da folha é reconhecido sozinho', lay.tipo, 'folha');
+  igual('e a linha de cabeçalho é achada', lay.linhaCabecalho, 5);
+  igual('a unidade é lida da linha "Empresa:"', C.unidadeDoRelatorio(matriz),
+        '073 - NFE COMERCIO DE ALIMENTOS LTDA');
+
+  var lido = C.lerPlanilha(matriz);
+  igual('duas pessoas lidas', lido.registros.length, 2);
+  igual('nome da 1ª', lido.registros[0].nome, 'MARCOS ANTONIO PEREIRA LIMA');
+  igual('CPF da 1ª', lido.registros[0].cpf, '123.456.789-09');
+  igual('admissão da 1ª', lido.registros[0].data_admissao_bruta, '10/03/2026');
+  igual('nascimento da 1ª', lido.registros[0].data_nascimento_bruta, '15/09/2003');
+  igual('nome da mãe da 1ª', lido.registros[0].nome_mae, 'HELENA PEREIRA LIMA');
+  igual('e-mail da 1ª', lido.registros[0].email, 'MARCOSLIMA15@EXEMPLO.COM');
+  igual('unidade herdada do bloco', lido.registros[0].unidade, '073 - NFE COMERCIO DE ALIMENTOS LTDA');
+  igual('a "Data Mov." não é confundida com admissão nem nascimento',
+        [lido.registros[1].data_admissao_bruta, lido.registros[1].data_nascimento_bruta],
+        ['04/07/2026', '12/04/1994']);
+  igual('a unidade digitada pelo usuário substitui a razão social',
+        C.lerPlanilha(matriz, { unidade: 'NAZO SUL' }).registros[0].unidade, 'NAZO SUL');
+  ok('as linhas de título, página e cabeçalho não entram como pessoa',
+     lido.registros.every(function (r) { return !/LISTAGEM|Rel090|Pág|Matr/.test(r.nome); }));
+})();
+
+grupo('18. Importação — validação linha a linha');
+(function () {
+  function v(o) {
+    var base = { linha: 2, nome: 'ANA MARIA', cpf: '529.982.247-25',
+                 data_admissao_bruta: '01/06/2026', data_nascimento_bruta: '12/04/1994',
+                 email: 'ana@x.com', telefone_bruto: '(61)999998888', unidade: 'NAZO SUL' };
+    Object.keys(o || {}).forEach(function (k) { base[k] = o[k]; });
+    return C.validarRegistro(base);
+  }
+  igual('registro completo é válido', v({}).grau, 'valido');
+  igual('CPF normalizado para dígitos', v({}).cpf, '52998224725');
+  igual('telefone normalizado para o padrão WhatsApp', v({}).telefone, '5561999998888');
+  igual('datas convertidas para ISO', [v({}).data_admissao, v({}).data_nascimento],
+        ['2026-06-01', '1994-04-12']);
+
+  igual('sem nome é descartado', v({ nome: '' }).grau, 'invalido');
+  igual('CPF inválido é descartado', v({ cpf: '111.111.111-11' }).grau, 'invalido');
+  igual('data de admissão impossível é descartada', v({ data_admissao_bruta: '31/02/2026' }).grau, 'invalido');
+  igual('nascimento depois da admissão é descartado',
+        v({ data_nascimento_bruta: '12/04/2025' }).grau, 'invalido');
+
+  igual('sem CPF vai para correção manual, não para o lixo', v({ cpf: '' }).grau, 'manual');
+  igual('sem telefone vai para correção manual', v({ telefone_bruto: '' }).grau, 'manual');
+  igual('sem e-mail vai para correção manual', v({ email: '' }).grau, 'manual');
+  igual('e-mail malformado vai para correção manual', v({ email: 'ana@@x' }).grau, 'manual');
+  igual('sem data de nascimento vai para correção manual',
+        v({ data_nascimento_bruta: '' }).grau, 'manual');
+  igual('sem data de admissão vai para correção manual',
+        v({ data_admissao_bruta: '' }).grau, 'manual');
+
+  var inc = v({ telefone_bruto: '(61)95551234' });
+  igual('celular de 8 dígitos vai para correção manual', inc.grau, 'manual');
+  igual('sem gravar telefone chutado', inc.telefone, null);
+  igual('mas guardando a sugestão para o usuário confirmar', inc.telefoneSugestao, '5561995551234');
+
+  var fixo = v({ telefone_bruto: '(61)33334444' });
+  igual('telefone fixo é gravado', fixo.telefone, '556133334444');
+  igual('mas sinalizado para conferência', fixo.grau, 'manual');
+
+  igual('situação "Demitido" na planilha vira Inativo',
+        C.validarRegistro({ linha: 2, nome: 'X Y', cpf: '', situacao: 'Demitido' }).situacao, 'Inativo');
+  igual('sem coluna de situação assume Ativo', v({}).situacao, 'Ativo');
+
+  var doisCampos = C.validarRegistro({ linha: 2, nome: 'ANA', cpf: '529.982.247-25',
+    data_admissao_bruta: '01/06/2026', data_nascimento_bruta: '12/04/1994', email: 'a@b.com',
+    telefones_brutos: ['(61)', '(61)995551234'] });
+  igual('quando há dois campos de telefone, escolhe o aproveitável',
+        doisCampos.telefone, '5561995551234');
+})();
+
+grupo('19. Importação — duplicidade, atualização e reimportação');
+(function () {
+  var existentes = [
+    { id: 'u1', nome: 'ANA MARIA', cpf: '52998224725', data_admissao: '2026-06-01',
+      data_nascimento: '1994-04-12', email: 'ana@x.com', telefone: '5561999998888',
+      unidade: 'NAZO SUL', nome_mae: 'MARIA MAE' },
+    { id: 'u2', nome: 'JOAO SEM CPF', cpf: null, data_admissao: '2026-05-01',
+      data_nascimento: '1990-01-01', email: null, telefone: null, unidade: 'NAZO SUL' }
+  ];
+  function val(o) {
+    var base = { linha: 2, nome: 'ANA MARIA', cpf: '529.982.247-25',
+                 data_admissao_bruta: '01/06/2026', data_nascimento_bruta: '12/04/1994',
+                 email: 'ana@x.com', telefone_bruto: '(61)99999-8888', unidade: 'NAZO SUL',
+                 nome_mae: 'MARIA MAE' };
+    Object.keys(o || {}).forEach(function (k) { base[k] = o[k]; });
+    return C.validarRegistro(base);
+  }
+
+  // (a) reimportar o mesmo arquivo não deve mexer em nada
+  var re = C.conciliar([val({})], existentes);
+  igual('reimportar dado idêntico: nada a inserir', re.inserir.length, 0);
+  igual('reimportar dado idêntico: nada a atualizar', re.atualizar.length, 0);
+  igual('reimportar dado idêntico: entra como sem mudança', re.semMudanca.length, 1);
+
+  // (b) telefone e e-mail mudaram
+  var mud = C.conciliar([val({ telefone_bruto: '(61)97777-6666', email: 'nova@x.com' })], existentes);
+  igual('mudança de contato entra como atualização', mud.atualizar.length, 1);
+  var difs = mud.atualizar[0].diferencas;
+  igual('duas diferenças detectadas', difs.length, 2);
+  ok('telefone e e-mail vêm pré-marcados (é o alvo do escopo)',
+     difs.every(function (d) { return d.marcado === true; }), JSON.stringify(difs));
+  igual('a diferença mostra de → para',
+        difs.filter(function (d) { return d.campo === 'email'; })[0],
+        { campo: 'email', rotulo: 'E-mail', de: 'ana@x.com', para: 'nova@x.com', marcado: true });
+
+  // (c) campos sensíveis mudaram: não vêm pré-marcados
+  var sens = C.conciliar([val({ nome_mae: 'OUTRA MAE', data_admissao_bruta: '02/06/2026' })], existentes);
+  var ds = sens.atualizar[0].diferencas;
+  ok('nome da mãe e admissão NÃO vêm pré-marcados',
+     ds.every(function (d) { return d.marcado === false; }), JSON.stringify(ds));
+
+  // (d) a planilha não informou um campo: não apaga o que já existe
+  var semTel = C.conciliar([val({ telefone_bruto: '', email: '' })], existentes);
+  igual('campo vazio na planilha não vira proposta de apagar',
+        semTel.atualizar.length + semTel.semMudanca.length, 1);
+  igual('e nenhuma diferença é gerada por ausência',
+        (semTel.atualizar[0] ? semTel.atualizar[0].diferencas.length : 0), 0);
+
+  // (e) CPF duplicado dentro do próprio arquivo
+  var dup = C.conciliar([val({ linha: 2 }), val({ linha: 9 })], []);
+  igual('CPF repetido na planilha: só o primeiro entra', dup.inserir.length, 1);
+  igual('o segundo é marcado como duplicata do arquivo', dup.duplicadosNoArquivo.length, 1);
+  ok('e o motivo aponta a linha original',
+     /linha 2/.test(dup.duplicadosNoArquivo[0].motivoDuplicata),
+     dup.duplicadosNoArquivo[0].motivoDuplicata);
+
+  // (f) sem CPF, a duplicata é achada por nome + admissão
+  var semCpf1 = C.validarRegistro({ linha: 3, nome: 'JOAO SEM CPF', cpf: '',
+    data_admissao_bruta: '01/05/2026', data_nascimento_bruta: '01/01/1990' });
+  var semCpfConc = C.conciliar([semCpf1], existentes);
+  igual('quem não tem CPF é reconhecido por nome + admissão',
+        semCpfConc.inserir.length, 0);
+  ok('e não é inserido de novo',
+     semCpfConc.semMudanca.length + semCpfConc.atualizar.length === 1,
+     JSON.stringify({ i: semCpfConc.inserir.length, s: semCpfConc.semMudanca.length, a: semCpfConc.atualizar.length }));
+
+  var semCpfDup = C.conciliar([
+    C.validarRegistro({ linha: 3, nome: 'NOVA PESSOA', cpf: '', data_admissao_bruta: '01/05/2026' }),
+    C.validarRegistro({ linha: 4, nome: 'NOVA PESSOA', cpf: '', data_admissao_bruta: '01/05/2026' })
+  ], []);
+  igual('mesmo nome e admissão repetidos no arquivo, sem CPF: 1 entra',
+        semCpfDup.inserir.length, 1);
+  igual('e 1 é barrado como duplicata', semCpfDup.duplicadosNoArquivo.length, 1);
+
+  // (g) mesmo nome e admissão, CPF diferente: decisão humana
+  var conflito = C.conciliar([val({ cpf: '111.444.777-35' })], existentes);
+  igual('CPF novo para nome e admissão já cadastrados: entra como pendência manual',
+        conflito.manual.length, 1);
+  ok('e avisa da possível duplicata',
+     /CPF diferente/.test(conflito.inserir[0].avisos.join(' ')),
+     conflito.inserir[0].avisos.join(' '));
+
+  // (h) o pacote só leva o que foi confirmado
+  var pac = C.montarPacote(mud, {});
+  igual('pacote de atualização tem 1 item', pac.length, 1);
+  igual('e leva só os campos marcados', pac[0].campos.sort(), ['email', 'telefone']);
+  igual('com a ação certa', pac[0].acao, 'atualizar');
+  igual('e o id do cadastro existente', pac[0].id, 'u1');
+
+  var pacDesmarcado = C.montarPacote(mud, { campos: { 2: { email: false, telefone: false } } });
+  igual('se o usuário desmarcar tudo, nada é enviado', pacDesmarcado.length, 0);
+
+  var pacParcial = C.montarPacote(mud, { campos: { 2: { email: false, telefone: true } } });
+  igual('desmarcar um campo mantém o outro', pacParcial[0].campos, ['telefone']);
+  igual('e o valor enviado é o novo', pacParcial[0].telefone, '5561977776666');
+
+  var pacInsercao = C.montarPacote(C.conciliar([val({ cpf: '222.333.444-05', nome: 'NOVO NOME' })], existentes), {});
+  igual('inserção leva todos os campos', pacInsercao[0].acao, 'inserir');
+  igual('com o CPF em dígitos', pacInsercao[0].cpf, '22233344405');
+
+  var pacRecusado = C.montarPacote(C.conciliar([val({ cpf: '222.333.444-05', nome: 'NOVO' })], existentes),
+                                   { inserir: { 2: false } });
+  igual('inserção recusada pelo usuário não entra no pacote', pacRecusado.length, 0);
+
+  // (i) resumo
+  var conc = C.conciliar([
+    val({ linha: 2 }),                                          // sem mudança
+    val({ linha: 3, telefone_bruto: '(61)97777-6666' }),        // atualizar (mesmo CPF -> duplicata!)
+    C.validarRegistro({ linha: 4, nome: 'X', cpf: '111.111.111-11' }),  // inválido
+    C.validarRegistro({ linha: 5, nome: 'SEM CPF NOVO', cpf: '' })      // manual
+  ], existentes);
+  var res = C.resumoImportacao(conc, { inseridos: 1, atualizados: 0, recusados: 0 });
+  igual('o resumo conta os lidos', res.lidos, 4);
+  igual('o resumo conta os inválidos', res.invalidos, 1);
+  ok('o resumo conta os que exigem correção manual', res.exigemCorrecaoManual >= 1, JSON.stringify(res));
+  ok('o resumo traz o que o banco respondeu', res.inseridos === 1, JSON.stringify(res));
+})();
+
+
+/* =================================================================
+   7) CADASTRO INCOMPLETO
+   ================================================================= */
+grupo('20. Situação do cadastro');
+(function () {
+  var bom = { nome: 'ANA', cpf: '52998224725', tem_cpf: true, telefone: '5561999998888',
+              email: 'a@b.com', data_nascimento: '1994-04-12', data_admissao: '2026-06-01' };
+  igual('cadastro completo', C.situacaoCadastro(bom).completo, true);
+  igual('cadastro completo não é contato incompleto', C.situacaoCadastro(bom).contatoIncompleto, false);
+
+  function semCampo(k, v) { var c = {}; Object.keys(bom).forEach(function (x) { c[x] = bom[x]; }); c[k] = v; return c; }
+  igual('sem telefone é contato incompleto',
+        C.situacaoCadastro(semCampo('telefone', null)).contatoIncompleto, true);
+  igual('sem e-mail é contato incompleto',
+        C.situacaoCadastro(semCampo('email', '')).contatoIncompleto, true);
+  igual('e-mail inválido é contato incompleto',
+        C.situacaoCadastro(semCampo('email', 'x@@y')).contatoIncompleto, true);
+  igual('celular de 8 dígitos é contato incompleto',
+        C.situacaoCadastro(semCampo('telefone', '556195551234')).contatoIncompleto, true);
+  igual('telefone fixo é sinalizado como atenção, não como erro',
+        C.situacaoCadastro(semCampo('telefone', '556133334444')).problemas[0].grau, 'atencao');
+  igual('sem nascimento aparece como problema, mas não de contato', (function () {
+    var s = C.situacaoCadastro(semCampo('data_nascimento', null));
+    return [s.completo, s.contatoIncompleto];
+  })(), [false, false]);
+  ok('a sugestão do nono dígito acompanha o problema',
+     C.situacaoCadastro(semCampo('telefone', '556195551234')).problemas[0].sugestao === '5561995551234');
+})();
+
+
+/* =================================================================
+   8) NOTIFICAÇÕES
+   ================================================================= */
+grupo('21. Notificações');
+(function () {
+  var cfg = { dias_aviso_p1: 7, dias_aviso_p2: 7, dias_aviso_aniv: 7, politica_folga_ativa: true };
+  var hoje = '2026-08-03';
+  function base(o) {
+    var c = { id: 'x', nome: 'ANA MARIA', situacao: 'Ativo', unidade: 'NAZO SUL',
+              cpf: '52998224725', tem_cpf: true, telefone: '5561999998888', email: 'a@b.com',
+              data_admissao: null, data_nascimento: null,
+              folga_status: 'nao_analisada', folga_ano: null, folga_data: null,
+              aniv_msg_ano: null, aniv_msg_em: null };
+    Object.keys(o || {}).forEach(function (k) { c[k] = o[k]; });
+    return c;
+  }
+  function tipos(c, estados) {
+    return C.gerarNotificacoes([c], cfg, hoje, estados || [], hoje + 'T12:00:00Z')
+            .map(function (n) { return n.tipo; });
+  }
+
+  // 06/07/2026 -> 30º dia em 04/08/2026: dentro da janela de 7 dias.
+  ok('avisa do fim do 1º período dentro da antecedência',
+     tipos(base({ data_admissao: '2026-07-06' })).indexOf('p1_vence') >= 0,
+     JSON.stringify(tipos(base({ data_admissao: '2026-07-06' }))));
+  // 01/08/2026 -> 30º dia em 30/08: fora da janela.
+  igual('não avisa quando ainda está longe',
+        tipos(base({ data_admissao: '2026-08-01' })).indexOf('p1_vence'), -1);
+  // 04/07/2026 -> 30º dia em 02/08: já passou.
+  ok('cobra a decisão do 1º período em atraso',
+     tipos(base({ data_admissao: '2026-07-04' })).indexOf('p1_atrasada') >= 0);
+  ok('a decisão em atraso é urgente',
+     C.gerarNotificacoes([base({ data_admissao: '2026-07-04' })], cfg, hoje, [], hoje)[0].prioridade === 'urgente');
+  ok('cobra a renovação aprovada e não confirmada',
+     tipos(base({ data_admissao: '2026-07-04', p1_decisao: 'aprovado' })).indexOf('renov_pendente') >= 0);
+  // 07/05/2026 -> 90º dia hoje.
+  ok('avisa do 90º dia',
+     tipos(base({ data_admissao: '2026-05-07', p1_decisao: 'aprovado', renovacao_confirmada_em: 'x' }))
+       .indexOf('p2_vence') >= 0);
+  // 15/04/2026 -> 90º dia em 13/07: passou.
+  ok('cobra a decisão final em atraso',
+     tipos(base({ data_admissao: '2026-04-15', p1_decisao: 'aprovado', renovacao_confirmada_em: 'x' }))
+       .indexOf('p2_atrasada') >= 0);
+  igual('quem já foi efetivado sai das cobranças de contrato',
+        tipos(base({ data_admissao: '2026-04-15', p1_decisao: 'aprovado',
+                     renovacao_confirmada_em: 'x', p2_decisao: 'efetivado' }))
+          .filter(function (t) { return /^p[12]/.test(t) || t === 'renov_pendente'; }).length, 0);
+  igual('quem foi reprovado sai das cobranças de contrato',
+        tipos(base({ data_admissao: '2026-07-04', p1_decisao: 'reprovado', situacao: 'Inativo' }))
+          .filter(function (t) { return /^p[12]/.test(t); }).length, 0);
+
+  // Aniversário
+  ok('avisa do aniversário uma semana antes',
+     tipos(base({ data_nascimento: '1990-08-08' })).indexOf('aniversario') >= 0);
+  igual('não avisa de aniversário fora da antecedência',
+        tipos(base({ data_nascimento: '1990-08-20' })).indexOf('aniversario'), -1);
+  ok('quem nasceu em 29/02 é avisado em ano comum',
+     C.gerarNotificacoes([base({ data_nascimento: '2000-02-29' })], cfg, '2026-02-25', [], '2026-02-25')
+       .some(function (n) { return n.tipo === 'aniversario' && /29\/02/.test(n.detalhe); }));
+  ok('cobra a mensagem não enviada depois do aniversário',
+     tipos(base({ data_nascimento: '1990-08-01' })).indexOf('msg_aniv') >= 0);
+  igual('mensagem já registrada não é cobrada',
+        tipos(base({ data_nascimento: '1990-08-01', aniv_msg_ano: 2026, aniv_msg_em: '2026-08-01T10:00:00Z' }))
+          .indexOf('msg_aniv'), -1);
+  ok('mensagem enviada no ano passado volta a ser cobrada neste ano',
+     tipos(base({ data_nascimento: '1990-08-01', aniv_msg_ano: 2025, aniv_msg_em: '2025-08-01T10:00:00Z' }))
+       .indexOf('msg_aniv') >= 0);
+
+  // Folga
+  ok('cobra a folga do aniversariante do mês',
+     tipos(base({ data_nascimento: '1990-08-20' })).indexOf('folga_analise') >= 0);
+  ok('cobra o agendamento da folga aprovada sem data',
+     tipos(base({ data_nascimento: '1990-08-20', folga_status: 'aprovada', folga_ano: 2026 }))
+       .indexOf('folga_agendar') >= 0);
+  igual('folga já agendada não é cobrada',
+        tipos(base({ data_nascimento: '1990-08-20', folga_status: 'agendada',
+                     folga_ano: 2026, folga_data: '2026-08-25' }))
+          .filter(function (t) { return /folga/.test(t); }).length, 0);
+  igual('folga marcada como "não se aplica" não é cobrada',
+        tipos(base({ data_nascimento: '1990-08-20', folga_status: 'nao_se_aplica', folga_ano: 2026 }))
+          .filter(function (t) { return /folga/.test(t); }).length, 0);
+  ok('folga do ano passado volta a ser cobrada neste ano',
+     tipos(base({ data_nascimento: '1990-08-20', folga_status: 'realizada', folga_ano: 2025 }))
+       .indexOf('folga_analise') >= 0);
+  igual('com a política de folga desligada, não se cobra folga',
+        C.gerarNotificacoes([base({ data_nascimento: '1990-08-20' })],
+          { dias_aviso_aniv: 7, politica_folga_ativa: false }, hoje, [], hoje)
+          .filter(function (n) { return /folga/.test(n.tipo); }).length, 0);
+  igual('aniversariante de outro mês não gera cobrança de folga',
+        tipos(base({ data_nascimento: '1990-11-20' })).filter(function (t) { return /folga/.test(t); }).length, 0);
+
+  // Cadastro
+  ok('cobra telefone e e-mail ausentes',
+     tipos(base({ telefone: null, email: null })).indexOf('cadastro') >= 0);
+  igual('cadastro completo não gera cobrança', tipos(base({})).indexOf('cadastro'), -1);
+  igual('colaborador inativo não é cobrado por cadastro',
+        tipos(base({ situacao: 'Inativo', telefone: null, email: null })).indexOf('cadastro'), -1);
+
+  // Estado das notificações
+  var c1 = base({ data_admissao: '2026-07-04' });
+  var lidas = C.gerarNotificacoes([c1], cfg, hoje,
+    [{ colaborador_id: 'x', tipo: 'p1_atrasada', referencia: 'p1', lida_em: '2026-08-03T09:00:00Z' }], hoje);
+  igual('marcar como lida é refletido', lidas[0].lida, true);
+  var adiada = C.gerarNotificacoes([c1], cfg, hoje,
+    [{ colaborador_id: 'x', tipo: 'p1_atrasada', referencia: 'p1', adiada_para: '2026-08-10T09:00:00Z' }],
+    '2026-08-03T12:00:00Z');
+  igual('adiar esconde da contagem', adiada[0].adiada, true);
+  igual('e a contagem ignora a adiada', C.contarNotificacoes(adiada).total, 0);
+  var venceu = C.gerarNotificacoes([c1], cfg, hoje,
+    [{ colaborador_id: 'x', tipo: 'p1_atrasada', referencia: 'p1', adiada_para: '2026-08-01T09:00:00Z' }],
+    '2026-08-03T12:00:00Z');
+  igual('quando o adiamento vence, a pendência volta', venceu[0].adiada, false);
+  var resolvida = C.gerarNotificacoes([c1], cfg, hoje,
+    [{ colaborador_id: 'x', tipo: 'p1_atrasada', referencia: 'p1',
+       resolvida_em: '2026-08-03T09:00:00Z', resolucao: 'Falei com o gestor' }], hoje);
+  igual('resolver é refletido', resolvida[0].resolvida, true);
+  igual('e a resolução fica registrada', resolvida[0].resolucao, 'Falei com o gestor');
+  igual('resolvida sai da contagem', C.contarNotificacoes(resolvida).total, 0);
+
+  // Ordenação e agrupamento
+  var varias = C.gerarNotificacoes([
+    base({ id: 'a', nome: 'AAA', data_admissao: '2026-07-04' }),                 // urgente
+    base({ id: 'b', nome: 'BBB', telefone: null, email: null }),                 // media
+    base({ id: 'c', nome: 'CCC', data_nascimento: '1990-08-08' })                // media/alta
+  ], cfg, hoje, [], hoje);
+  igual('as urgentes vêm primeiro', varias[0].prioridade, 'urgente');
+  ok('todas as notificações têm grupo e título',
+     varias.every(function (n) { return !!n.grupo && !!n.titulo; }));
+  ok('todos os tipos previstos no escopo existem',
+     ['p1_vence','p1_atrasada','renov_pendente','p2_vence','p2_atrasada','aniversario',
+      'msg_aniv','folga_analise','folga_agendar','cadastro']
+       .every(function (t) { return !!C.TIPOS_NOTIF[t]; }));
+})();
+
+
+/* =================================================================
+   9) FILTROS
+   ================================================================= */
+grupo('22. Filtros e pesquisa');
+(function () {
+  var cfg = { dias_aviso_p1: 7, dias_aviso_p2: 7 }, hoje = '2026-08-03';
+  var lista = [
+    // Telefone com 8 dígitos depois do DDD, como vem da folha: cadastro
+    // de contato incompleto até alguém confirmar o nono dígito.
+    { id: 'a', nome: 'ADRIANA DA SILVA SOUZA', cpf: '11144477735', telefone: '556195551234',
+      email: 'as12contato@exemplo.com', unidade: 'NAZO SUL', situacao: 'Ativo',
+      data_admissao: '2026-07-04', data_nascimento: '1994-04-12', folga_status: 'nao_analisada' },
+    { id: 'b', nome: 'CARLOS ANTONIO RIBEIRO DE JESUS', cpf: '22233344405', telefone: null,
+      email: null, unidade: 'ITAIM', situacao: 'Ativo',
+      data_admissao: '2020-09-10', data_nascimento: '1994-09-08', folga_status: 'aprovada' },
+    { id: 'c', nome: 'ZORAIDE INATIVA', cpf: '33355577782', telefone: '5561999998888',
+      email: 'z@x.com', unidade: 'NAZO SUL', situacao: 'Inativo',
+      data_admissao: '2024-01-10', data_nascimento: '1980-08-15', folga_status: 'nao_se_aplica',
+      p1_decisao: 'reprovado' }
+  ];
+  function f(o) { return C.filtrar(lista, o, cfg, hoje).map(function (c) { return c.id; }); }
+
+  igual('busca por parte do nome', f({ busca: 'adriana' }), ['a']);
+  igual('busca ignora acento', f({ busca: 'ADRIANA' }), ['a']);
+  igual('busca por CPF com pontuação', f({ busca: '111.444.777-35' }), ['a']);
+  igual('busca por CPF só com dígitos', f({ busca: '11144477735' }), ['a']);
+  igual('busca por parte do telefone', f({ busca: '99999888' }), ['c']);
+  igual('busca por e-mail', f({ busca: 'as12contato' }), ['a']);
+  igual('busca sem resultado', f({ busca: 'ninguem aqui' }), []);
+
+  igual('filtro por ativos', f({ situacao: 'Ativo' }), ['a', 'b']);
+  igual('filtro por inativos', f({ situacao: 'Inativo' }), ['c']);
+  igual('filtro por unidade', f({ unidade: 'NAZO SUL' }), ['a', 'c']);
+  igual('filtro por mês de aniversário', f({ mesAniversario: 8 }), ['c']);
+  igual('filtro por etapa do contrato', f({ etapaContrato: 'reprovado_p1' }), ['c']);
+  igual('filtro por decisão pendente', f({ decisaoPendente: true }), ['a', 'b']);
+  igual('filtro por decisão em atraso', f({ decisaoAtrasada: true }), ['a', 'b']);
+  igual('filtro por vencimento em 7 dias', f({ venceEm: 7 }), []);
+  igual('filtro por folga pendente de análise', f({ folga: 'pendentes' }), ['a']);
+  igual('filtro por folga aprovada sem data', f({ folga: 'sem_data' }), ['b']);
+  igual('filtro por cadastro incompleto', f({ cadastroIncompleto: true }), ['a', 'b']);
+  igual('filtro por quem não tem telefone', f({ semTelefone: true }), ['b']);
+  igual('filtro por quem não tem e-mail', f({ semEmail: true }), ['b']);
+  igual('filtros combinados', f({ situacao: 'Ativo', unidade: 'NAZO SUL', cadastroIncompleto: true }), ['a']);
+  igual('sem filtro nenhum devolve todos', f({}).length, 3);
+  igual('lista de unidades', C.unidades(lista), ['ITAIM', 'NAZO SUL']);
+
+  // 04/07/2026 -> 30º dia em 02/08 (ontem): dentro de "vence em 30"? não, já venceu.
+  var venceHoje = C.filtrar([{ id: 'z', nome: 'Z', situacao: 'Ativo',
+    data_admissao: '2026-07-06', data_nascimento: null, folga_status: 'nao_analisada' }],
+    { venceEm: 7 }, cfg, hoje).length;
+  igual('quem vence em 1 dia aparece no filtro de 7 dias', venceHoje, 1);
+})();
+
+
+/* =================================================================
+   10) EXPORTAÇÃO
+   ================================================================= */
+grupo('23. Exportação');
+(function () {
+  var cfg = { dias_aviso_p1: 7, dias_aviso_p2: 7 };
+  var lista = [{ id: 'a', nome: 'ANA MARIA', cpf: '52998224725', nome_mae: 'MARIA MAE',
+                 data_admissao: '2026-06-01', data_nascimento: '1994-04-12', email: 'a@b.com',
+                 telefone: '5561999998888', unidade: 'NAZO SUL', situacao: 'Ativo',
+                 folga_status: 'agendada', folga_data: '2026-04-20', aniv_msg_em: null }];
+  var comSensivel = C.linhasExportacao(lista, cfg, '2026-08-03', true);
+  var semSensivel = C.linhasExportacao(lista, cfg, '2026-08-03', false);
+  igual('cabeçalho + 1 linha', comSensivel.length, 2);
+  igual('quem tem permissão exporta o CPF completo', comSensivel[1][1], '529.982.247-25');
+  igual('quem não tem permissão exporta o CPF mascarado', semSensivel[1][1], '***.***.247-25');
+  igual('e o nome da mãe sai restrito', semSensivel[1][2], '(restrito)');
+  igual('nome da mãe sai para quem tem permissão', comSensivel[1][2], 'MARIA MAE');
+  ok('o status do contrato entra na exportação', /período|Efetivado|Reprovado|encerrado/i.test(comSensivel[1][9]),
+     comSensivel[1][9]);
+  ok('CSV usa ponto e vírgula (padrão do Excel em português)',
+     C.paraCsv([['a', 'b'], ['1', '2']]) === 'a;b\r\n1;2');
+  ok('CSV protege campo com ponto e vírgula dentro',
+     C.paraCsv([['x;y']]) === '"x;y"');
+  ok('CSV escapa aspas', C.paraCsv([['di"z']]) === '"di""z"');
+})();
+
+
+/* =================================================================
+   11) PLANILHA DE VERDADE (opcional)
+   ================================================================= */
+function testarArquivo(nome, matriz) {
+  grupo('24. Planilha real — ' + nome);
+  var lido = C.lerPlanilha(matriz, { unidade: 'NAZO SUL' });
+  igual('layout reconhecido sozinho', lido.layout, 'folha');
+  ok('a unidade foi lida do arquivo',
+     !!C.unidadeDoRelatorio(matriz), C.unidadeDoRelatorio(matriz));
+  ok('leu mais de 50 colaboradores', lido.registros.length > 50,
+     'leu ' + lido.registros.length);
+
+  var validados = lido.registros.map(C.validarRegistro);
+  var inval = validados.filter(function (v) { return v.grau === 'invalido'; });
+  ok('nenhum registro inválido', inval.length === 0,
+     inval.slice(0, 5).map(function (v) { return 'linha ' + v.linha + ': ' + v.erros.join('; '); }).join('\n'));
+
+  var semNome = validados.filter(function (v) { return !v.nome; });
+  igual('todos têm nome', semNome.length, 0);
+  var semCpf = validados.filter(function (v) { return !v.cpf; });
+  igual('todos têm CPF válido', semCpf.length, 0);
+  var semAdm = validados.filter(function (v) { return !v.data_admissao; });
+  igual('todos têm data de admissão', semAdm.length, 0);
+  var semNasc = validados.filter(function (v) { return !v.data_nascimento; });
+  igual('todos têm data de nascimento', semNasc.length, 0);
+  var semMae = validados.filter(function (v) { return !v.nome_mae; });
+  igual('todos têm nome da mãe', semMae.length, 0);
+  var semMail = validados.filter(function (v) { return !v.email; });
+  igual('todos têm e-mail em formato válido', semMail.length, 0);
+
+  var cpfs = {}, repetidos = 0;
+  validados.forEach(function (v) { if (v.cpf) { if (cpfs[v.cpf]) repetidos++; cpfs[v.cpf] = 1; } });
+  igual('nenhum CPF repetido no arquivo', repetidos, 0);
+
+  var tipos = {};
+  validados.forEach(function (v) {
+    var t = (v.telefoneAnalise || {}).tipo || 'vazio';
+    tipos[t] = (tipos[t] || 0) + 1;
+  });
+  ok('telefones classificados: ' + JSON.stringify(tipos), true);
+  var comWhats = validados.filter(function (v) {
+    return v.telefone && (v.telefoneAnalise || {}).whatsapp; }).length;
+  ok('há telefones prontos para o WhatsApp (' + comWhats + ')', comWhats > 20, String(comWhats));
+  var manual = validados.filter(function (v) { return v.grau === 'manual'; }).length;
+  ok('os que exigem correção manual foram separados (' + manual + ')', manual > 0, String(manual));
+
+  // Primeira importação, num banco vazio.
+  var c1 = C.conciliar(validados, []);
+  igual('primeira importação: tudo entra como inserção', c1.inserir.length, validados.length);
+  igual('e nada como duplicata', c1.duplicadosNoArquivo.length, 0);
+  var pacote = C.montarPacote(c1, {});
+  igual('o pacote leva todos os registros', pacote.length, validados.length);
+  ok('todos os itens do pacote são inserção',
+     pacote.every(function (p) { return p.acao === 'inserir'; }));
+
+  // Reimportação: o mesmo arquivo, com o banco já preenchido.
+  var jaNoBanco = pacote.map(function (p, i) {
+    return { id: 'id' + i, nome: p.nome, cpf: p.cpf, nome_mae: p.nome_mae,
+             data_admissao: p.data_admissao, data_nascimento: p.data_nascimento,
+             email: p.email, telefone: p.telefone, unidade: p.unidade, situacao: p.situacao };
+  });
+  var c2 = C.conciliar(validados, jaNoBanco);
+  igual('reimportar o mesmo arquivo não insere ninguém', c2.inserir.length, 0);
+  igual('reimportar o mesmo arquivo não propõe atualização', c2.atualizar.length, 0);
+  igual('e reconhece todos como já cadastrados', c2.semMudanca.length, validados.length);
+  igual('o pacote da reimportação fica vazio', C.montarPacote(c2, {}).length, 0);
+
+  // Reimportação com telefone novo em uma pessoa.
+  var mexido = validados.map(function (v) { return v; });
+  var alvo = jaNoBanco.filter(function (x) { return x.telefone; })[0];
+  if (alvo) {
+    var copia = jaNoBanco.map(function (x) {
+      return x.id === alvo.id
+        ? { id: x.id, nome: x.nome, cpf: x.cpf, nome_mae: x.nome_mae,
+            data_admissao: x.data_admissao, data_nascimento: x.data_nascimento,
+            email: x.email, telefone: '5500000000000', unidade: x.unidade, situacao: x.situacao }
+        : x;
+    });
+    var c3 = C.conciliar(mexido, copia);
+    igual('um telefone diferente gera exatamente 1 atualização', c3.atualizar.length, 1);
+    igual('e só o campo telefone', c3.atualizar[0].diferencas.map(function (d) { return d.campo; }), ['telefone']);
+    ok('pré-marcado para atualizar', c3.atualizar[0].diferencas[0].marcado === true);
+  }
+
+  // Contrato de experiência com os dados reais.
+  var hoje = C.hojeIso();
+  var cfg = { dias_aviso_p1: 7, dias_aviso_p2: 7, dias_aviso_aniv: 7, politica_folga_ativa: true };
+  var comoColabs = jaNoBanco.map(function (x) {
+    return { id: x.id, nome: x.nome, cpf: x.cpf, tem_cpf: !!x.cpf, telefone: x.telefone,
+             email: x.email, unidade: x.unidade, situacao: 'Ativo',
+             data_admissao: x.data_admissao, data_nascimento: x.data_nascimento,
+             folga_status: 'nao_analisada', folga_ano: null, folga_data: null,
+             aniv_msg_ano: null, aniv_msg_em: null };
+  });
+  var porStatus = {};
+  comoColabs.forEach(function (c) {
+    var s = C.contratoStatus(c, cfg, hoje);
+    porStatus[s] = (porStatus[s] || 0) + 1;
+  });
+  ok('status do contrato calculado para todos: ' + JSON.stringify(porStatus),
+     Object.keys(porStatus).reduce(function (a, k) { return a + porStatus[k]; }, 0) === comoColabs.length);
+  ok('nenhum registro real ficou sem data de admissão', !porStatus.sem_admissao,
+     JSON.stringify(porStatus));
+
+  var notifs = C.gerarNotificacoes(comoColabs, cfg, hoje, [], hoje);
+  var porTipo = {};
+  notifs.forEach(function (n) { porTipo[n.tipo] = (porTipo[n.tipo] || 0) + 1; });
+  ok('notificações geradas a partir dos dados reais: ' + JSON.stringify(porTipo), notifs.length > 0,
+     JSON.stringify(porTipo));
+  ok('há cobrança de contrato de experiência entre os dados reais',
+     !!(porTipo.p1_vence || porTipo.p1_atrasada || porTipo.p2_vence || porTipo.p2_atrasada),
+     JSON.stringify(porTipo));
+  ok('há aniversariante do mês entre os dados reais',
+     C.aniversariantesDoMes(comoColabs, +C.partes(hoje).ano, +C.partes(hoje).mes, hoje).length > 0);
+
+  // Regularização de histórico com os dados reais: quantas cobranças a
+  // implantação deixa de gerar, e quantas sobram como pendência de fato.
+  var reg = C.candidatosRegularizacao(comoColabs, cfg, hoje);
+  var sobra = comoColabs.filter(function (c) { return reg.indexOf(c) < 0; });
+  ok('a regularização separa o histórico antigo (' + reg.length + ' de ' + comoColabs.length + ')',
+     reg.length > 0 && reg.length < comoColabs.length, reg.length + '/' + comoColabs.length);
+  ok('todos os separados já passaram do 90º dia com folga de 30 dias',
+     reg.every(function (c) {
+       return C.difDias(C.experiencia(c.data_admissao).fimP2, hoje) > 30;
+     }));
+  var regularizados = comoColabs.map(function (c) {
+    if (reg.indexOf(c) < 0) return c;
+    var n = {}; Object.keys(c).forEach(function (k) { n[k] = c[k]; });
+    n.p1_decisao = 'aprovado'; n.renovacao_confirmada_em = 'x'; n.p2_decisao = 'efetivado';
+    return n;
+  });
+  var contratoAntes = C.gerarNotificacoes(comoColabs, cfg, hoje, [], hoje)
+    .filter(function (n) { return n.grupo === 'contrato'; }).length;
+  var contratoDepois = C.gerarNotificacoes(regularizados, cfg, hoje, [], hoje)
+    .filter(function (n) { return n.grupo === 'contrato'; }).length;
+  ok('a central sai de ' + contratoAntes + ' para ' + contratoDepois +
+     ' cobranças de contrato depois da regularização', contratoDepois < contratoAntes,
+     contratoAntes + ' -> ' + contratoDepois);
+  ok('e o que sobra corresponde aos contratos realmente em curso (' + sobra.length + ')',
+     contratoDepois <= sobra.length, contratoDepois + ' <= ' + sobra.length);
+
+  // Cada colaborador real gera um termo coerente.
+  var cfgTermo = { empresa_nome: 'NFE COMERCIO DE ALIMENTOS LTDA', empresa_cidade: 'Brasília',
+                   resp_nome: 'Bruna Patricio', resp_cargo: 'Coordenadora de RH' };
+  var termosRuins = comoColabs.filter(function (c) {
+    var t = C.montarTermo(c, cfgTermo, { dataEmissao: hoje, dataEncerramento: hoje });
+    return !t.completo || C.TERMO_CAMPOS.some(function (k) { return t.texto.indexOf(k) >= 0; });
+  });
+  igual('o termo sai completo para todos os colaboradores reais', termosRuins.length, 0);
+
+  render();
+}
+
+function lerArquivoDaPlanilha(file) {
+  var fr = new FileReader();
+  fr.onload = function (e) {
+    try {
+      var wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+      var ws = wb.Sheets[wb.SheetNames[0]];
+      var matriz = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: '' });
+      testarArquivo(file.name, matriz);
+    } catch (err) {
+      grupo('24. Planilha real — ' + file.name);
+      ok('leitura do arquivo', false, String(err && err.message || err));
+      render();
+    }
+  };
+  fr.readAsArrayBuffer(file);
+}
+
+document.getElementById('arq').addEventListener('change', function () {
+  if (this.files && this.files[0]) lerArquivoDaPlanilha(this.files[0]);
+});
+
+/* Quando a página é servida por http (e não aberta como arquivo), tenta
+   achar a planilha ao lado dela — é assim que a suíte roda sozinha. */
+(function () {
+  if (!/^https?:/.test(location.protocol)) return;
+  var nomes = ['nazo-sul.xls', 'nazo sul.xls'];
+  (function tentar(i) {
+    if (i >= nomes.length) return;
+    fetch(encodeURI(nomes[i])).then(function (r) {
+      if (!r.ok) { tentar(i + 1); return null; }
+      return r.arrayBuffer();
+    }).then(function (buf) {
+      if (!buf) return;
+      var wb = XLSX.read(new Uint8Array(buf), { type: 'array' });
+      var ws = wb.Sheets[wb.SheetNames[0]];
+      testarArquivo(nomes[i], XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: '' }));
+    }).catch(function () { tentar(i + 1); });
+  })(0);
+})();
+
+render();
+</script>
+</body>
+</html>

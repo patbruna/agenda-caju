@@ -5,25 +5,45 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Processo Seletivo — Grupo Caju</title>
 <style>
+  /* Mesma paleta do módulo de colaboradores, para as duas telas serem a
+     mesma aplicação. Os NOMES dos tokens são os de sempre — só os valores
+     mudaram, e por isso o CSS abaixo herdou tudo sem ser reescrito.
+
+     Duas ideias sustentam a paleta:
+     1. Faixa tonal larga. Casca quase preta, tinta funda, fundo um grau
+        abaixo do branco do cartão. Tela lavada quase sempre é tela cujos
+        tons vivem todos na mesma vizinhança — o remédio é distância.
+     2. Verde vivo com âmbar de caju como segunda voz. Verde sozinho é frio;
+        o âmbar tira o ar apagado, e é a cor da fruta que nomeia a casa. */
   :root{
-    --page:#eceff0; --card:#fff; --ink:#16211c; --muted:#65756c; --line:#dbe1dd;
-    --wa:#1fa855; --wa-dark:#178a45;
-    --confirmado:#178a45; --confirmado-bg:#e7f4ec;
-    --convidado:#9a6b00; --convidado-bg:#fbf1db;
-    --pendente:#5a6b63; --pendente-bg:#eef1ef;
-    --realizada:#2563a8; --realizada-bg:#e7effa;
-    --recusou:#b23a2b; --recusou-bg:#fbe9e6;
-    --aprovado:#0f7a3d; --aprovado-bg:#dff3e6;
-    --reprovado:#a33224; --reprovado-bg:#fbe6e2;
-    --alert:#e07a00; --alert-bg:#fff3e0;
-    --rail:#b2c0b9; --now:#e07a00;
+    /* casca: não acompanha tema, é a assinatura do sistema */
+    --shell:#080f0c; --shell-2:#0e1814; --shell-ink:#eefbf4;
+    --shell-ink-2:#7f958b; --shell-line:#1b2822;
+
+    --page:#eef2f0; --card:#fff; --ink:#04100a; --muted:#61736a; --line:#dae2dd;
+    --wa:#00c46a; --wa-dark:#02734a;
+    --caju:#ff7a1a; --caju-ink:#b04b05; --caju-soft:#ffe9d6; --caju-tinta:#2a1000;
+
+    --confirmado:#02734a; --confirmado-bg:#d4f8e6;
+    --convidado:#a35d05;  --convidado-bg:#ffeed2;
+    --pendente:#61736a;   --pendente-bg:#e4ebe7;
+    --realizada:#0065c0;  --realizada-bg:#ddeeff;
+    --recusou:#c00d1e;    --recusou-bg:#ffe2e3;
+    --aprovado:#02734a;   --aprovado-bg:#d4f8e6;
+    --reprovado:#c00d1e;  --reprovado-bg:#ffe2e3;
+    --alert:#d97706; --alert-bg:#fff4e3;
+    --vivo-vermelho:#f5333f; --vivo-ambar:#f59e0b;
+    --rail:#c8d4ce; --now:#ff7a1a;
     /* Uma cor por etapa. O roxo da final é o único tom novo da paleta:
        é a etapa que não é operação, é decisão, e destoar ajuda. */
-    --et-entrevista:#2563a8; --et-entrevista-bg:#e7effa;
-    --et-tecnica:#9a6b00;    --et-tecnica-bg:#fbf1db;
-    --et-final:#6b4bab;      --et-final-bg:#eee9f9;
-    --et-contratado:#0f7a3d; --et-contratado-bg:#dff3e6;
-    --radius:14px;
+    --et-entrevista:#0065c0; --et-entrevista-bg:#ddeeff;
+    --et-tecnica:#a35d05;    --et-tecnica-bg:#ffeed2;
+    --et-final:#6e3ad6;      --et-final-bg:#eee4ff;
+    --et-contratado:#02734a; --et-contratado-bg:#d4f8e6;
+
+    /* três degraus com papel definido, no lugar dos cinco que conviviam */
+    --r-sm:6px; --radius:16px; --r:10px; --r-pill:999px;
+    --lateral:236px;
     --mono:ui-monospace,"SF Mono","Cascadia Mono","Roboto Mono",Menlo,Consolas,monospace;
   }
   *{box-sizing:border-box;}
@@ -34,26 +54,58 @@
   }
   body{margin:0;background:var(--page);color:var(--ink);
     font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.5;
-    padding:26px 16px 90px;}
-  .wrap{max-width:980px;margin:0 auto;}
+    padding:0;}
   .eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--wa-dark);font-weight:700;margin-bottom:6px;}
-  h1{font-size:26px;margin:0 0 2px;font-weight:700;letter-spacing:-.01em;}
-  .clock{color:var(--muted);font-size:14px;font-variant-numeric:tabular-nums;}
+  h1{font-size:22px;margin:0;font-weight:660;letter-spacing:-.02em;}
+  .clock{color:var(--muted);font-size:12.5px;font-variant-numeric:tabular-nums;margin-top:3px;}
   .clock b{color:var(--ink);}
 
+  /* ============ A CASCA ============
+     Lateral escura fixa emoldurando conteúdo claro — a mesma do módulo
+     de colaboradores, e o que faz as duas telas serem um sistema só. */
+  .wrap{display:grid;grid-template-columns:var(--lateral) 1fr;min-height:100vh;}
+
+  .lateral{background:var(--shell);padding:18px 12px 24px;display:flex;flex-direction:column;
+    gap:2px;position:sticky;top:0;height:100vh;overflow-y:auto;}
+  .marca{display:flex;align-items:center;gap:10px;padding:0 8px 16px;margin-bottom:6px;
+    border-bottom:1px solid var(--shell-line);}
+  .marca .sig{width:30px;height:30px;border-radius:var(--r);background:var(--wa);color:#04160d;
+    display:grid;place-items:center;font-weight:800;font-size:13px;flex:none;letter-spacing:-.04em;}
+  .marca .nm{font-size:13px;font-weight:660;line-height:1.2;letter-spacing:-.01em;color:var(--shell-ink);}
+  .marca .un{font-size:11px;color:var(--shell-ink-2);line-height:1.25;}
+  .grp{font:600 9.5px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;
+    color:var(--shell-ink-2);padding:15px 8px 6px;opacity:.75;}
+
+  .conteudo{min-width:0;padding:0 26px 90px;max-width:1180px;}
+  /* Ícone dentro de texto corrido (resumos das caixas, botões de envio). */
+  .ico{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;
+    stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px;flex:none;}
+  .topo{display:flex;gap:16px;align-items:center;justify-content:space-between;
+    flex-wrap:wrap;padding:20px 0 16px;border-bottom:1px solid var(--line);margin-bottom:18px;}
+  .topo .cresce{flex:1;min-width:200px;}
+
+  @media(max-width:900px){
+    .wrap{grid-template-columns:1fr;}
+    .lateral{position:static;height:auto;flex-direction:row;flex-wrap:wrap;
+      align-items:center;padding:12px;gap:4px;}
+    .marca{border-bottom:none;padding:0 10px 0 4px;margin:0;}
+    .grp{display:none;}
+    .conteudo{padding:0 14px 80px;}
+  }
+
   .banner{display:none;background:var(--alert-bg);border:1px solid #f2d19a;border-left:5px solid var(--alert);
-    border-radius:12px;padding:12px 16px;margin:16px 0;font-weight:600;color:#8a4b00;}
+    border-radius:var(--r);padding:12px 16px;margin:16px 0;font-weight:600;color:#8a4b00;}
   .banner.show{display:block;}
   .banner .b-row{display:flex;align-items:center;gap:8px;}
   .banner .b-row + .b-row{margin-top:5px;}
 
-  .bar{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
-    padding:14px 16px;margin:16px 0;display:flex;gap:22px;flex-wrap:wrap;align-items:center;}
+  .bar{display:flex;gap:12px;flex-wrap:wrap;align-items:center;font-size:12.5px;
+    justify-content:flex-end;}
   .toggle{display:flex;align-items:center;gap:7px;font-size:14px;color:var(--muted);cursor:pointer;user-select:none;}
   .toggle input{width:17px;height:17px;accent-color:var(--wa);}
 
   .stats{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px;}
-  .stat{font-size:13px;font-weight:600;padding:6px 12px;border-radius:20px;background:var(--card);border:1px solid var(--line);}
+  .stat{font-size:13px;font-weight:600;padding:6px 12px;border-radius:var(--r-pill);background:var(--card);border:1px solid var(--line);}
   .stat b{font-size:15px;}
   .stat.c{color:var(--confirmado);} .stat.v{color:var(--convidado);} .stat.p{color:var(--pendente);}
 
@@ -62,7 +114,7 @@
   .dayhead{position:sticky;top:0;z-index:5;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;
     margin:0 0 14px;padding:14px 2px 10px;background:var(--page);border-bottom:1px solid var(--line);}
   .daytag{font:700 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;
-    padding:5px 9px;border-radius:6px;background:var(--pendente-bg);color:var(--muted);}
+    padding:5px 9px;border-radius:var(--r-sm);background:var(--pendente-bg);color:var(--muted);}
   .daytag.hoje{background:var(--wa);color:#fff;}
   .daytag.amanha{background:var(--convidado-bg);color:var(--convidado);}
   .daytag.sem{background:var(--realizada-bg);color:var(--realizada);}
@@ -94,7 +146,7 @@
   /* Horário e data ficam na trilha, fora do cartão. Sem moldura até o mouse chegar. */
   .when{position:absolute;left:-136px;top:9px;width:112px;display:flex;flex-direction:column;
     align-items:flex-end;gap:1px;}
-  .when input{font:inherit;border:1px solid transparent;background:transparent;border-radius:7px;
+  .when input{font:inherit;border:1px solid transparent;background:transparent;border-radius:var(--r-sm);
     text-align:right;color:var(--ink);padding:2px 4px;width:100%;}
   .when input.t{font:700 21px/1.15 var(--mono);letter-spacing:-.02em;}
   .when input.d{font:600 11px/1.3 var(--mono);color:var(--muted);}
@@ -123,40 +175,59 @@
     font:700 12px var(--mono);color:var(--now);}
   .who .name{font-weight:700;font-size:16px;}
   .who .meta{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:2px;}
-  .chip{font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;}
+  .chip{font-size:11px;font-weight:700;padding:2px 8px;border-radius:var(--r-pill);}
   .chip.bom{background:var(--confirmado-bg);color:var(--confirmado);}
   .chip.analisar{background:#fdf3dd;color:#9a6b00;}
   .chip.agendado{background:var(--realizada-bg);color:var(--realizada);}
-  .conflict-badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:var(--recusou-bg);color:var(--recusou);}
+  .conflict-badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:var(--r-pill);background:var(--recusou-bg);color:var(--recusou);}
   .countdown{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:2px;}
   .countdown.soon{color:var(--alert);font-weight:700;}
 
   .conf{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--muted);
-    cursor:pointer;user-select:none;padding:7px 9px;border:1px solid var(--line);border-radius:9px;justify-content:center;}
+    cursor:pointer;user-select:none;padding:7px 9px;border:1px solid var(--line);border-radius:var(--r);justify-content:center;}
   .conf input{width:17px;height:17px;accent-color:var(--confirmado);}
   .conf.on{background:var(--confirmado-bg);color:var(--confirmado);border-color:#bfe0cc;}
 
-  select.status{font:inherit;font-weight:600;padding:8px 6px;border-radius:8px;border:1px solid var(--line);width:100%;cursor:pointer;}
-  select.status.s-Confirmado{background:var(--confirmado-bg);color:var(--confirmado);border-color:#bfe0cc;}
-  select.status.s-Convidado{background:var(--convidado-bg);color:var(--convidado);border-color:#ecd9a6;}
-  select.status.s-Pendente{background:var(--pendente-bg);color:var(--pendente);}
-  select.status.s-Realizada{background:var(--realizada-bg);color:var(--realizada);border-color:#c3d6ec;}
-  select.status.s-Recusou{background:var(--recusou-bg);color:var(--recusou);border-color:#eec4bd;}
-  select.status.s-Aprovado{background:var(--aprovado-bg);color:var(--aprovado);border-color:#a9dcbf;}
-  select.status.s-Reprovado{background:var(--reprovado-bg);color:var(--reprovado);border-color:#eec0b8;}
+  /* O seletor de situação já não recebe fundo colorido inteiro.
+     Numa lista de vinte candidatos aquilo eram vinte caixas coloridas
+     competindo, e o sinal se perdia no próprio excesso: o nó da trilha
+     já conta o status. Aqui fica só a tinta, sobre fundo branco. */
+  select.status{font:inherit;font-weight:620;font-size:13px;padding:8px 6px;
+    border-radius:var(--r-sm);border:1px solid var(--line);width:100%;cursor:pointer;
+    background:var(--card);color:var(--ink);}
+  select.status:hover{border-color:var(--pendente-bg);}
+  select.status.s-Confirmado{color:var(--confirmado);}
+  select.status.s-Convidado{color:var(--convidado);}
+  select.status.s-Pendente{color:var(--pendente);}
+  select.status.s-Realizada{color:var(--realizada);}
+  select.status.s-Recusou{color:var(--recusou);}
+  select.status.s-Aprovado{color:var(--aprovado);}
+  select.status.s-Reprovado{color:var(--reprovado);}
 
-  /* Abas */
-  .tabs{display:flex;gap:6px;margin:16px 0 4px;flex-wrap:wrap;}
-  .tab{font:inherit;font-size:14px;font-weight:600;padding:9px 16px;border-radius:11px;cursor:pointer;
-    border:1px solid var(--line);background:var(--card);color:var(--muted);display:flex;align-items:center;gap:7px;}
-  .tab:hover{border-color:#c4ccc7;}
-  .tab.on{background:var(--ink);color:#fff;border-color:var(--ink);}
-  .tab .n{font-size:12px;font-weight:700;padding:1px 8px;border-radius:20px;background:var(--page);color:var(--ink);}
-  .tab.on .n{background:rgba(255,255,255,.22);color:#fff;}
-  .tab.t-reprov.on{background:var(--reprovado);border-color:var(--reprovado);}
+  /* Abas — agora linhas da barra lateral. Continuam sendo .tab com
+     data-tab e onclick: setTab() segue funcionando sem alteração. */
+  .tabs{display:contents;}
+  .tab{font:inherit;font-size:13px;font-weight:520;cursor:pointer;width:100%;
+    border:none;background:none;color:var(--shell-ink-2);
+    display:flex;align-items:center;gap:10px;padding:0 10px;height:34px;
+    border-radius:var(--r);position:relative;text-align:left;
+    transition:background .15s,color .15s;}
+  .tab svg{width:16px;height:16px;flex:none;stroke:currentColor;fill:none;
+    stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;opacity:.9;}
+  .tab:hover{background:var(--shell-2);color:var(--shell-ink);}
+  .tab.on{background:var(--shell-2);color:var(--wa);font-weight:620;}
+  .tab.on svg{opacity:1;}
+  .tab.on::before{content:"";position:absolute;left:-12px;top:5px;bottom:5px;width:3px;
+    background:var(--wa);border-radius:0 3px 3px 0;box-shadow:0 0 12px rgba(0,196,106,.55);}
+  .tab .n{margin-left:auto;font:600 11px var(--mono);font-variant-numeric:tabular-nums;
+    color:var(--shell-ink-2);background:none;padding:0;opacity:.85;}
+  .tab.on .n{color:var(--wa);opacity:1;}
+  .tab.t-reprov.on{background:var(--shell-2);color:var(--vivo-vermelho);}
+  .tab.t-reprov.on::before{background:var(--vivo-vermelho);box-shadow:0 0 12px rgba(245,51,63,.5);}
+  .tab.t-reprov.on .n{color:var(--vivo-vermelho);}
 
   /* ---------- Etapas do processo ---------- */
-  .etapa-chip{font:700 11px/1 var(--mono);letter-spacing:.04em;padding:3px 8px;border-radius:6px;}
+  .etapa-chip{font:700 11px/1 var(--mono);letter-spacing:.04em;padding:3px 8px;border-radius:var(--r-sm);}
   .et-entrevista{background:var(--et-entrevista-bg);color:var(--et-entrevista);}
   .et-tecnica{background:var(--et-tecnica-bg);color:var(--et-tecnica);}
   .et-final{background:var(--et-final-bg);color:var(--et-final);}
@@ -190,7 +261,7 @@
   .quando{display:inline-flex;align-items:center;gap:6px;}
   .quando .rot{font:700 10px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);}
   .quando input{font:inherit;font-size:13px;padding:5px 7px;color:var(--ink);
-    border:1px solid var(--line);border-radius:7px;background:var(--card);
+    border:1px solid var(--line);border-radius:var(--r-sm);background:var(--card);
     font-variant-numeric:tabular-nums;}
   .quando.vazio input{border-color:#ecd9a6;background:var(--convidado-bg);}
   .quando.vazio .rot{color:var(--convidado);}
@@ -201,7 +272,7 @@
   .tecgrid{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;
     margin-top:13px;padding-top:13px;border-top:1px dashed var(--line);}
   .tecgrid label{display:block;font-size:12px;color:var(--muted);margin-bottom:3px;}
-  .tecgrid input{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;}
+  .tecgrid input{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r-sm);}
   .tecgrid .tnota input{width:92px;font:700 16px var(--mono);text-align:center;}
   .tecgrid .tlink{flex:1;min-width:220px;}
   .tecgrid .tlink input{width:100%;}
@@ -214,7 +285,7 @@
 
   .fcard-acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:13px;}
   .linkbtn.volta{margin-left:auto;}
-  .msgsel{font:inherit;padding:9px 10px;border:1px solid var(--line);border-radius:9px;
+  .msgsel{font:inherit;padding:9px 10px;border:1px solid var(--line);border-radius:var(--r);
     background:var(--card);cursor:pointer;max-width:100%;margin-top:4px;}
 
   .sendbtn{font:inherit;font-weight:700;border:none;border-radius:10px;cursor:pointer;padding:10px 16px;
@@ -233,7 +304,7 @@
     padding:26px 18px;text-align:center;color:var(--muted);font-size:14px;}
 
   .actions{display:flex;gap:6px;justify-content:flex-end;}
-  .icon{width:36px;height:36px;border:1px solid var(--line);background:#fff;border-radius:9px;cursor:pointer;
+  .icon{width:36px;height:36px;border:1px solid var(--line);background:#fff;border-radius:var(--r);cursor:pointer;
     display:flex;align-items:center;justify-content:center;font-size:16px;text-decoration:none;color:var(--muted);}
   .icon.wa{color:var(--wa);border-color:#bfe6cd;} .icon.wa:hover{background:var(--confirmado-bg);}
   .icon.del:hover{color:var(--recusou);border-color:#eec4bd;background:var(--recusou-bg);}
@@ -243,13 +314,13 @@
   .addbox summary{cursor:pointer;font-weight:600;color:var(--wa-dark);}
   .addgrid{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:12px;}
   .addgrid label{font-size:12px;color:var(--muted);}
-  .addgrid input{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;}
-  .btn{font:inherit;font-weight:600;border:none;border-radius:9px;cursor:pointer;padding:9px 16px;background:var(--wa);color:#fff;}
+  .addgrid input{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r-sm);}
+  .btn{font:inherit;font-weight:600;border:none;border-radius:var(--r);cursor:pointer;padding:9px 16px;background:var(--wa);color:#fff;}
   .btn:hover{background:var(--wa-dark);}
 
   .foot{margin-top:22px;font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px;}
   .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;
-    padding:10px 18px;border-radius:24px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;max-width:90vw;text-align:center;}
+    padding:10px 18px;border-radius:var(--r-pill);font-size:14px;opacity:0;pointer-events:none;transition:.25s;max-width:90vw;text-align:center;}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
   .toast.err{background:var(--reprovado);font-weight:600;}
 
@@ -267,7 +338,7 @@
     border-bottom:1px solid var(--line);position:sticky;top:0;z-index:2;
     background:var(--card);border-radius:18px 18px 0 0;}
   .perfil-nome{font:700 21px/1.2 inherit;color:var(--ink);width:100%;margin-left:-7px;
-    border:1px solid transparent;background:transparent;border-radius:8px;padding:3px 6px;}
+    border:1px solid transparent;background:transparent;border-radius:var(--r-sm);padding:3px 6px;}
   .perfil-nome:hover,.perfil-nome:focus{border-color:var(--line);background:var(--page);}
   .perfil-chips{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:7px;
     font-size:13px;color:var(--muted);}
@@ -280,11 +351,11 @@
   .pcampo{display:flex;flex-direction:column;gap:4px;}
   .pcampo span{font-size:12px;color:var(--muted);}
   .pcampo input{font:inherit;width:100%;padding:9px 11px;color:var(--ink);
-    border:1px solid var(--line);border-radius:9px;background:var(--card);}
+    border:1px solid var(--line);border-radius:var(--r);background:var(--card);}
   .pcampo.largo{grid-column:1/-1;}
 
   .cv{display:flex;gap:12px;align-items:center;flex-wrap:wrap;
-    padding:14px 16px;border:1px dashed var(--line);border-radius:12px;}
+    padding:14px 16px;border:1px dashed var(--line);border-radius:var(--r);}
   .cv .arq{font-weight:600;font-size:14px;flex:1;min-width:150px;}
   .cv .dica{flex-basis:100%;font-size:12px;color:var(--muted);}
   .cv input[type=file]{font:inherit;font-size:13px;max-width:100%;}
@@ -294,7 +365,7 @@
   .nota-autor{font:600 11px var(--mono);color:var(--muted);}
   .nota p{margin:0;font-size:14px;white-space:pre-wrap;}
   .nota-nova textarea{width:100%;font:inherit;padding:10px;resize:vertical;
-    border:1px solid var(--line);border-radius:9px;}
+    border:1px solid var(--line);border-radius:var(--r);}
   .nota-acoes{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:9px;}
   .nota-acoes .aviso{flex:1;min-width:190px;font-size:12px;color:var(--muted);}
   .sem-historico{font-size:14px;color:var(--muted);margin:0 0 16px;}
@@ -311,7 +382,7 @@
   .exp-op input{width:16px;height:16px;accent-color:var(--wa);}
   .exp-op.on{border-color:#bfe0cc;background:var(--confirmado-bg);color:var(--confirmado);font-weight:600;}
   .exp-preview{margin:0;padding:15px 17px;background:var(--page);border:1px solid var(--line);
-    border-radius:12px;font:13px/1.55 var(--mono);white-space:pre-wrap;word-break:break-word;
+    border-radius:var(--r);font:13px/1.55 var(--mono);white-space:pre-wrap;word-break:break-word;
     max-height:340px;overflow-y:auto;color:var(--ink);}
   .exp-vazio{color:var(--muted);font-style:italic;}
   .exp-acoes{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:15px;}
@@ -319,15 +390,17 @@
   .exp-conta.longo{color:var(--alert);}
 
   /* Tela de login */
-  #gate{max-width:380px;margin:8vh auto;background:var(--card);border:1px solid var(--line);
+  /* Login fica fora da casca: o respiro que o corpo perdeu ao virar
+     grade de tela cheia volta aqui. */
+  #gate{max-width:380px;margin:8vh 16px;margin-inline:auto;background:var(--card);border:1px solid var(--line);
     border-radius:var(--radius);padding:28px 26px;}
   #gate h2{margin:0 0 4px;font-size:20px;}
   #gate p.sub{margin:0 0 18px;font-size:13px;color:var(--muted);}
   #gate label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px;}
-  #gate input{font:inherit;width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;margin-bottom:12px;}
+  #gate input{font:inherit;width:100%;padding:10px;border:1px solid var(--line);border-radius:var(--r);margin-bottom:12px;}
   #gate button{width:100%;padding:11px;font-size:15px;}
   #gate .err{display:none;background:var(--recusou-bg);color:var(--recusou);border:1px solid #eec4bd;
-    border-radius:9px;padding:9px 12px;font-size:13px;font-weight:600;margin-bottom:12px;}
+    border-radius:var(--r);padding:9px 12px;font-size:13px;font-weight:600;margin-bottom:12px;}
   #gate .err.show{display:block;}
   .boot{text-align:center;padding:14vh 20px;color:var(--muted);font-size:15px;}
 
@@ -399,38 +472,76 @@
 </div>
 
 <div class="wrap" id="app" style="display:none">
-  <div class="eyebrow">Grupo Caju · Recrutamento</div>
-  <h1>Processo seletivo — Executivo de Back</h1>
-  <div class="clock" id="clock"></div>
 
-  <div class="banner" id="banner"></div>
-
-  <div class="seedbox" id="seedbox" style="display:none">
-    <h3 id="seedTitle">A agenda está vazia</h3>
-    <p id="seedMsg"></p>
-    <div class="btns" id="seedBtns"></div>
-  </div>
-
-  <div class="bar">
-    <label class="toggle"><input type="checkbox" id="soundOn"> 🔔 Alerta sonoro</label>
-    <label class="toggle" title="Aviso quando faltarem 15 minutos"><input type="checkbox" id="alertOn" checked> Alertar 15 min antes</label>
-    <div class="session">
-      <span class="sync" id="sync" title="Alterações são salvas no Supabase"><span class="dot"></span><span id="syncTxt">Sincronizado</span></span>
-      <span id="whoami"></span>
-      <button class="linkbtn" onclick="doLogout()">Sair</button>
+  <!-- A casca. Os botões continuam sendo .tab com data-tab e onclick:
+       setTab() segue funcionando sem alteração. -->
+  <nav class="lateral">
+    <div class="marca">
+      <span class="sig">GC</span>
+      <div>
+        <div class="nm">Grupo Caju</div>
+        <div class="un">Recrutamento</div>
+      </div>
     </div>
-  </div>
 
-  <div class="tabs" id="tabs">
-    <button class="tab on" data-tab="agenda" onclick="setTab('agenda')">📅 Agenda <span class="n" id="tab-n-agenda">0</span></button>
-    <button class="tab" data-tab="funil" onclick="setTab('funil')">🧭 Funil <span class="n" id="tab-n-funil">0</span></button>
-    <button class="tab t-reprov" data-tab="fora" onclick="setTab('fora')">🚫 Fora <span class="n" id="tab-n-fora">0</span></button>
-    <button class="tab exportar-btn" onclick="abrirExport()" title="Montar um recado com a agenda">📤 Exportar</button>
-  </div>
+    <div class="grp">Processo seletivo</div>
+    <div class="tabs" id="tabs">
+      <button class="tab on" data-tab="agenda" onclick="setTab('agenda')">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        Agenda <span class="n" id="tab-n-agenda">0</span></button>
+      <button class="tab" data-tab="funil" onclick="setTab('funil')">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h18l-7 8v7l-4 2v-9z"/></svg>
+        Funil <span class="n" id="tab-n-funil">0</span></button>
+      <button class="tab t-reprov" data-tab="fora" onclick="setTab('fora')">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg>
+        Fora <span class="n" id="tab-n-fora">0</span></button>
+    </div>
 
-  <div class="stats" id="stats"></div>
+    <div class="grp">Pessoas</div>
+    <a class="tab" href="colaboradores.html">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg>
+      Colaboradores</a>
 
-  <div id="list"></div>
+    <div class="grp">Administrar</div>
+    <button class="tab exportar-btn" onclick="abrirExport()" title="Montar um recado com a agenda">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v14"/></svg>
+      Exportar agenda</button>
+    <label class="tab" style="cursor:pointer;">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5L6 9H2v6h4l5 4z"/><path d="M19 5a9 9 0 0 1 0 14M15.5 8.5a5 5 0 0 1 0 7"/></svg>
+      Alerta sonoro
+      <input type="checkbox" id="soundOn" style="margin-left:auto;width:15px;height:15px;accent-color:var(--wa);"></label>
+    <label class="tab" style="cursor:pointer;" title="Aviso quando faltarem 15 minutos">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg>
+      Alertar 15 min antes
+      <input type="checkbox" id="alertOn" checked style="margin-left:auto;width:15px;height:15px;accent-color:var(--wa);"></label>
+  </nav>
+
+  <main class="conteudo">
+    <div class="topo">
+      <div class="cresce">
+        <h1>Processo seletivo — Executivo de Back</h1>
+        <div class="clock" id="clock"></div>
+      </div>
+      <div class="bar">
+        <div class="session">
+          <span class="sync" id="sync" title="Alterações são salvas no Supabase"><span class="dot"></span><span id="syncTxt">Sincronizado</span></span>
+          <span id="whoami"></span>
+          <button class="linkbtn" onclick="doLogout()">Sair</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="banner" id="banner"></div>
+
+    <div class="seedbox" id="seedbox" style="display:none">
+      <h3 id="seedTitle">A agenda está vazia</h3>
+      <p id="seedMsg"></p>
+      <div class="btns" id="seedBtns"></div>
+    </div>
+
+    <div class="stats" id="stats"></div>
+
+    <div id="list"></div>
 
   <details class="addbox">
     <summary>+ Adicionar candidato</summary>
@@ -444,7 +555,7 @@
   </details>
 
   <details class="addbox">
-    <summary>🔗 Endereço dos formulários</summary>
+    <summary><svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg> Endereço dos formulários</summary>
     <p style="font-size:12px;color:var(--muted);margin:10px 0 12px;">Cole aqui o endereço do Google Forms de cada etapa. O candidato nunca vê este endereço direto: ele recebe um link pessoal que só revela o formulário dentro da janela dele. Enquanto o campo estiver vazio, o link pessoal avisa que a avaliação ainda não foi liberada.</p>
     <div style="display:flex;flex-direction:column;gap:11px;">
       <label style="font-size:12px;color:var(--muted);">Avaliação técnica
@@ -458,7 +569,7 @@
   </details>
 
   <details class="addbox">
-    <summary>✎ Mensagens de WhatsApp e e-mail</summary>
+    <summary><svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4z"/></svg> Mensagens de WhatsApp e e-mail</summary>
     <p style="font-size:12px;color:var(--muted);margin:10px 0 10px;">Cada etapa tem seu convite, seu aviso de resultado e, quando as instruções são longas, um modelo de e-mail com assunto próprio. Marcadores: <b>{NOME}</b> primeiro nome, <b>{NOME_COMPLETO}</b> nome inteiro, <b>{DATA}</b> data curta, <b>{DATA_EXTENSO}</b> data por extenso, <b>{HORARIO}</b> horário — todos vêm do compromisso marcado para aquele candidato. Trechos entre colchetes travam o envio até você preenchê-los. As mensagens são as mesmas para toda a equipe.</p>
     <label style="font-size:12px;color:var(--muted);">Qual mensagem</label><br>
     <select id="msgSel" class="msgsel" onchange="trocaMsg()"></select>
@@ -482,6 +593,7 @@
     <p><b>Agenda:</b> mostra tudo que tem hora marcada, de qualquer etapa, com um selo dizendo qual é. Para remarcar, clique no horário ou na data à esquerda e digite o novo valor — a agenda reordena e reagrupa por dia sozinha. A bolinha na trilha muda de cor conforme o status, e o número entre dois compromissos é o intervalo entre eles. Quando faltarem 15 minutos, o compromisso acende e aparece um aviso no topo (com som, se ativado). Quem foi reprovado ou recusou sai da agenda e do funil, e fica registrado na aba <b>Fora</b> com a etapa em que parou.</p>
     <p><b>Salvo na nuvem:</b> cada alteração vai direto para o banco de dados no Supabase, então a agenda é a mesma em qualquer computador ou celular. Se duas pessoas estiverem com a página aberta, as duas telas se atualizam sozinhas. O indicador <b>Sincronizado</b> no topo fica vermelho se algo não conseguir ser salvo — se isso acontecer, confira a internet e recarregue a página.</p>
   </div>
+  </main>
 </div>
 <!-- Exportar a agenda como recado de WhatsApp. Montado por renderExport(). -->
 <div class="overlay" id="exportBg" onclick="fecharExport(event)">
@@ -1327,7 +1439,7 @@ function buildFunilCard(c){
     acts.push(!c.email
       ? '<span class="sendbtn ghost" title="Cadastre o e-mail no perfil do candidato">Sem e-mail</span>'
       : faltaAgendar(c,et.email) ? semData
-      : `<button class="sendbtn email" onclick="enviarEmailEtapa('${c.id}')">✉ Instruções por e-mail</button>`);
+      : `<button class="sendbtn email" onclick="enviarEmailEtapa('${c.id}')"><svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 6 10-6"/></svg> Instruções por e-mail</button>`);
   }
   const nn=notasDe(c.id).length;
   acts.push(`<button class="sendbtn perfil-btn" onclick="abrirPerfil('${c.id}')">Perfil`+
@@ -1714,7 +1826,7 @@ function blocoCurriculo(c){
       'sem login ninguém alcança, nem com a chave pública do site.</span></div>';
   }
   return '<div class="cv">'+
-    `<span class="arq">📄 ${escHtml(c.curriculo.split('/').pop())}</span>`+
+    `<span class="arq"><svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg> ${escHtml(c.curriculo.split('/').pop())}</span>`+
     '<a class="sendbtn conv" id="linkCurriculo" href="#" target="_blank" rel="noopener">Abrir</a>'+
     seletor+
     '<button class="linkbtn" onclick="removerCurriculo()">remover</button>'+
