@@ -370,6 +370,39 @@
   .nota-acoes .aviso{flex:1;min-width:190px;font-size:12px;color:var(--muted);}
   .sem-historico{font-size:14px;color:var(--muted);margin:0 0 16px;}
 
+  /* ---------- Vagas ---------- */
+  .vaga-abas{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;}
+  .vaga-fechada{font:600 10px var(--mono);letter-spacing:.08em;text-transform:uppercase;
+    color:var(--muted);}
+  .vaga-add{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px;}
+  .vaga-add input{font:inherit;padding:9px 11px;border:1px solid var(--line);
+    border-radius:9px;background:var(--card);color:var(--ink);min-width:170px;}
+
+  .vaga-linha{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:13px 15px;margin-bottom:10px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;}
+  .vaga-quem{flex:1;min-width:180px;}
+  .vaga-sub{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:4px;
+    font-size:13px;color:var(--muted);}
+  .vaga-quando{display:inline-flex;align-items:center;gap:6px;}
+  .vaga-quando .rot{font:700 10px var(--mono);letter-spacing:.12em;text-transform:uppercase;
+    color:var(--muted);}
+  .vaga-quando input{font:inherit;font-size:13px;padding:5px 7px;color:var(--ink);
+    border:1px solid var(--line);border-radius:7px;background:var(--card);
+    font-variant-numeric:tabular-nums;}
+  .vaga-quando.vazio input{border-color:#ecd9a6;background:var(--convidado-bg);}
+  .vaga-quando.vazio .rot{color:var(--convidado);}
+  .vaga-acoes{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .vaga-cv{display:inline-flex;gap:8px;align-items:center;font-size:13px;}
+  .vaga-cv a{color:var(--wa-dark);font-weight:600;}
+
+  .vaga-gerir{margin-top:18px;}
+  .vaga-gerir.aberto{background:var(--card);border:1px dashed var(--line);
+    border-radius:var(--radius);padding:14px 16px;}
+  .vaga-gerir h4{margin:0 0 9px;font:700 11px/1 var(--mono);letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted);}
+  .vaga-gerir ul{margin:0 0 12px;padding-left:18px;font-size:14px;}
+  .vaga-gerir li{margin-bottom:4px;}
+
   /* ---------- Exportar agenda ---------- */
   .exportar-btn{margin-left:auto;}
   .exp-bloco{margin-top:18px;}
@@ -486,6 +519,9 @@
 
     <div class="grp">Processo seletivo</div>
     <div class="tabs" id="tabs">
+      <button class="tab" data-tab="vagas" onclick="setTab('vagas')">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>
+        Vagas <span class="n" id="tab-n-vagas">0</span></button>
       <button class="tab on" data-tab="agenda" onclick="setTab('agenda')">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
         Agenda <span class="n" id="tab-n-agenda">0</span></button>
@@ -519,7 +555,7 @@
   <main class="conteudo">
     <div class="topo">
       <div class="cresce">
-        <h1>Processo seletivo — Executivo de Back</h1>
+        <h1>Processo seletivo</h1>
         <div class="clock" id="clock"></div>
       </div>
       <div class="bar">
@@ -570,7 +606,7 @@
 
   <details class="addbox">
     <summary><svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4z"/></svg> Mensagens de WhatsApp e e-mail</summary>
-    <p style="font-size:12px;color:var(--muted);margin:10px 0 10px;">Cada etapa tem seu convite, seu aviso de resultado e, quando as instruções são longas, um modelo de e-mail com assunto próprio. Marcadores: <b>{NOME}</b> primeiro nome, <b>{NOME_COMPLETO}</b> nome inteiro, <b>{DATA}</b> data curta, <b>{DATA_EXTENSO}</b> data por extenso, <b>{HORARIO}</b> horário — todos vêm do compromisso marcado para aquele candidato. Trechos entre colchetes travam o envio até você preenchê-los. As mensagens são as mesmas para toda a equipe.</p>
+    <p style="font-size:12px;color:var(--muted);margin:10px 0 10px;">Cada etapa tem seu convite, seu aviso de resultado e, quando as instruções são longas, um modelo de e-mail com assunto próprio. Marcadores: <b>{CARGO}</b> a vaga do candidato, <b>{NOME}</b> primeiro nome, <b>{NOME_COMPLETO}</b> nome inteiro, <b>{DATA}</b> data curta, <b>{DATA_EXTENSO}</b> data por extenso, <b>{HORARIO}</b> horário — todos vêm do compromisso marcado para aquele candidato. Trechos entre colchetes travam o envio até você preenchê-los. As mensagens são as mesmas para toda a equipe.</p>
     <label style="font-size:12px;color:var(--muted);">Qual mensagem</label><br>
     <select id="msgSel" class="msgsel" onchange="trocaMsg()"></select>
     <div id="msgAssuntoWrap" style="display:none;margin-top:10px;">
@@ -586,6 +622,7 @@
 
   <div class="foot">
     <p><b>As três etapas:</b> entrevista, avaliação técnica e entrevista final com os sócios. Marcar <b>Aprovado</b> não muda ninguém de etapa — quem muda é o botão <b>Avançar</b>, na aba Funil. A separação é de propósito: dá tempo de mandar a mensagem de aprovação antes de o candidato trocar de lugar na tela. Ao avançar, o status volta para Pendente e a data fica em branco, para você marcar o novo compromisso. Clique errado se desfaz em <b>voltar uma etapa</b>.</p>
+    <p><b>Vagas:</b> a triagem por cargo. Cada vaga aberta vira uma sub-aba, e é ali que o candidato entra, o currículo é anexado e a entrevista é marcada. <b>Anexar o currículo é o gatilho da convocação:</b> se a data já estiver preenchida, a mensagem de convite abre pronta no WhatsApp, com o nome, o cargo e o horário daquela pessoa, e o status vira Convidado — o app não dispara nada sozinho, você confere e envia. Sem data, ele guarda o currículo e avisa que falta marcar. Abrir e fechar vagas se faz em <b>Gerenciar vagas abertas</b>, no fim da aba; fechar não apaga ninguém, só marca a vaga como fechada e mantém quem estava nela. O cargo entra nos modelos pelo marcador <b>{CARGO}</b>, então o mesmo texto serve para todas as vagas.</p>
     <p><b>Portão da avaliação:</b> cada candidato tem um link pessoal, que já vai dentro do convite e do e-mail e também pode ser copiado no perfil. Nele o candidato vê a contagem regressiva até o horário <i>dele</i>; no horário, o formulário é liberado; sessenta minutos depois, encerra. Quem confere a hora é o banco de dados, não o relógio do computador do candidato, e o endereço do formulário só entra na resposta com a janela aberta. Cole o endereço do Google Forms em <b>Endereço dos formulários</b>, aqui embaixo — enquanto estiver vazio, o link avisa que a avaliação ainda não foi liberada. O perfil registra se e quando a pessoa abriu.</p>
     <p><b>Onde se marca a data:</b> em três lugares, o que for mais perto de onde você estiver. No cartão do <b>Funil</b>, nos campos ao lado do nome — ficam amarelos enquanto estiverem vazios. No <b>Perfil</b>, no primeiro bloco. E na <b>Agenda</b>, no horário à esquerda de cada compromisso. Avançar alguém de etapa limpa data e horário de propósito, porque a etapa nova tem compromisso novo — por isso a pessoa reaparece no funil pedindo agendamento. Enquanto não tiver data, os botões de convite e de e-mail ficam travados, já que o texto deles cita o dia e a hora.</p>
     <p><b>Mensagens:</b> cada etapa tem seu convite curto de WhatsApp e, quando as instruções são longas, um modelo de e-mail com assunto próprio. O botão <b>Instruções por e-mail</b> aparece no funil para quem está na etapa e tem e-mail cadastrado no perfil: ele abre seu cliente de e-mail com destinatário e assunto prontos, e copia o texto já preenchido com o nome, a data e o horário daquele candidato. Se o modelo ainda tiver algum trecho entre colchetes, o envio trava e o app diz quais faltam — é o que impede um <b>[PRAZO] dias úteis</b> de chegar num candidato. Tudo se edita em <b>Mensagens de WhatsApp e e-mail</b>, no fim da página.</p>
@@ -595,6 +632,11 @@
   </div>
   </main>
 </div>
+<!-- Seletor de arquivo da aba Vagas: fica fora da lista para o redesenho
+     dela não cancelar um envio em andamento. -->
+<input type="file" id="vagaFile" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+       style="display:none" onchange="enviarCurriculoVaga(this)">
+
 <!-- Exportar a agenda como recado de WhatsApp. Montado por renderExport(). -->
 <div class="overlay" id="exportBg" onclick="fecharExport(event)">
   <section class="perfil" id="exportPanel" role="dialog" aria-modal="true" aria-label="Exportar agenda"></section>
@@ -635,7 +677,7 @@ Gostaríamos de convidá-lo(a) para a próxima etapa: entrevista online, que aco
 📅 Data: {DATA}
 🕒 Horário: {HORARIO}
 📍 Formato: Online (o link da reunião será enviado próximo ao horário da entrevista).
-Durante a entrevista, conversaremos sobre sua experiência profissional, sua trajetória e apresentaremos com mais detalhes a oportunidade de Executivo de Front ou Executivo de Back, conforme a vaga, incluindo as responsabilidades, metas e expectativas do cargo.
+Durante a entrevista, conversaremos sobre sua experiência profissional, sua trajetória e apresentaremos com mais detalhes a oportunidade de {CARGO}, incluindo as responsabilidades, metas e expectativas do cargo.
 Por gentileza, confirme sua disponibilidade respondendo a esta mensagem.
 Ficamos felizes com seu interesse em fazer parte do Grupo Caju e esperamos falar com você em breve!
 Atenciosamente,
@@ -705,10 +747,10 @@ Equipe de Recrutamento – Grupo Caju`;
    de envio se recusa a abrir enquanto sobrar algum, para não sair
    "[PRAZO] dias úteis" para um candidato. */
 const DEF_EMAIL_TECNICA_ASSUNTO=
-`Avaliação técnica — Processo seletivo Executivo de Back | Grupo Caju`;
+`Avaliação técnica — Processo seletivo {CARGO} | Grupo Caju`;
 
 const DEF_EMAIL_TECNICA=
-`PROCESSO SELETIVO — EXECUTIVO DE BACK
+`PROCESSO SELETIVO — {CARGO}
 Grupo Caju | Avaliação Técnica
 
 ------------------------------------------------------------
@@ -721,7 +763,7 @@ Horário de liberação: {HORARIO} — o link fica ativo por 60 minutos e é enc
 
 1. DO QUE SE TRATA
 
-Você está na etapa de avaliação técnica do processo seletivo para a posição de Executivo de Back do Grupo Caju. Esta etapa mede conhecimento aplicado e postura profissional. Não é uma prova sobre a vaga nem sobre a empresa: é sobre o ofício.
+Você está na etapa de avaliação técnica do processo seletivo para a posição de {CARGO} do Grupo Caju. Esta etapa mede conhecimento aplicado e postura profissional. Não é uma prova sobre a vaga nem sobre a empresa: é sobre o ofício.
 
 2. FORMATO
 
@@ -818,7 +860,7 @@ const MSGS=[
    padraoAssunto:DEF_EMAIL_TECNICA_ASSUNTO},
   {campo:'email_final',   rotulo:'E-mail — instruções da entrevista final',
    padrao:'', assunto:'email_final_assunto',
-   padraoAssunto:'Entrevista final — Processo seletivo Executivo de Back | Grupo Caju'}
+   padraoAssunto:'Entrevista final — Processo seletivo {CARGO} | Grupo Caju'}
 ];
 let cfg={};                       // o que está gravado no banco
 let msgAtual=MSGS[0].campo;       // qual mensagem o editor está mostrando
@@ -892,7 +934,8 @@ function fromDb(r){
           experiencia:r.experiencia||'',
           nascimento:r.nascimento||'', cpf:r.cpf||'',
           curriculo:r.curriculo||'',
-          token:r.token||'', avaliacao_abertura:r.avaliacao_abertura||''};
+          token:r.token||'', avaliacao_abertura:r.avaliacao_abertura||'',
+          cargo:r.cargo||''};
 }
 
 /* Indicador no topo. Fica vermelho se uma gravação falhar, para
@@ -1201,6 +1244,7 @@ function linkAvaliacao(c){
    para saudação; {NOME_COMPLETO} é para documento. */
 function preencher(tpl,c){
   return String(tpl||'')
+    .replace(/{CARGO}/g,c.cargo||'[cargo não definido]')
     .replace(/{LINK_AVALIACAO}/g,linkAvaliacao(c))
     .replace(/{NOME_COMPLETO}/g,c.nome)
     .replace(/{NOME}/g,c.nome.split(' ')[0])
@@ -1255,11 +1299,15 @@ function updateTabCounts(){
     data.filter(c=>ATIVOS.includes(c.status)&&c.etapa!=='contratado').length;
   document.getElementById('tab-n-funil').textContent=data.filter(c=>!estaFora(c)).length;
   document.getElementById('tab-n-fora').textContent=data.filter(estaFora).length;
+  // Vagas conta quem está na entrevista, que é onde a triagem acontece.
+  document.getElementById('tab-n-vagas').textContent=
+    data.filter(c=>c.etapa==='entrevista'&&!estaFora(c)).length;
 }
 
 function render(){
   sortData();
   const list=document.getElementById('list');list.innerHTML='';
+  if(activeTab==='vagas'){renderVagas(list);renderStats();tick();return;}
   if(activeTab==='funil'){renderFunil(list);renderStats();tick();return;}
   if(activeTab==='fora'){renderFora(list);renderStats();tick();return;}
   // Aba Agenda: tudo que tem compromisso em aberto, de qualquer etapa.
@@ -2198,6 +2246,232 @@ function showToast(t,isErr){
   el.className='toast show'+(isErr?' err':'');
   clearTimeout(el._t);
   el._t=setTimeout(()=>{el.className='toast';},isErr?6000:1800);
+}
+
+
+/* =========================================================
+   Vagas — triagem por cargo
+   Uma aba por vaga aberta. É aqui que o currículo chega, a
+   entrevista é marcada e a convocação sai. Depois disso o
+   candidato segue a vida nas outras abas, como sempre.
+   ========================================================= */
+let vagaAtiva=null;
+let vagaEditando=false;
+
+function cargosAbertos(){
+  const v=cfg.cargos;
+  return Array.isArray(v)?v.filter(x=>String(x||'').trim()):[];
+}
+/* Vagas abertas mais qualquer cargo que ainda tenha gente, para um
+   processo antigo não sumir da tela ao ser fechado. */
+function cargosNaTela(){
+  const abertos=cargosAbertos();
+  const comGente=[];
+  data.forEach(c=>{
+    const k=c.cargo||'';
+    if(k&&abertos.indexOf(k)<0&&comGente.indexOf(k)<0)comGente.push(k);
+  });
+  const semCargo=data.some(c=>!c.cargo)?['']:[];
+  return abertos.concat(comGente.sort()).concat(semCargo);
+}
+function rotuloCargo(k){return k||'Sem vaga definida';}
+function daVaga(k){
+  return data.filter(c=>(c.cargo||'')===k&&c.etapa==='entrevista'&&!estaFora(c));
+}
+
+function renderVagas(list){
+  const cargos=cargosNaTela();
+  if(!cargos.length){
+    list.innerHTML='<div class="empty">Nenhuma vaga aberta.<br>'+
+      'Use <b>Gerenciar vagas</b> abaixo para abrir a primeira.</div>'+blocoGerirVagas();
+    return;
+  }
+  if(cargos.indexOf(vagaAtiva)<0)vagaAtiva=cargos[0];
+  const abertos=cargosAbertos();
+
+  let h='<div class="vaga-abas">'+cargos.map(k=>{
+    const n=daVaga(k).length, fechada=k&&abertos.indexOf(k)<0;
+    return `<button class="tab${k===vagaAtiva?' on':''}" onclick="setVaga(${JSON.stringify(k).replace(/"/g,'&quot;')})">`+
+      escHtml(rotuloCargo(k))+(fechada?' <span class="vaga-fechada">fechada</span>':'')+
+      ` <span class="n">${n}</span></button>`;
+  }).join('')+'</div>';
+
+  h+='<div class="vaga-add">'+
+     `<input id="vagaNome" type="text" placeholder="Nome do candidato">`+
+     `<input id="vagaFone" type="text" placeholder="WhatsApp (DDD+nº)">`+
+     `<button class="btn" onclick="addCandidatoVaga()">+ Adicionar em ${escHtml(rotuloCargo(vagaAtiva))}</button>`+
+     '</div>';
+
+  const itens=daVaga(vagaAtiva);
+  if(!itens.length){
+    h+='<div class="empty">Ninguém nesta vaga ainda. Adicione acima, ou mude a vaga de alguém que já está no processo.</div>';
+  }else{
+    h+=itens.map(c=>linhaVaga(c)).join('');
+  }
+  list.innerHTML=h+blocoGerirVagas();
+}
+
+function linhaVaga(c){
+  const temCv=!!c.curriculo;
+  const podeConvocar=c.fone&&c.date&&c.time;
+  const cv=temCv
+    ? `<span class="vaga-cv"><a href="#" onclick="verCurriculoVaga('${c.id}');return false;">📄 ${escHtml(c.curriculo.split('/').pop())}</a>`+
+      `<button class="linkbtn" onclick="tirarCurriculoVaga('${c.id}')">remover</button></span>`
+    : `<button class="sendbtn conv" onclick="escolherCurriculo('${c.id}')">📎 Anexar currículo</button>`;
+
+  const convocar=!c.fone
+    ? '<span class="sendbtn ghost" title="Cadastre o WhatsApp no perfil">Sem WhatsApp</span>'
+    : !podeConvocar
+      ? '<span class="sendbtn ghost" title="Marque data e horário para convocar">Marque a data</span>'
+      : `<a class="sendbtn ok" href="${waLink(c,'msg_convite_entrevista')}" target="_blank" rel="noopener"`+
+        ` onclick="marcarConvidado('${c.id}')">💬 Convocar</a>`;
+
+  return `<article class="vaga-linha" id="row-${c.id}">
+    <div class="vaga-quem">
+      <button class="name linkname" onclick="abrirPerfil('${c.id}')" title="Abrir o perfil">${escHtml(c.nome)}</button>
+      <div class="vaga-sub"><span class="chip ${c.cat}">${catLabel(c.cat)}</span>
+        <span>${c.status}</span></div>
+    </div>
+    <div class="vaga-quando${c.date?'':' vazio'}">
+      <span class="rot">Entrevista</span>
+      <input type="date" value="${escAttr(c.date)}" onchange="setDate('${c.id}',this.value)">
+      <input type="time" value="${escAttr(c.time)}" onchange="setTime('${c.id}',this.value)">
+    </div>
+    <div class="vaga-acoes">${cv}${convocar}</div>
+  </article>`;
+}
+
+function blocoGerirVagas(){
+  if(!vagaEditando){
+    return '<div class="vaga-gerir"><button class="linkbtn" onclick="vagaEditando=true;render()">⚙ Gerenciar vagas abertas</button></div>';
+  }
+  const abertos=cargosAbertos();
+  return '<div class="vaga-gerir aberto"><h4>Vagas abertas</h4>'+
+    (abertos.length
+      ? '<ul>'+abertos.map(k=>`<li>${escHtml(k)} <button class="linkbtn" onclick="fecharVaga(${JSON.stringify(k).replace(/"/g,'&quot;')})">fechar</button></li>`).join('')+'</ul>'
+      : '<p class="dica-campo">Nenhuma vaga aberta.</p>')+
+    '<div class="vaga-add">'+
+      '<input id="vagaNova" type="text" placeholder="Nome do cargo">'+
+      '<button class="btn" onclick="abrirVaga()">Abrir vaga</button>'+
+      '<button class="linkbtn" onclick="vagaEditando=false;render()">pronto</button>'+
+    '</div>'+
+    '<p class="dica-campo">Fechar uma vaga não apaga ninguém: quem estiver nela continua aparecendo, marcado como fechada.</p></div>';
+}
+
+/* ---- ações ---- */
+function setVaga(k){vagaAtiva=k;render();}
+
+async function salvarCargos(lista){
+  const campos={};campos.cargos=lista;
+  const ok=await gravarCfg(campos,true);
+  if(ok){cfg.cargos=lista;render();}
+  return ok;
+}
+async function abrirVaga(){
+  const el=document.getElementById('vagaNova');
+  const nome=el.value.trim();
+  if(!nome){showToast('Escreva o nome do cargo');el.focus();return;}
+  const lista=cargosAbertos();
+  if(lista.indexOf(nome)>=0){showToast('Essa vaga já está aberta');return;}
+  lista.push(nome);
+  if(await salvarCargos(lista)){vagaAtiva=nome;showToast('Vaga aberta');}
+}
+async function fecharVaga(k){
+  const n=daVaga(k).length;
+  if(!confirm('Fechar a vaga "'+k+'"?'+(n?'\n\nOs '+n+' candidatos nela continuam no processo, e a vaga segue na tela marcada como fechada.':'')))return;
+  if(await salvarCargos(cargosAbertos().filter(x=>x!==k)))showToast('Vaga fechada');
+}
+
+async function addCandidatoVaga(){
+  const nomeEl=document.getElementById('vagaNome'), foneEl=document.getElementById('vagaFone');
+  const nome=nomeEl.value.trim();
+  let fone=foneEl.value.replace(/\D/g,'');
+  if(!nome){showToast('Informe o nome');nomeEl.focus();return;}
+  if(fone&&fone.length<=11)fone='55'+fone;
+  setSync(true,'Salvando…');
+  const {data:rows,error}=await sb.from('candidatos')
+    .insert({nome,cat:'agendado',fone,data:null,hora:null,status:'Pendente',
+             etapa:'entrevista',cargo:vagaAtiva||''}).select();
+  if(error){
+    setSync(false,'Erro ao salvar');
+    showToast('Não adicionou: '+error.message,true);
+    return;
+  }
+  setSync(true);
+  if(rows&&rows[0]&&!data.some(x=>x.id===rows[0].id))data.push(fromDb(rows[0]));
+  nomeEl.value='';foneEl.value='';
+  render();showToast('Candidato adicionado em '+rotuloCargo(vagaAtiva));
+}
+
+function escolherCurriculo(id){
+  const inp=document.getElementById('vagaFile');
+  inp.dataset.id=id;
+  inp.click();
+}
+
+/* Anexar é o gatilho da convocação: assim que o arquivo sobe, se a
+   entrevista já estiver marcada, a mensagem abre pronta. Sem data,
+   avisa em vez de mandar algo com lacuna. */
+async function enviarCurriculoVaga(input){
+  const id=input.dataset.id;
+  const c=data.find(x=>x.id===id);
+  const arq=input.files&&input.files[0];
+  input.value='';
+  if(!c||!arq)return;
+  if(arq.size>10*1024*1024){showToast('O arquivo passa de 10 MB',true);return;}
+
+  const ext=(arq.name.match(/\.[A-Za-z0-9]+$/)||[''])[0].toLowerCase();
+  const caminho=c.id+'/curriculo'+ext;
+  setSync(true,'Enviando…');
+  const {error}=await sb.storage.from('curriculos')
+    .upload(caminho,arq,{upsert:true,contentType:arq.type||undefined});
+  if(error){
+    setSync(false,'Erro ao enviar');
+    showToast('Não enviou o currículo: '+error.message,true);
+    return;
+  }
+  if(c.curriculo&&c.curriculo!==caminho)await sb.storage.from('curriculos').remove([c.curriculo]);
+  c.curriculo=caminho;
+  setSync(true);
+  await patchRow(c.id,{curriculo:caminho});
+  render();
+
+  if(!c.fone){showToast('Currículo anexado. Cadastre o WhatsApp no perfil para convocar.');return;}
+  if(!c.date||!c.time){showToast('Currículo anexado. Marque data e horário para a convocação sair.');return;}
+  showToast('Currículo anexado. Abrindo a convocação…');
+  marcarConvidado(c.id);
+  window.open(waLink(c,'msg_convite_entrevista'),'_blank','noopener');
+}
+
+/* Convocar significa que o convite saiu: quem estava Pendente passa a
+   Convidado, e a pessoa aparece na Agenda aguardando confirmação. */
+function marcarConvidado(id){
+  const c=data.find(x=>x.id===id);
+  if(!c||c.status!=='Pendente')return;
+  c.status='Convidado';
+  patchRow(id,{status:'Convidado'});
+  render();
+}
+
+async function verCurriculoVaga(id){
+  const c=data.find(x=>x.id===id);
+  if(!c||!c.curriculo)return;
+  const {data:d,error}=await sb.storage.from('curriculos').createSignedUrl(c.curriculo,120);
+  if(error||!d){showToast('Não consegui abrir o currículo',true);return;}
+  window.open(d.signedUrl,'_blank','noopener');
+}
+
+async function tirarCurriculoVaga(id){
+  const c=data.find(x=>x.id===id);
+  if(!c||!c.curriculo)return;
+  if(!confirm('Remover o currículo de '+c.nome+'? O arquivo é apagado de vez.'))return;
+  setSync(true,'Salvando…');
+  const {error}=await sb.storage.from('curriculos').remove([c.curriculo]);
+  if(error){setSync(false,'Erro ao salvar');showToast('Não removeu: '+error.message,true);return;}
+  c.curriculo='';
+  setSync(true);
+  await patchRow(c.id,{curriculo:''});
+  render();showToast('Currículo removido');
 }
 
 boot();
