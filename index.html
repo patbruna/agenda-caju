@@ -370,6 +370,18 @@
   .nota-acoes .aviso{flex:1;min-width:190px;font-size:12px;color:var(--muted);}
   .sem-historico{font-size:14px;color:var(--muted);margin:0 0 16px;}
 
+  /* Selo de vaga: a dimensão que faltava nos cartões. Dava para saber a
+     etapa e o status de alguém sem saber para qual vaga ela concorre. */
+  .cargo-chip{font:600 11px var(--mono);padding:3px 8px;border-radius:6px;
+    border:1px solid var(--line);background:var(--page);color:var(--muted);}
+  .cargo-chip.fechada{opacity:.65;text-decoration:line-through;}
+  .funil-filtro{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:0 0 14px;}
+  .funil-filtro label{font:700 10px var(--mono);letter-spacing:.12em;
+    text-transform:uppercase;color:var(--muted);}
+  .funil-filtro select{font:inherit;padding:8px 10px;border:1px solid var(--line);
+    border-radius:9px;background:var(--card);color:var(--ink);cursor:pointer;}
+  .funil-filtro .conta{font:600 12px var(--mono);color:var(--muted);}
+
   /* ---------- Vagas ---------- */
   .vaga-abas{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;}
   .vaga-fechada{font:600 10px var(--mono);letter-spacing:.08em;text-transform:uppercase;
@@ -622,7 +634,7 @@
 
   <div class="foot">
     <p><b>As três etapas:</b> entrevista, avaliação técnica e entrevista final com os sócios. Marcar <b>Aprovado</b> não muda ninguém de etapa — quem muda é o botão <b>Avançar</b>, na aba Funil. A separação é de propósito: dá tempo de mandar a mensagem de aprovação antes de o candidato trocar de lugar na tela. Ao avançar, o status volta para Pendente e a data fica em branco, para você marcar o novo compromisso. Clique errado se desfaz em <b>voltar uma etapa</b>.</p>
-    <p><b>Vagas:</b> a triagem por cargo. Cada vaga aberta vira uma sub-aba, e é ali que o candidato entra, o currículo é anexado e a entrevista é marcada. <b>Anexar o currículo é o gatilho da convocação:</b> se a data já estiver preenchida, a mensagem de convite abre pronta no WhatsApp, com o nome, o cargo e o horário daquela pessoa, e o status vira Convidado — o app não dispara nada sozinho, você confere e envia. Sem data, ele guarda o currículo e avisa que falta marcar. Abrir e fechar vagas se faz em <b>Gerenciar vagas abertas</b>, no fim da aba; fechar não apaga ninguém, só marca a vaga como fechada e mantém quem estava nela. O cargo entra nos modelos pelo marcador <b>{CARGO}</b>, então o mesmo texto serve para todas as vagas.</p>
+    <p><b>Vagas:</b> a triagem por cargo. Cada vaga aberta vira uma sub-aba, e é ali que o candidato entra, o currículo é anexado e a entrevista é marcada. <b>Anexar o currículo é o gatilho da convocação:</b> se a data já estiver preenchida, a mensagem de convite abre pronta no WhatsApp, com o nome, o cargo e o horário daquela pessoa, e o status vira Convidado — o app não dispara nada sozinho, você confere e envia. Sem data, ele guarda o currículo e avisa que falta marcar. Abrir e fechar vagas se faz em <b>Gerenciar vagas abertas</b>, no fim da aba; fechar não apaga ninguém, só marca a vaga como fechada e mantém quem estava nela. O cargo entra nos modelos pelo marcador <b>{CARGO}</b>, então o mesmo texto serve para todas as vagas. A vaga de cada pessoa também aparece como selo nos cartões da Agenda, do Funil e da aba Fora, e o Funil tem um filtro por vaga no topo: com vários processos correndo juntos, ver o funil de uma vaga responde mais que ver o funil inteiro. Vaga fechada aparece riscada.</p>
     <p><b>Portão da avaliação:</b> cada candidato tem um link pessoal, que já vai dentro do convite e do e-mail e também pode ser copiado no perfil. Nele o candidato vê a contagem regressiva até o horário <i>dele</i>; no horário, o formulário é liberado; sessenta minutos depois, encerra. Quem confere a hora é o banco de dados, não o relógio do computador do candidato, e o endereço do formulário só entra na resposta com a janela aberta. Cole o endereço do Google Forms em <b>Endereço dos formulários</b>, aqui embaixo — enquanto estiver vazio, o link avisa que a avaliação ainda não foi liberada. O perfil registra se e quando a pessoa abriu.</p>
     <p><b>Onde se marca a data:</b> em três lugares, o que for mais perto de onde você estiver. No cartão do <b>Funil</b>, nos campos ao lado do nome — ficam amarelos enquanto estiverem vazios. No <b>Perfil</b>, no primeiro bloco. E na <b>Agenda</b>, no horário à esquerda de cada compromisso. Avançar alguém de etapa limpa data e horário de propósito, porque a etapa nova tem compromisso novo — por isso a pessoa reaparece no funil pedindo agendamento. Enquanto não tiver data, os botões de convite e de e-mail ficam travados, já que o texto deles cita o dia e a hora.</p>
     <p><b>Mensagens:</b> cada etapa tem seu convite curto de WhatsApp e, quando as instruções são longas, um modelo de e-mail com assunto próprio. O botão <b>Instruções por e-mail</b> aparece no funil para quem está na etapa e tem e-mail cadastrado no perfil: ele abre seu cliente de e-mail com destinatário e assunto prontos, e copia o texto já preenchido com o nome, a data e o horário daquele candidato. Se o modelo ainda tiver algum trecho entre colchetes, o envio trava e o app diz quais faltam — é o que impede um <b>[PRAZO] dias úteis</b> de chegar num candidato. Tudo se edita em <b>Mensagens de WhatsApp e e-mail</b>, no fim da página.</p>
@@ -1382,7 +1394,7 @@ function buildSlot(c,slot){
     </div>
     <div class="who">
       <button class="name linkname" onclick="abrirPerfil('${c.id}')" title="Abrir o perfil">${escHtml(c.nome)}</button>
-      <div class="meta"><span class="etapa-chip et-${c.etapa}">${et.curto}</span><span class="chip ${c.cat}">${catLabel(c.cat)}</span>${conflict?'<span class="conflict-badge">⚠ mesmo horário</span>':''}</div>
+      <div class="meta">${chipCargo(c)}<span class="etapa-chip et-${c.etapa}">${et.curto}</span><span class="chip ${c.cat}">${catLabel(c.cat)}</span>${conflict?'<span class="conflict-badge">⚠ mesmo horário</span>':''}</div>
       <div class="countdown" id="cd-${c.id}"></div>
     </div>
     <div class="confirm-cell">
@@ -1435,13 +1447,42 @@ function quandoTxt(c){
    pela etapa em que está. É aqui que se aprova, se manda a
    mensagem e se empurra para a etapa seguinte.
    ========================================================= */
+function chipCargo(c){
+  if(!c.cargo)return '';
+  const fechada=cargosAbertos().indexOf(c.cargo)<0;
+  return '<span class="cargo-chip'+(fechada?' fechada':'')+'"'+
+    (fechada?' title="Vaga fechada"':'')+'>'+escHtml(c.cargo)+'</span>';
+}
+
+/* Filtro por vaga: com tres processos correndo juntos, ver o funil inteiro
+   de uma vez responde menos do que ver o funil de uma vaga. */
+let funilCargo='todas';
+function setFunilCargo(v){funilCargo=v;render();}
+function barraFiltroVaga(total,visiveis){
+  const vagas=cargosNaTela().filter(k=>k);
+  const opts=['<option value="todas">Todas as vagas</option>']
+    .concat(vagas.map(k=>'<option value="'+escAttr(k)+'"'+
+      (funilCargo===k?' selected':'')+'>'+escHtml(k)+'</option>'))
+    .join('');
+  return '<div class="funil-filtro"><label for="fCargoFunil">Vaga</label>'+
+    '<select id="fCargoFunil" onchange="setFunilCargo(this.value)">'+opts+'</select>'+
+    (funilCargo!=='todas'
+      ? '<span class="conta">'+visiveis+' de '+total+' no funil</span>'
+      : '')+'</div>';
+}
+
 function renderFunil(list){
-  const ativos=data.filter(c=>!estaFora(c));
+  const todos=data.filter(c=>!estaFora(c));
+  const ativos=funilCargo==='todas'?todos:todos.filter(c=>(c.cargo||'')===funilCargo);
   if(!ativos.length){
-    list.innerHTML='<div class="empty">Ninguém no processo ainda.<br>'+
-      'Use <b>+ Adicionar candidato</b> logo abaixo para começar.</div>';
+    list.innerHTML=(todos.length?barraFiltroVaga(todos.length,0):'')+
+      '<div class="empty">'+(todos.length
+        ? 'Ninguém no funil para <b>'+escHtml(funilCargo)+'</b>. Troque a vaga acima.'
+        : 'Ninguém no processo ainda.<br>Use <b>+ Adicionar candidato</b> logo abaixo para começar.')+
+      '</div>';
     return;
   }
+  list.insertAdjacentHTML('beforeend',barraFiltroVaga(todos.length,ativos.length));
   ETAPAS.forEach(et=>{
     const itens=ativos.filter(c=>c.etapa===et.id);
     const sec=document.createElement('section');
@@ -1516,6 +1557,7 @@ function buildFunilCard(c){
       <div class="fcard-who">
         <button class="name linkname" onclick="abrirPerfil('${c.id}')" title="Abrir o perfil">${escHtml(c.nome)}</button>
         <div class="fcard-sub">
+          ${chipCargo(c)}
           <span class="chip ${c.cat}">${catLabel(c.cat)}</span>
           <span class="quando${c.date?'':' vazio'}">
             <span class="rot">Quando</span>
@@ -1561,6 +1603,7 @@ function renderFora(list){
         <div class="fcard-who">
           <button class="name linkname" onclick="abrirPerfil('${c.id}')" title="Abrir o perfil">${escHtml(c.nome)}</button>
           <div class="fcard-sub">
+            ${chipCargo(c)}
             <span class="etapa-chip et-${c.etapa}">${et.curto}</span>
             <span>${c.status==='Recusou'?'Recusou':'Reprovado'} na etapa de ${et.nome.toLowerCase()}</span>
           </div>
