@@ -382,6 +382,45 @@
     border-radius:9px;background:var(--card);color:var(--ink);cursor:pointer;}
   .funil-filtro .conta{font:600 12px var(--mono);color:var(--muted);}
 
+  /* ---------- Ficha da etapa ---------- */
+  .ficha-topo{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;margin-bottom:12px;}
+  .ficha-conta{font:700 13px var(--mono);color:var(--ink);}
+  .ficha-soma{font:600 12px var(--mono);color:var(--muted);}
+  .ficha-escala{flex-basis:100%;font-size:11px;color:var(--muted);}
+  .crit{padding:11px 0;border-top:1px solid var(--line);}
+  .crit:first-of-type{border-top:none;}
+  .crit-top{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  .crit-nome{font-weight:700;font-size:14px;flex:1;min-width:150px;}
+  .crit-notas{display:inline-flex;gap:4px;}
+  .nb{font:700 13px var(--mono);width:30px;height:30px;cursor:pointer;
+    border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--muted);}
+  .nb:hover{border-color:#c4ccc7;color:var(--ink);}
+  .nb.on{color:#fff;border-color:transparent;}
+  .nb.on.n0{background:var(--muted);}
+  .nb.on.n1{background:var(--recusou);}
+  .nb.on.n2{background:var(--convidado);}
+  .nb.on.n3{background:var(--confirmado);}
+  .nb.limpar{width:26px;color:var(--muted);border-style:dashed;}
+  .crit-dica{margin:5px 0 0;font-size:12px;color:var(--muted);}
+  .crit-ev{width:100%;margin-top:7px;font:inherit;font-size:13px;padding:7px 9px;
+    border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);}
+  .crit.avaliado .crit-ev:placeholder-shown{border-color:#ecd9a6;}
+
+  .ficha-fim{margin-top:16px;padding-top:14px;border-top:2px solid var(--line);}
+  .ficha-fim h5{margin:0 0 10px;font:700 11px/1 var(--mono);letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted);}
+  .ficha-campo{display:block;margin-bottom:11px;}
+  .ficha-campo span{display:block;font-size:12px;color:var(--muted);margin-bottom:4px;}
+  .ficha-campo textarea{width:100%;font:inherit;font-size:13px;padding:9px;resize:vertical;
+    border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);}
+  .ficha-decisao{margin-top:13px;}
+  .ficha-decisao .rot{display:block;font:700 10px var(--mono);letter-spacing:.12em;
+    text-transform:uppercase;color:var(--muted);margin-bottom:7px;}
+  .dec-btns{display:flex;gap:8px;flex-wrap:wrap;}
+  .crit-lista{margin:0 0 12px;padding-left:20px;font-size:14px;}
+  .crit-lista li{margin-bottom:10px;}
+  .crit-lista .linkbtn{margin-left:8px;}
+
   /* ---------- Vagas ---------- */
   .vaga-abas{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;}
   .vaga-fechada{font:600 10px var(--mono);letter-spacing:.08em;text-transform:uppercase;
@@ -603,6 +642,12 @@
   </details>
 
   <details class="addbox">
+    <summary><svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> Critérios da ficha</summary>
+    <p style="font-size:12px;color:var(--muted);margin:10px 0 12px;">Os critérios de avaliação de cada vaga, usados na ficha do perfil do candidato. Vieram dos guias de entrevista e podem ser editados aqui — a mesma lista vale para toda a equipe.</p>
+    <div id="critBox"></div>
+  </details>
+
+  <details class="addbox">
     <summary><svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg> Endereço dos formulários</summary>
     <p style="font-size:12px;color:var(--muted);margin:10px 0 12px;">Cole aqui o endereço do Google Forms de cada etapa. O candidato nunca vê este endereço direto: ele recebe um link pessoal que só revela o formulário dentro da janela dele. Enquanto o campo estiver vazio, o link pessoal avisa que a avaliação ainda não foi liberada.</p>
     <div style="display:flex;flex-direction:column;gap:11px;">
@@ -638,6 +683,7 @@
     <p><b>Portão da avaliação:</b> cada candidato tem um link pessoal, que já vai dentro do convite e do e-mail e também pode ser copiado no perfil. Nele o candidato vê a contagem regressiva até o horário <i>dele</i>; no horário, o formulário é liberado; sessenta minutos depois, encerra. Quem confere a hora é o banco de dados, não o relógio do computador do candidato, e o endereço do formulário só entra na resposta com a janela aberta. Cole o endereço do Google Forms em <b>Endereço dos formulários</b>, aqui embaixo — enquanto estiver vazio, o link avisa que a avaliação ainda não foi liberada. O perfil registra se e quando a pessoa abriu.</p>
     <p><b>Onde se marca a data:</b> em três lugares, o que for mais perto de onde você estiver. No cartão do <b>Funil</b>, nos campos ao lado do nome — ficam amarelos enquanto estiverem vazios. No <b>Perfil</b>, no primeiro bloco. E na <b>Agenda</b>, no horário à esquerda de cada compromisso. Avançar alguém de etapa limpa data e horário de propósito, porque a etapa nova tem compromisso novo — por isso a pessoa reaparece no funil pedindo agendamento. Enquanto não tiver data, os botões de convite e de e-mail ficam travados, já que o texto deles cita o dia e a hora.</p>
     <p><b>Mensagens:</b> cada etapa tem seu convite curto de WhatsApp e, quando as instruções são longas, um modelo de e-mail com assunto próprio. O botão <b>Instruções por e-mail</b> aparece no funil para quem está na etapa e tem e-mail cadastrado no perfil: ele abre seu cliente de e-mail com destinatário e assunto prontos, e copia o texto já preenchido com o nome, a data e o horário daquele candidato. Se o modelo ainda tiver algum trecho entre colchetes, o envio trava e o app diz quais faltam — é o que impede um <b>[PRAZO] dias úteis</b> de chegar num candidato. Tudo se edita em <b>Mensagens de WhatsApp e e-mail</b>, no fim da página.</p>
+    <p><b>Ficha da etapa:</b> no perfil, abaixo do currículo. Os critérios vêm da vaga do candidato, porque avaliar chefe de sushi e chefe de APV pelos mesmos nove itens não diz nada. Cada critério recebe nota de 0 a 3 e uma evidência curta — o caso que sustenta a nota, não a opinião. O contador no topo mostra quantos critérios já foram avaliados e a soma, que é o que permite comparar cinco pessoas no fim do dia. No fechamento entram as três evidências, o maior ponto de atenção, o que testar na etapa seguinte e a pergunta em aberto. A <b>decisão</b> grava na ficha e <i>propõe</i> mudar o status no funil, com confirmação: registrar a impressão e decidir o destino da pessoa continuam sendo dois atos. Os critérios de cada vaga se editam em <b>Critérios da ficha</b>, no fim da página; renomear um não apaga a nota já dada, e remover um não apaga as fichas.</p>
     <p><b>Perfil do candidato:</b> clique no nome de qualquer pessoa, em qualquer aba, para abrir a ficha — contato, endereço, origem da candidatura, experiência e currículo. Os campos salvam sozinhos ao sair de cada um. O currículo fica guardado num espaço privado: o botão de abrir gera um link que vale por uma hora e só funciona para quem está logado. No fim da ficha está o histórico: cada anotação fica carimbada com quem escreveu, quando, e em que etapa, e nenhuma sobrescreve a outra. Você só pode apagar as suas.</p>
     <p><b>Agenda:</b> mostra tudo que tem hora marcada, de qualquer etapa, com um selo dizendo qual é. Para remarcar, clique no horário ou na data à esquerda e digite o novo valor — a agenda reordena e reagrupa por dia sozinha. A bolinha na trilha muda de cor conforme o status, e o número entre dois compromissos é o intervalo entre eles. Quando faltarem 15 minutos, o compromisso acende e aparece um aviso no topo (com som, se ativado). Quem foi reprovado ou recusou sai da agenda e do funil, e fica registrado na aba <b>Fora</b> com a etapa em que parou.</p>
     <p><b>Salvo na nuvem:</b> cada alteração vai direto para o banco de dados no Supabase, então a agenda é a mesma em qualquer computador ou celular. Se duas pessoas estiverem com a página aberta, as duas telas se atualizam sozinhas. O indicador <b>Sincronizado</b> no topo fica vermelho se algo não conseguir ser salvo — se isso acontecer, confira a internet e recarregue a página.</p>
@@ -1012,6 +1058,8 @@ async function mostrar(session){
   await fetchConfig();
   await fetchAll();
   await fetchNotas();
+  await fetchFichas();
+  montarEditorCriterios();
   subscribeLive();
   render();
   tickTimer=setInterval(tick,1000);
@@ -1114,6 +1162,14 @@ function subscribeLive(){
         if(i>=0)notas[i]=n; else notas.push(n);
       }
       scheduleRender();
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'fichas'},p=>{
+      if(p.eventType==='DELETE'){if(p.old)delete fichas[p.old.candidato_id+'|'+p.old.etapa];}
+      else if(p.new){fichas[p.new.candidato_id+'|'+p.new.etapa]=p.new;}
+      scheduleRender();
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'criterios'},async p=>{
+      await fetchFichas();montarEditorCriterios();scheduleRender();
     })
     .on('postgres_changes',{event:'*',schema:'public',table:'configuracoes'},p=>{
       if(p.new){cfg=p.new;montarEditorMsgs();}
@@ -1879,6 +1935,7 @@ function renderPerfil(){
       </div></div>
 
       <div class="pgrupo"><h4>Currículo</h4>${blocoCurriculo(c)}</div>
+      <div class="pgrupo"><h4>Ficha da etapa — ${et.nome}</h4>${blocoFicha(c)}</div>
       <div class="pgrupo"><h4>Histórico</h4>${blocoHistorico(c)}</div>
     </div>`;
 
@@ -2515,6 +2572,260 @@ async function tirarCurriculoVaga(id){
   setSync(true);
   await patchRow(c.id,{curriculo:''});
   render();showToast('Currículo removido');
+}
+
+
+/* =========================================================
+   Ficha da etapa — registro estruturado da conversa.
+   Os guias de entrevista já traziam 9 critérios com nota de
+   0 a 3 e uma evidência curta, mais um fechamento. É isso que
+   vive aqui. Os critérios mudam por cargo: "técnica de sushi"
+   não serve para avaliar chefe de APV.
+   ========================================================= */
+let criterios=[];        // o modelo, por cargo e etapa
+let fichas={};           // 'candidato|etapa' -> linha preenchida
+let fichaTimers={};      // debounce por campo
+let critCargo='';        // cargo aberto no editor de critérios
+
+const DECISOES=[
+  {v:'avanca',     r:'Avança',              cls:'ok'},
+  {v:'ressalva',   r:'Avança com ressalva', cls:'conv'},
+  {v:'nao_avanca', r:'Não avança',          cls:'no'}
+];
+
+async function fetchFichas(){
+  const cr=await sb.from('criterios').select('*');
+  criterios=cr.error?[]:(cr.data||[]);
+  const fi=await sb.from('fichas').select('*');
+  fichas={};
+  if(!fi.error)(fi.data||[]).forEach(f=>{fichas[f.candidato_id+'|'+f.etapa]=f;});
+}
+
+function criteriosDe(cargo,etapa){
+  return criterios.filter(x=>x.cargo===cargo&&x.etapa===etapa)
+    .sort((a,b)=>(a.ordem-b.ordem)||String(a.nome).localeCompare(String(b.nome),'pt-BR'));
+}
+function fichaDe(c){
+  return fichas[c.id+'|'+c.etapa]||
+    {notas:{},evidencias:'',atencao:'',testar:'',aberto:'',decisao:''};
+}
+function notaDe(f,nome){
+  const n=(f.notas||{})[nome];
+  return (n&&n.nota!==undefined&&n.nota!==null)?n.nota:null;
+}
+
+/* Uma linha por candidato por etapa: grava a ficha inteira de uma vez,
+   com upsert, para não existir meia ficha no banco. */
+async function gravarFicha(c,campos){
+  const chave=c.id+'|'+c.etapa;
+  const a=fichaDe(c);
+  const novo={
+    candidato_id:c.id, etapa:c.etapa,
+    notas:      campos.notas      !==undefined?campos.notas      :(a.notas||{}),
+    evidencias: campos.evidencias !==undefined?campos.evidencias :(a.evidencias||''),
+    atencao:    campos.atencao    !==undefined?campos.atencao    :(a.atencao||''),
+    testar:     campos.testar     !==undefined?campos.testar     :(a.testar||''),
+    aberto:     campos.aberto     !==undefined?campos.aberto     :(a.aberto||''),
+    decisao:    campos.decisao    !==undefined?campos.decisao    :(a.decisao||''),
+    autor: usuario?usuario.email:''
+  };
+  setSync(true,'Salvando…');
+  const {data:rows,error}=await sb.from('fichas')
+    .upsert(novo,{onConflict:'candidato_id,etapa'}).select();
+  if(error){
+    setSync(false,'Erro ao salvar');
+    showToast('Não salvou a ficha: '+error.message,true);
+    return false;
+  }
+  setSync(true);
+  fichas[chave]=(rows&&rows[0])?rows[0]:novo;
+  return true;
+}
+
+function blocoFicha(c){
+  if(!c.cargo){
+    return '<p class="dica-campo">Este candidato não tem vaga definida. '+
+      'Escolha a vaga na aba <b>Vagas</b> para a ficha desta etapa aparecer.</p>';
+  }
+  const lista=criteriosDe(c.cargo,c.etapa);
+  const et=etapaInfo(c.etapa);
+  if(!lista.length){
+    return '<p class="dica-campo">Nenhum critério cadastrado para <b>'+escHtml(c.cargo)+
+      '</b> na etapa de '+escHtml(et.nome.toLowerCase())+'. Cadastre em '+
+      '<b>Critérios da ficha</b>, no fim da página.</p>';
+  }
+  const f=fichaDe(c);
+  const feitos=lista.filter(x=>notaDe(f,x.nome)!==null).length;
+  const soma=lista.reduce((s,x)=>s+(notaDe(f,x.nome)||0),0);
+
+  let h='<div class="ficha-topo"><span class="ficha-conta">'+feitos+' de '+lista.length+
+    ' avaliados</span>'+(feitos?'<span class="ficha-soma">soma '+soma+' de '+(lista.length*3)+'</span>':'')+
+    '<span class="ficha-escala">0 sem evidência · 1 fraca · 2 suficiente · 3 forte</span></div>';
+
+  h+=lista.map(x=>{
+    const n=notaDe(f,x.nome);
+    const ev=((f.notas||{})[x.nome]||{}).evidencia||'';
+    const botoes=[0,1,2,3].map(v=>
+      '<button class="nb'+(n===v?' on n'+v:'')+'" title="'+v+'"'+
+      ' onclick="setNotaFicha(\''+c.id+'\','+JSON.stringify(x.nome).replace(/"/g,'&quot;')+','+v+')">'+v+'</button>'
+    ).join('');
+    return '<div class="crit'+(n!==null?' avaliado':'')+'">'+
+      '<div class="crit-top"><span class="crit-nome">'+escHtml(x.nome)+'</span>'+
+      '<span class="crit-notas">'+botoes+
+      (n!==null?'<button class="nb limpar" title="Limpar nota" onclick="setNotaFicha(\''+c.id+'\','+
+        JSON.stringify(x.nome).replace(/"/g,'&quot;')+',null)">✕</button>':'')+'</span></div>'+
+      (x.evidencia?'<p class="crit-dica">'+escHtml(x.evidencia)+'</p>':'')+
+      '<input class="crit-ev" placeholder="Evidência curta: o caso que sustenta a nota"'+
+      ' value="'+escAttr(ev)+'" oninput="setEvidenciaFicha(\''+c.id+'\','+
+      JSON.stringify(x.nome).replace(/"/g,'&quot;')+',this.value)">'+
+      '</div>';
+  }).join('');
+
+  h+='<div class="ficha-fim"><h5>Fechamento</h5>'+
+    campoFicha(c,'evidencias','Três evidências que sustentam avanço',3)+
+    campoFicha(c,'atencao','Maior ponto de atenção',2)+
+    campoFicha(c,'testar','O que precisa ser testado na etapa seguinte',2)+
+    campoFicha(c,'aberto','Pergunta ou contradição que ficou em aberto',2)+
+    '<div class="ficha-decisao"><span class="rot">Decisão desta etapa</span><div class="dec-btns">'+
+    DECISOES.map(d=>'<button class="sendbtn '+(f.decisao===d.v?d.cls:'perfil-btn')+'"'+
+      ' onclick="setDecisaoFicha(\''+c.id+'\',\''+(f.decisao===d.v?'':d.v)+'\')">'+
+      (f.decisao===d.v?'✓ ':'')+d.r+'</button>').join('')+
+    '</div></div>'+
+    (f.autor?'<p class="dica-campo">Última alteração por '+escHtml(f.autor)+'.</p>':'')+
+    '</div>';
+  return h;
+}
+
+function campoFicha(c,campo,rotulo,linhas){
+  const f=fichaDe(c);
+  return '<label class="ficha-campo"><span>'+rotulo+'</span>'+
+    '<textarea rows="'+linhas+'" oninput="setCampoFicha(\''+c.id+'\',\''+campo+'\',this.value)">'+
+    escHtml(f[campo]||'')+'</textarea></label>';
+}
+
+/* ---- ações ---- */
+function setNotaFicha(id,nome,valor){
+  const c=data.find(x=>x.id===id);if(!c)return;
+  const f=fichaDe(c);
+  const notas=Object.assign({},f.notas||{});
+  const ev=(notas[nome]||{}).evidencia||'';
+  if(valor===null){ if(ev)notas[nome]={evidencia:ev}; else delete notas[nome]; }
+  else notas[nome]={nota:valor,evidencia:ev};
+  gravarFicha(c,{notas:notas}).then(ok=>{if(ok)renderPerfil();});
+}
+
+/* Texto grava ao parar de digitar. Sem debounce seria uma gravação por
+   tecla, e a ficha inteira vai numa linha só. */
+function agendaFicha(chave,fn){
+  if(fichaTimers[chave])clearTimeout(fichaTimers[chave]);
+  fichaTimers[chave]=setTimeout(fn,700);
+}
+function setEvidenciaFicha(id,nome,txt){
+  const c=data.find(x=>x.id===id);if(!c)return;
+  agendaFicha(id+'|'+nome,()=>{
+    const f=fichaDe(c);
+    const notas=Object.assign({},f.notas||{});
+    const n=notas[nome]||{};
+    notas[nome]=(n.nota!==undefined&&n.nota!==null)?{nota:n.nota,evidencia:txt}:{evidencia:txt};
+    gravarFicha(c,{notas:notas});
+  });
+}
+function setCampoFicha(id,campo,txt){
+  const c=data.find(x=>x.id===id);if(!c)return;
+  agendaFicha(id+'|'+campo,()=>{
+    const campos={};campos[campo]=txt;
+    gravarFicha(c,campos);
+  });
+}
+
+/* A decisão registra e PROPÕE o status. Registrar impressão e decidir o
+   destino da pessoa continuam sendo dois atos. */
+async function setDecisaoFicha(id,valor){
+  const c=data.find(x=>x.id===id);if(!c)return;
+  if(!await gravarFicha(c,{decisao:valor}))return;
+  renderPerfil();
+  if(!valor)return;
+  const et=etapaInfo(c.etapa).nome.toLowerCase();
+  if(valor==='avanca'&&c.status!=='Aprovado'&&
+     confirm('Ficha salva.\n\nMarcar '+c.nome+' como Aprovado na etapa de '+et+'?')){
+    setStatus(c.id,'Aprovado');renderPerfil();
+  }else if(valor==='nao_avanca'&&c.status!=='Reprovado'&&
+     confirm('Ficha salva.\n\nMarcar '+c.nome+' como Reprovado?')){
+    setStatus(c.id,'Reprovado');renderPerfil();
+  }
+}
+
+/* =========================================================
+   Editor de critérios, por cargo
+   ========================================================= */
+function montarEditorCriterios(){
+  const box=document.getElementById('critBox');
+  if(!box)return;
+  const cargos=cargosNaTela().filter(k=>k);
+  const doBanco=criterios.map(x=>x.cargo).filter((v,i,a)=>a.indexOf(v)===i);
+  const todos=cargos.concat(doBanco.filter(k=>cargos.indexOf(k)<0));
+  if(!todos.length){box.innerHTML='<p class="dica-campo">Abra uma vaga primeiro.</p>';return;}
+  if(todos.indexOf(critCargo)<0)critCargo=todos[0];
+
+  const lista=criteriosDe(critCargo,'entrevista');
+  box.innerHTML=
+    '<div class="vaga-add"><select onchange="critCargo=this.value;montarEditorCriterios()">'+
+      todos.map(k=>'<option value="'+escAttr(k)+'"'+(k===critCargo?' selected':'')+'>'+
+        escHtml(k)+'</option>').join('')+
+    '</select><span class="conta">'+lista.length+' critérios</span></div>'+
+    (lista.length?'<ol class="crit-lista">'+lista.map(x=>
+      '<li><b>'+escHtml(x.nome)+'</b>'+
+      '<button class="linkbtn" onclick="removerCriterio(\''+x.id+'\')">remover</button>'+
+      '<input class="crit-ev" value="'+escAttr(x.evidencia)+'"'+
+      ' placeholder="O que conta como evidência"'+
+      ' oninput="setEvidenciaCriterio(\''+x.id+'\',this.value)"></li>').join('')+'</ol>'
+      :'<p class="dica-campo">Nenhum critério para esta vaga.</p>')+
+    '<div class="vaga-add"><input id="critNovo" type="text" placeholder="Nome do critério">'+
+      '<button class="btn" onclick="addCriterio()">Adicionar critério</button></div>'+
+    '<p class="dica-campo">Renomear um critério não apaga a nota já dada: ela fica '+
+    'guardada com o nome antigo. Remover um critério não apaga as notas das fichas.</p>';
+}
+
+async function addCriterio(){
+  const el=document.getElementById('critNovo');
+  const nome=el.value.trim();
+  if(!nome){showToast('Escreva o nome do critério');el.focus();return;}
+  const lista=criteriosDe(critCargo,'entrevista');
+  if(lista.some(x=>x.nome===nome)){showToast('Esse critério já existe nesta vaga',true);return;}
+  const ordem=lista.length?Math.max.apply(null,lista.map(x=>x.ordem||0))+1:1;
+  setSync(true,'Salvando…');
+  const {data:rows,error}=await sb.from('criterios')
+    .insert({cargo:critCargo,etapa:'entrevista',ordem:ordem,nome:nome,evidencia:''}).select();
+  if(error){setSync(false,'Erro ao salvar');showToast('Não adicionou: '+error.message,true);return;}
+  setSync(true);
+  // o aviso de tempo real pode chegar antes daqui
+  if(rows&&rows[0]&&!criterios.some(k=>k.id===rows[0].id))criterios.push(rows[0]);
+  el.value='';
+  montarEditorCriterios();
+  if(perfilId)renderPerfil();
+  showToast('Critério adicionado');
+}
+async function removerCriterio(id){
+  const x=criterios.find(k=>k.id===id);if(!x)return;
+  if(!confirm('Remover o critério "'+x.nome+'" de '+x.cargo+'?\n\n'+
+    'As notas já dadas nas fichas não são apagadas.'))return;
+  setSync(true,'Salvando…');
+  const {error}=await sb.from('criterios').delete().eq('id',id);
+  if(error){setSync(false,'Erro ao salvar');showToast('Não removeu: '+error.message,true);return;}
+  setSync(true);
+  criterios=criterios.filter(k=>k.id!==id);
+  montarEditorCriterios();
+  if(perfilId)renderPerfil();
+  showToast('Critério removido');
+}
+function setEvidenciaCriterio(id,txt){
+  agendaFicha('crit|'+id,async()=>{
+    const {error}=await sb.from('criterios').update({evidencia:txt}).eq('id',id);
+    if(error){showToast('Não salvou: '+error.message,true);return;}
+    const x=criterios.find(k=>k.id===id);
+    if(x)x.evidencia=txt;
+    if(perfilId)renderPerfil();
+  });
 }
 
 boot();
