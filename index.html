@@ -437,17 +437,28 @@
   .post-campos select,.post-campos input{font:inherit;font-size:13px;color:var(--ink);
     padding:6px 8px;border:1px solid var(--line);border-radius:7px;background:var(--card);min-width:150px;}
 
-  .post-artes{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0 4px;}
-  .post-arte{position:relative;width:92px;height:92px;border-radius:10px;overflow:hidden;
+  .post-slots{display:flex;gap:20px;flex-wrap:wrap;margin:14px 0 4px;}
+  .post-slot-cab{font:700 10px var(--mono);letter-spacing:.08em;text-transform:uppercase;
+    color:var(--muted);margin-bottom:6px;}
+  .post-slot-dica{font-weight:400;letter-spacing:0;text-transform:none;opacity:.8;margin-left:6px;}
+  .post-artes{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start;}
+  .post-slot-link{display:block;margin-top:5px;padding:0;}
+  .post-arte{position:relative;height:122px;border-radius:10px;overflow:hidden;
     border:1px solid var(--line);background:var(--page);}
-  .post-arte img{width:100%;height:100%;object-fit:cover;display:block;}
+  .post-arte img{width:100%;height:100%;object-fit:contain;display:block;}
+  .post-arte-alerta{position:absolute;top:4px;right:4px;width:18px;height:18px;border-radius:50%;
+    background:var(--convidado);color:#fff;font-size:11px;line-height:18px;text-align:center;cursor:help;}
+  .post-arte-fmt{position:absolute;left:3px;bottom:3px;font:inherit;font-size:10px;color:var(--ink);
+    border:1px solid var(--line);border-radius:6px;background:rgba(255,255,255,.92);
+    padding:1px 2px;max-width:calc(100% - 6px);opacity:0;transition:.15s;}
+  .post-arte:hover .post-arte-fmt{opacity:1;}
   .post-arte-bar{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:center;gap:2px;
     padding:3px 2px;background:rgba(12,18,15,.62);opacity:0;transition:.15s;}
   .post-arte:hover .post-arte-bar{opacity:1;}
   .post-arte-bar .icon{width:20px;height:20px;font-size:11px;border:none;background:transparent;color:#fff;}
   .post-arte-bar .icon:hover{background:rgba(255,255,255,.2);}
   .post-arte-add{font:inherit;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;
-    width:92px;height:92px;border:1px dashed var(--line);border-radius:10px;background:var(--page);
+    height:122px;border:1px dashed var(--line);border-radius:10px;background:var(--page);
     display:flex;align-items:center;justify-content:center;}
   .post-arte-add:hover{border-color:var(--wa);color:var(--wa-dark);}
 
@@ -740,7 +751,7 @@
 
   <div class="foot">
     <p><b>As três etapas:</b> entrevista, avaliação técnica e entrevista final com os sócios. Marcar <b>Aprovado</b> não muda ninguém de etapa — quem muda é o botão <b>Avançar</b>, na aba Funil. A separação é de propósito: dá tempo de mandar a mensagem de aprovação antes de o candidato trocar de lugar na tela. Ao avançar, o status volta para Pendente e a data fica em branco, para você marcar o novo compromisso. Clique errado se desfaz em <b>voltar uma etapa</b>.</p>
-    <p><b>Divulgação:</b> a biblioteca de posts de vaga, para a legenda não ser reescrita a cada repostagem. Cada post guarda a <b>legenda-base</b>, as artes e o histórico de onde já saiu. Os três botões copiam o texto já ajustado ao canal: o WhatsApp recebe o negrito com um asterisco só, o LinkedIn recebe as hashtags no fim, e o e-mail vem com a linha de assunto na frente. Enquanto um canal estiver seguindo a base, mexer na base muda os três; quando um deles precisa de outro texto, <b>escrever um texto só para aqui</b> desliga aquele canal da base — e <b>voltar a seguir a base</b> desfaz. Os marcadores <b>{CARGO}</b> e <b>{UNIDADE}</b> são trocados na hora de copiar pelo que estiver escolhido no post, que é como o mesmo anúncio serve BH e Asa Sul sem virar dois. Depois de copiar, o app pergunta se já publicou e guarda a data, para você enxergar o que está velho. As artes ficam num depósito <b>público</b>, porque o link precisa abrir na mão de quem vai divulgar: currículo e documento de admissão continuam nos seus depósitos privados e nunca devem ser enviados aqui.</p>
+    <p><b>Divulgação:</b> a biblioteca de posts de vaga, para a legenda não ser reescrita a cada repostagem. Cada post guarda a <b>legenda-base</b>, as artes e o histórico de onde já saiu. Os três botões copiam o texto já ajustado ao canal: o WhatsApp recebe o negrito com um asterisco só, o LinkedIn recebe as hashtags no fim, e o e-mail vem com a linha de assunto na frente. Enquanto um canal estiver seguindo a base, mexer na base muda os três; quando um deles precisa de outro texto, <b>escrever um texto só para aqui</b> desliga aquele canal da base — e <b>voltar a seguir a base</b> desfaz. Os marcadores <b>{CARGO}</b> e <b>{UNIDADE}</b> são trocados na hora de copiar pelo que estiver escolhido no post, que é como o mesmo anúncio serve BH e Asa Sul sem virar dois. Depois de copiar, o app pergunta se já publicou e guarda a data, para você enxergar o que está velho. Cada arte mora numa prateleira: <b>WhatsApp e LinkedIn</b> (a mesma peça serve nos dois), <b>Story</b> em pé e <b>Feed do Instagram</b> quadrado. O formato vem da prateleira em que você enviou, não de adivinhação — e dá para mudar de prateleira pelo seletor no canto da miniatura. A moldura de cada prateleira tem a proporção certa e a imagem entra inteira dentro dela, então a tarja que sobrar já mostra o que o Instagram vai cortar; quando a proporção destoa muito, aparece um <b>!</b> com o aviso. As artes ficam num depósito <b>público</b>, porque o link precisa abrir na mão de quem vai divulgar: currículo e documento de admissão continuam nos seus depósitos privados e nunca devem ser enviados aqui.</p>
 
     <p><b>Vagas:</b> a triagem por cargo. Cada vaga aberta vira uma sub-aba, e é ali que o candidato entra, o currículo é anexado e a entrevista é marcada. <b>Anexar o currículo é o gatilho da convocação:</b> se a data já estiver preenchida, a mensagem de convite abre pronta no WhatsApp, com o nome, o cargo e o horário daquela pessoa, e o status vira Convidado — o app não dispara nada sozinho, você confere e envia. Sem data, ele guarda o currículo e avisa que falta marcar. Abrir e fechar vagas se faz em <b>Gerenciar vagas abertas</b>, no fim da aba; fechar não apaga ninguém, só marca a vaga como fechada e mantém quem estava nela. O cargo entra nos modelos pelo marcador <b>{CARGO}</b>, então o mesmo texto serve para todas as vagas. A vaga de cada pessoa também aparece como selo nos cartões da Agenda, do Funil e da aba Fora, e o Funil tem um filtro por vaga no topo: com vários processos correndo juntos, ver o funil de uma vaga responde mais que ver o funil inteiro. Vaga fechada aparece riscada.</p>
     <p><b>Portão da avaliação:</b> cada candidato tem um link pessoal, que já vai dentro do convite e do e-mail e também pode ser copiado no perfil. Nele o candidato vê a contagem regressiva até o horário <i>dele</i>; no horário, o formulário é liberado; sessenta minutos depois, encerra. Quem confere a hora é o banco de dados, não o relógio do computador do candidato, e o endereço do formulário só entra na resposta com a janela aberta. Cole o endereço do Google Forms em <b>Endereço dos formulários</b>, aqui embaixo — enquanto estiver vazio, o link avisa que a avaliação ainda não foi liberada. O perfil registra se e quando a pessoa abriu.</p>
@@ -2928,6 +2939,46 @@ const CANAIS=[
 ];
 function canalInfo(id){return CANAIS.find(c=>c.id===id)||CANAIS[0];}
 
+/* Os três modelos de arte. A do WhatsApp serve também no LinkedIn,
+   então são um formato só. "prop" é a moldura que a tela desenha e
+   "alvo" é a proporção esperada — quando a imagem foge dela, o app
+   avisa que vai ser cortada, mas nunca recusa o envio. */
+const FORMATOS=[
+  {id:'whats', nome:'WhatsApp e LinkedIn', dica:'a mesma arte serve nos dois',
+   prop:'4 / 5',  alvo:null, exemplo:''},
+  {id:'story', nome:'Story',               dica:'em pé, 9 por 16',
+   prop:'9 / 16', alvo:9/16, exemplo:'1080 × 1920'},
+  {id:'feed',  nome:'Feed do Instagram',   dica:'quadrada',
+   prop:'1 / 1',  alvo:1,    exemplo:'1080 × 1080'},
+  {id:'outro', nome:'Outras',              dica:'fora de padrão',
+   prop:'1 / 1',  alvo:null, exemplo:''}
+];
+function formatoInfo(id){return FORMATOS.find(f=>f.id===id)||FORMATOS[0];}
+function formatoDe(im){return im.formato||'whats';}
+
+/* Mede a imagem antes de subir, para guardar as medidas e poder
+   avisar depois sem baixar o arquivo de novo. */
+function medirImagem(origem){
+  return new Promise(ok=>{
+    const img=new Image();
+    const ehArquivo=typeof origem!=='string';
+    const u=ehArquivo?URL.createObjectURL(origem):origem;
+    let respondeu=false;
+    const fim=(r)=>{if(respondeu)return;respondeu=true;if(ehArquivo)URL.revokeObjectURL(u);ok(r);};
+    img.onload=()=>fim({w:img.naturalWidth,h:img.naturalHeight});
+    img.onerror=()=>fim(null);
+    setTimeout(()=>fim(null),6000);
+    img.src=u;
+  });
+}
+function avisoFormato(fid,w,h){
+  const f=formatoInfo(fid);
+  if(!f.alvo||!w||!h)return '';
+  const r=w/h;
+  if(Math.abs(r-f.alvo)<=f.alvo*0.12)return '';
+  return 'A arte é '+w+'×'+h+' e '+f.nome+' pede '+f.exemplo+'. Ela vai aparecer cortada.';
+}
+
 /* Se o 11-divulgacao.sql ainda não rodou, a aba fica vazia em vez de
    derrubar o resto do app — mesmo trato das outras leituras. */
 async function fetchPosts(){
@@ -3015,15 +3066,23 @@ function urlImagem(im){
   const r=sb.storage.from('divulgacao').getPublicUrl(im.caminho);
   return (r&&r.data&&r.data.publicUrl)||'';
 }
+function artesDe(id,formato){
+  return imagensDe(id).filter(x=>formatoDe(x)===formato);
+}
+/* O formato não é adivinhado: vem da prateleira em que você soltou
+   o arquivo. Medir serve só para avisar quando a proporção destoa. */
 async function enviarArte(input){
   const id=input.dataset.id;
+  const formato=input.dataset.formato||'whats';
   const arqs=input.files?Array.prototype.slice.call(input.files):[];
   input.value='';
   if(!posts.some(x=>x.id===id)||!arqs.length)return;
   setSync(true,'Enviando…');
-  let ordem=imagensDe(id).length;
+  let ordem=artesDe(id,formato).length;
+  const avisos=[];
   for(const arq of arqs){
     if(arq.size>15*1024*1024){showToast(arq.name+' passa de 15 MB',true);continue;}
+    const med=await medirImagem(arq);
     const ext=(arq.name.match(/\.[A-Za-z0-9]+$/)||['.png'])[0].toLowerCase();
     const caminho=id+'/'+Date.now()+'-'+Math.random().toString(36).slice(2,8)+ext;
     const {error}=await sb.storage.from('divulgacao')
@@ -3031,21 +3090,38 @@ async function enviarArte(input){
     if(error){setSync(false,'Erro ao enviar');showToast('Não enviou '+arq.name+': '+error.message,true);continue;}
     ordem++;
     const {data:rows,error:e2}=await sb.from('posts_imagens')
-      .insert({post_id:id,caminho:caminho,ordem:ordem}).select();
+      .insert({post_id:id,caminho:caminho,ordem:ordem,formato:formato,
+               largura:med?med.w:null,altura:med?med.h:null}).select();
     if(e2){showToast('A arte subiu mas não entrou na lista: '+e2.message,true);continue;}
     if(rows&&rows[0]&&!postImgs.some(x=>x.id===rows[0].id))postImgs.push(rows[0]);
+    const a=med?avisoFormato(formato,med.w,med.h):'';
+    if(a)avisos.push(a);
   }
   setSync(true);
   render();
+  if(avisos.length)showToast(avisos[0],true);
 }
-async function colarLinkArte(id){
+async function colarLinkArte(id,formato){
+  formato=formato||'whats';
   const url=(prompt('Endereço da arte (Drive, Canva, qualquer link de imagem):')||'').trim();
   if(!url)return;
-  const ordem=imagensDe(id).length+1;
+  // Link de fora nem sempre deixa medir; sem medida, o app não avisa nada.
+  const med=await medirImagem(url);
+  const ordem=artesDe(id,formato).length+1;
   const {data:rows,error}=await sb.from('posts_imagens')
-    .insert({post_id:id,url:url,ordem:ordem}).select();
+    .insert({post_id:id,url:url,ordem:ordem,formato:formato,
+             largura:med?med.w:null,altura:med?med.h:null}).select();
   if(error){showToast('Não guardou o link: '+error.message,true);return;}
   if(rows&&rows[0]&&!postImgs.some(x=>x.id===rows[0].id))postImgs.push(rows[0]);
+  render();
+  const a=med?avisoFormato(formato,med.w,med.h):'';
+  if(a)showToast(a,true);
+}
+async function setFormatoArte(imgId,formato){
+  const {error}=await sb.from('posts_imagens').update({formato:formato}).eq('id',imgId);
+  if(error){showToast('Não mudou o formato: '+error.message,true);return;}
+  const im=postImgs.find(x=>x.id===imgId);
+  if(im)im.formato=formato;
   render();
 }
 /* A área de transferência só aceita PNG com segurança. JPEG e WebP
@@ -3264,13 +3340,7 @@ function cardPost(p){
      '<span class="post-dica">É isso que {CARGO} e {UNIDADE} viram no texto copiado.</span>'+
      '</div>';
 
-  h+='<div class="post-artes">'+imagensDe(p.id).map(cardArte).join('')+
-     '<label class="post-arte-add" title="Enviar imagem">+ Arte'+
-       '<input type="file" accept="image/*" multiple hidden data-id="'+p.id+'"'+
-       ' onchange="enviarArte(this)"></label>'+
-     '<button class="post-arte-add" title="Guardar um link do Drive ou do Canva"'+
-       ' onclick="colarLinkArte(\''+p.id+'\')">+ Link</button>'+
-     '</div>';
+  h+=blocoArtes(p);
 
   h+='<div class="post-canais">'+CANAIS.map(c=>{
     const u=ultimaPub(p.id,c.id);
@@ -3287,13 +3357,46 @@ function cardPost(p){
   return h+'</div>';
 }
 
-function cardArte(im){
-  return '<div class="post-arte"><img src="'+escAttr(urlImagem(im))+'" alt="" loading="lazy">'+
-    '<div class="post-arte-bar">'+
-      '<button class="icon" title="Copiar a imagem" onclick="copiarArte(\''+im.id+'\')">⧉</button>'+
-      '<button class="icon" title="Baixar" onclick="baixarArte(\''+im.id+'\')">⇩</button>'+
-      '<button class="icon" title="Copiar o endereço" onclick="copiarLinkArte(\''+im.id+'\')">🔗</button>'+
-      '<button class="icon del" title="Remover" onclick="removerArte(\''+im.id+'\')">✕</button>'+
+/* Uma prateleira por formato. "Outras" só aparece quando tem algo
+   dentro, para não sobrar caixa vazia na tela de quem não usa. */
+function blocoArtes(p){
+  const todas=imagensDe(p.id);
+  return '<div class="post-slots">'+FORMATOS.filter(f=>
+      f.id!=='outro'||todas.some(x=>formatoDe(x)==='outro')
+    ).map(f=>{
+    const lista=todas.filter(x=>formatoDe(x)===f.id);
+    let b='<div class="post-slot"><div class="post-slot-cab">'+escHtml(f.nome)+
+      '<span class="post-slot-dica">'+escHtml(f.dica)+'</span></div>'+
+      '<div class="post-artes">'+lista.map(im=>cardArte(im,f)).join('');
+    if(f.id!=='outro'){
+      b+='<label class="post-arte-add" style="aspect-ratio:'+f.prop+'" title="Enviar imagem">+ Arte'+
+         '<input type="file" accept="image/*" multiple hidden data-id="'+p.id+'"'+
+         ' data-formato="'+f.id+'" onchange="enviarArte(this)"></label>';
+    }
+    b+='</div>';
+    if(f.id!=='outro'){
+      b+='<button class="linkbtn post-slot-link"'+
+         ' onclick="colarLinkArte(\''+p.id+'\',\''+f.id+'\')">ou colar um link</button>';
+    }
+    return b+'</div>';
+  }).join('')+'</div>';
+}
+
+function cardArte(im,f){
+  f=f||formatoInfo(formatoDe(im));
+  const aviso=avisoFormato(formatoDe(im),im.largura,im.altura);
+  let h='<div class="post-arte" style="aspect-ratio:'+f.prop+'">'+
+    '<img src="'+escAttr(urlImagem(im))+'" alt="" loading="lazy">';
+  if(aviso)h+='<span class="post-arte-alerta" title="'+escAttr(aviso)+'">!</span>';
+  h+='<select class="post-arte-fmt" title="Mudar de prateleira"'+
+     ' onchange="setFormatoArte(\''+im.id+'\',this.value)">'+
+     FORMATOS.map(o=>'<option value="'+o.id+'"'+(o.id===formatoDe(im)?' selected':'')+'>'+
+       escHtml(o.nome)+'</option>').join('')+'</select>';
+  return h+'<div class="post-arte-bar">'+
+    '<button class="icon" title="Copiar a imagem" onclick="copiarArte(\''+im.id+'\')">⧉</button>'+
+    '<button class="icon" title="Baixar" onclick="baixarArte(\''+im.id+'\')">⇩</button>'+
+    '<button class="icon" title="Copiar o endereço" onclick="copiarLinkArte(\''+im.id+'\')">🔗</button>'+
+    '<button class="icon del" title="Remover" onclick="removerArte(\''+im.id+'\')">✕</button>'+
     '</div></div>';
 }
 
