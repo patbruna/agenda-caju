@@ -421,6 +421,64 @@
   .crit-lista li{margin-bottom:10px;}
   .crit-lista .linkbtn{margin-left:8px;}
 
+
+  /* ---------- Divulgação ---------- */
+  .post-topo{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:0 0 14px;}
+  .post-dica{font-size:12px;color:var(--muted);}
+  .post-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:14px 16px;margin-bottom:12px;}
+  .post-top{display:flex;gap:10px;align-items:center;}
+  .post-tit{flex:1;min-width:120px;font:700 16px/1.2 inherit;color:var(--ink);
+    border:1px solid transparent;background:transparent;border-radius:var(--r-sm);padding:5px 7px;}
+  .post-tit:hover,.post-tit:focus{border-color:var(--line);background:var(--page);}
+  .post-acoes{display:flex;gap:6px;}
+  .post-campos{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin:10px 0 4px;}
+  .post-campos label{display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--muted);}
+  .post-campos select,.post-campos input{font:inherit;font-size:13px;color:var(--ink);
+    padding:6px 8px;border:1px solid var(--line);border-radius:7px;background:var(--card);min-width:150px;}
+
+  .post-artes{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0 4px;}
+  .post-arte{position:relative;width:92px;height:92px;border-radius:10px;overflow:hidden;
+    border:1px solid var(--line);background:var(--page);}
+  .post-arte img{width:100%;height:100%;object-fit:cover;display:block;}
+  .post-arte-bar{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:center;gap:2px;
+    padding:3px 2px;background:rgba(12,18,15,.62);opacity:0;transition:.15s;}
+  .post-arte:hover .post-arte-bar{opacity:1;}
+  .post-arte-bar .icon{width:20px;height:20px;font-size:11px;border:none;background:transparent;color:#fff;}
+  .post-arte-bar .icon:hover{background:rgba(255,255,255,.2);}
+  .post-arte-add{font:inherit;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;
+    width:92px;height:92px;border:1px dashed var(--line);border-radius:10px;background:var(--page);
+    display:flex;align-items:center;justify-content:center;}
+  .post-arte-add:hover{border-color:var(--wa);color:var(--wa-dark);}
+
+  .post-canais{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 2px;}
+  .post-canal{display:flex;flex-direction:column;gap:3px;}
+  .post-copiar{font-size:13px;padding:8px 13px;}
+  .post-copiar.li{background:#2c5f8d;} .post-copiar.li:hover{background:#224b70;}
+  .post-copiar.em{background:#6b5b95;} .post-copiar.em:hover{background:#564878;}
+  .post-quando{font:600 10px var(--mono);letter-spacing:.06em;text-transform:uppercase;
+    color:var(--muted);text-align:center;}
+
+  .post-previa{margin-top:12px;border-top:1px solid var(--line);padding-top:10px;}
+  .post-previa summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--wa-dark);}
+  .post-ed{margin-top:12px;}
+  .post-lbl{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--muted);margin-bottom:12px;}
+  .post-lbl textarea,.post-lbl input{font:inherit;font-size:14px;color:var(--ink);line-height:1.5;
+    padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--card);resize:vertical;}
+  .post-dois{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .post-canal-ed{border-top:1px dashed var(--line);padding-top:10px;margin-top:4px;}
+  .post-canal-cab{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;margin-bottom:6px;}
+  .post-tag{font:600 10px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);
+    border:1px solid var(--line);border-radius:var(--r-pill);padding:2px 8px;}
+  .post-tag.prop{color:var(--wa-dark);border-color:#bfe6cd;background:var(--confirmado-bg);}
+  .post-canal-ed textarea{width:100%;font:inherit;font-size:14px;color:var(--ink);line-height:1.5;
+    padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--card);resize:vertical;}
+  .post-prev-rot{font:600 10px var(--mono);letter-spacing:.08em;text-transform:uppercase;
+    color:var(--muted);margin:8px 0 4px;}
+  .post-prev{white-space:pre-wrap;word-break:break-word;font:inherit;font-size:13px;line-height:1.55;
+    color:var(--ink);background:var(--page);border:1px solid var(--line);border-radius:9px;
+    padding:10px 12px;margin:0;max-height:220px;overflow:auto;}
+  @media (max-width:640px){ .post-dois{grid-template-columns:1fr;} }
   /* ---------- Vagas ---------- */
   .vaga-abas{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;}
   .vaga-fechada{font:600 10px var(--mono);letter-spacing:.08em;text-transform:uppercase;
@@ -570,6 +628,9 @@
 
     <div class="grp">Processo seletivo</div>
     <div class="tabs" id="tabs">
+      <button class="tab" data-tab="divulgacao" onclick="setTab('divulgacao')">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>
+        Divulgação <span class="n" id="tab-n-divulgacao">0</span></button>
       <button class="tab" data-tab="vagas" onclick="setTab('vagas')">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>
         Vagas <span class="n" id="tab-n-vagas">0</span></button>
@@ -679,6 +740,8 @@
 
   <div class="foot">
     <p><b>As três etapas:</b> entrevista, avaliação técnica e entrevista final com os sócios. Marcar <b>Aprovado</b> não muda ninguém de etapa — quem muda é o botão <b>Avançar</b>, na aba Funil. A separação é de propósito: dá tempo de mandar a mensagem de aprovação antes de o candidato trocar de lugar na tela. Ao avançar, o status volta para Pendente e a data fica em branco, para você marcar o novo compromisso. Clique errado se desfaz em <b>voltar uma etapa</b>.</p>
+    <p><b>Divulgação:</b> a biblioteca de posts de vaga, para a legenda não ser reescrita a cada repostagem. Cada post guarda a <b>legenda-base</b>, as artes e o histórico de onde já saiu. Os três botões copiam o texto já ajustado ao canal: o WhatsApp recebe o negrito com um asterisco só, o LinkedIn recebe as hashtags no fim, e o e-mail vem com a linha de assunto na frente. Enquanto um canal estiver seguindo a base, mexer na base muda os três; quando um deles precisa de outro texto, <b>escrever um texto só para aqui</b> desliga aquele canal da base — e <b>voltar a seguir a base</b> desfaz. Os marcadores <b>{CARGO}</b> e <b>{UNIDADE}</b> são trocados na hora de copiar pelo que estiver escolhido no post, que é como o mesmo anúncio serve BH e Asa Sul sem virar dois. Depois de copiar, o app pergunta se já publicou e guarda a data, para você enxergar o que está velho. As artes ficam num depósito <b>público</b>, porque o link precisa abrir na mão de quem vai divulgar: currículo e documento de admissão continuam nos seus depósitos privados e nunca devem ser enviados aqui.</p>
+
     <p><b>Vagas:</b> a triagem por cargo. Cada vaga aberta vira uma sub-aba, e é ali que o candidato entra, o currículo é anexado e a entrevista é marcada. <b>Anexar o currículo é o gatilho da convocação:</b> se a data já estiver preenchida, a mensagem de convite abre pronta no WhatsApp, com o nome, o cargo e o horário daquela pessoa, e o status vira Convidado — o app não dispara nada sozinho, você confere e envia. Sem data, ele guarda o currículo e avisa que falta marcar. Abrir e fechar vagas se faz em <b>Gerenciar vagas abertas</b>, no fim da aba; fechar não apaga ninguém, só marca a vaga como fechada e mantém quem estava nela. O cargo entra nos modelos pelo marcador <b>{CARGO}</b>, então o mesmo texto serve para todas as vagas. A vaga de cada pessoa também aparece como selo nos cartões da Agenda, do Funil e da aba Fora, e o Funil tem um filtro por vaga no topo: com vários processos correndo juntos, ver o funil de uma vaga responde mais que ver o funil inteiro. Vaga fechada aparece riscada.</p>
     <p><b>Portão da avaliação:</b> cada candidato tem um link pessoal, que já vai dentro do convite e do e-mail e também pode ser copiado no perfil. Nele o candidato vê a contagem regressiva até o horário <i>dele</i>; no horário, o formulário é liberado; sessenta minutos depois, encerra. Quem confere a hora é o banco de dados, não o relógio do computador do candidato, e o endereço do formulário só entra na resposta com a janela aberta. Cole o endereço do Google Forms em <b>Endereço dos formulários</b>, aqui embaixo — enquanto estiver vazio, o link avisa que a avaliação ainda não foi liberada. O perfil registra se e quando a pessoa abriu.</p>
     <p><b>Onde se marca a data:</b> em três lugares, o que for mais perto de onde você estiver. No cartão do <b>Funil</b>, nos campos ao lado do nome — ficam amarelos enquanto estiverem vazios. No <b>Perfil</b>, no primeiro bloco. E na <b>Agenda</b>, no horário à esquerda de cada compromisso. Avançar alguém de etapa limpa data e horário de propósito, porque a etapa nova tem compromisso novo — por isso a pessoa reaparece no funil pedindo agendamento. Enquanto não tiver data, os botões de convite e de e-mail ficam travados, já que o texto deles cita o dia e a hora.</p>
@@ -1059,6 +1122,7 @@ async function mostrar(session){
   await fetchAll();
   await fetchNotas();
   await fetchFichas();
+  await fetchPosts();
   montarEditorCriterios();
   subscribeLive();
   render();
@@ -1170,6 +1234,15 @@ function subscribeLive(){
     })
     .on('postgres_changes',{event:'*',schema:'public',table:'criterios'},async p=>{
       await fetchFichas();montarEditorCriterios();scheduleRender();
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'posts_divulgacao'},async p=>{
+      await fetchPosts();scheduleRender();
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'posts_imagens'},async p=>{
+      await fetchPosts();scheduleRender();
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'posts_publicacoes'},async p=>{
+      await fetchPosts();scheduleRender();
     })
     .on('postgres_changes',{event:'*',schema:'public',table:'configuracoes'},p=>{
       if(p.new){cfg=p.new;montarEditorMsgs();}
@@ -1370,11 +1443,14 @@ function updateTabCounts(){
   // Vagas conta quem está na entrevista, que é onde a triagem acontece.
   document.getElementById('tab-n-vagas').textContent=
     data.filter(c=>c.etapa==='entrevista'&&!estaFora(c)).length;
+  const nDiv=document.getElementById('tab-n-divulgacao');
+  if(nDiv)nDiv.textContent=posts.filter(p=>!p.arquivado).length;
 }
 
 function render(){
   sortData();
   const list=document.getElementById('list');list.innerHTML='';
+  if(activeTab==='divulgacao'){renderDivulgacao(list);renderStats();tick();return;}
   if(activeTab==='vagas'){renderVagas(list);renderStats();tick();return;}
   if(activeTab==='funil'){renderFunil(list);renderStats();tick();return;}
   if(activeTab==='fora'){renderFora(list);renderStats();tick();return;}
@@ -2826,6 +2902,434 @@ function setEvidenciaCriterio(id,txt){
     if(x)x.evidencia=txt;
     if(perfilId)renderPerfil();
   });
+}
+
+/* =========================================================
+   Divulgação — a biblioteca de posts de vaga.
+
+   A ideia é escrever a legenda uma vez. A legenda-base é a fonte da
+   verdade e serve aos três canais; quando um canal precisa de um texto
+   diferente, ele ganha um texto próprio e para de seguir a base.
+   Por isso txt_whats, txt_linkedin e txt_email são NULOS por padrão:
+   nulo quer dizer "usa a base", e string vazia quer dizer "aqui fica
+   em branco de propósito".
+
+   {CARGO} e {UNIDADE} são trocados na hora de copiar, para o mesmo
+   post servir Nazo BH e Asa Sul sem virar dois posts.
+   ========================================================= */
+let posts=[], postImgs=[], postPubs=[];
+let postFiltro='';        // cargo aberto no filtro da aba
+let postAberto={};        // id -> o "Ver e editar" está aberto
+
+const CANAIS=[
+  {id:'whats',    nome:'WhatsApp', campo:'txt_whats',    cls:'wa'},
+  {id:'linkedin', nome:'LinkedIn', campo:'txt_linkedin', cls:'li'},
+  {id:'email',    nome:'E-mail',   campo:'txt_email',    cls:'em'}
+];
+function canalInfo(id){return CANAIS.find(c=>c.id===id)||CANAIS[0];}
+
+/* Se o 11-divulgacao.sql ainda não rodou, a aba fica vazia em vez de
+   derrubar o resto do app — mesmo trato das outras leituras. */
+async function fetchPosts(){
+  const p=await sb.from('posts_divulgacao').select('*');
+  posts=p.error?[]:(p.data||[]);
+  const i=await sb.from('posts_imagens').select('*');
+  postImgs=i.error?[]:(i.data||[]);
+  const u=await sb.from('posts_publicacoes').select('*');
+  postPubs=u.error?[]:(u.data||[]);
+}
+
+/* ---------- o texto ---------- */
+function trocaCampos(txt,p){
+  return String(txt==null?'':txt)
+    .replace(/{CARGO}/g,p.cargo||'[cargo]')
+    .replace(/{UNIDADE}/g,p.unidade||'[unidade]');
+}
+function usaBase(p,canal){
+  const v=p[canalInfo(canal).campo];
+  return v===null||v===undefined;
+}
+function textoCanal(p,canal){
+  let t=trocaCampos(usaBase(p,canal)?p.legenda:p[canalInfo(canal).campo],p);
+  // O WhatsApp entende um asterisco só como negrito; os outros, nenhum.
+  t=canal==='whats'?t.replace(/\*\*(.+?)\*\*/g,'*$1*'):t.replace(/\*\*(.+?)\*\*/g,'$1');
+  if(canal==='linkedin'){
+    const tags=trocaCampos(p.hashtags,p).trim();
+    if(tags)t=t.replace(/\s+$/,'')+'\n\n'+tags;
+  }
+  return t;
+}
+function textoParaCopiar(p,canal){
+  const corpo=textoCanal(p,canal);
+  if(canal!=='email')return corpo;
+  const as=trocaCampos(p.assunto_email,p).trim();
+  return as?('Assunto: '+as+'\n\n'+corpo):corpo;
+}
+
+/* ---------- o histórico ---------- */
+function ultimaPub(id,canal){
+  const l=postPubs.filter(x=>x.post_id===id&&x.canal===canal)
+    .sort((a,b)=>String(b.publicado_em).localeCompare(String(a.publicado_em)));
+  return l.length?l[0]:null;
+}
+function haQuanto(iso){
+  const dias=Math.floor((Date.now()-new Date(iso).getTime())/86400000);
+  if(dias<=0)return 'hoje';
+  if(dias===1)return 'ontem';
+  if(dias<30)return 'há '+dias+' dias';
+  const m=Math.floor(dias/30);
+  return m===1?'há 1 mês':'há '+m+' meses';
+}
+
+/* ---------- copiar ---------- */
+async function copiarPost(id,canal){
+  const p=posts.find(x=>x.id===id);
+  if(!p)return;
+  const txt=textoParaCopiar(p,canal);
+  if(!txt.trim()){showToast('Este canal ainda está sem texto',true);return;}
+  try{await navigator.clipboard.writeText(txt);}
+  catch(e){showToast('O navegador não deixou copiar. Abra "Ver e editar" e copie da prévia.',true);return;}
+  const nome=canalInfo(canal).nome;
+  const falta=pendencias(txt);
+  if(falta.length)showToast('Copiado, mas ainda falta preencher: '+falta.join(', '),true);
+  else showToast('Legenda de '+nome+' copiada');
+  if(confirm('Legenda copiada.\n\nJá publicou no '+nome+'? Registro a data aqui.'))
+    await marcarPublicado(id,canal);
+}
+async function marcarPublicado(id,canal){
+  const {data:rows,error}=await sb.from('posts_publicacoes')
+    .insert({post_id:id,canal:canal,autor:usuario?usuario.email:''}).select();
+  if(error){showToast('Não registrou a publicação: '+error.message,true);return;}
+  if(rows&&rows[0]&&!postPubs.some(x=>x.id===rows[0].id))postPubs.push(rows[0]);
+  render();
+}
+
+/* ---------- as artes ---------- */
+function imagensDe(id){
+  return postImgs.filter(x=>x.post_id===id)
+    .sort((a,b)=>(a.ordem-b.ordem)||String(a.criado_em).localeCompare(String(b.criado_em)));
+}
+function urlImagem(im){
+  if(im.url)return im.url;
+  if(!im.caminho)return '';
+  const r=sb.storage.from('divulgacao').getPublicUrl(im.caminho);
+  return (r&&r.data&&r.data.publicUrl)||'';
+}
+async function enviarArte(input){
+  const id=input.dataset.id;
+  const arqs=input.files?Array.prototype.slice.call(input.files):[];
+  input.value='';
+  if(!posts.some(x=>x.id===id)||!arqs.length)return;
+  setSync(true,'Enviando…');
+  let ordem=imagensDe(id).length;
+  for(const arq of arqs){
+    if(arq.size>15*1024*1024){showToast(arq.name+' passa de 15 MB',true);continue;}
+    const ext=(arq.name.match(/\.[A-Za-z0-9]+$/)||['.png'])[0].toLowerCase();
+    const caminho=id+'/'+Date.now()+'-'+Math.random().toString(36).slice(2,8)+ext;
+    const {error}=await sb.storage.from('divulgacao')
+      .upload(caminho,arq,{upsert:false,contentType:arq.type||undefined});
+    if(error){setSync(false,'Erro ao enviar');showToast('Não enviou '+arq.name+': '+error.message,true);continue;}
+    ordem++;
+    const {data:rows,error:e2}=await sb.from('posts_imagens')
+      .insert({post_id:id,caminho:caminho,ordem:ordem}).select();
+    if(e2){showToast('A arte subiu mas não entrou na lista: '+e2.message,true);continue;}
+    if(rows&&rows[0]&&!postImgs.some(x=>x.id===rows[0].id))postImgs.push(rows[0]);
+  }
+  setSync(true);
+  render();
+}
+async function colarLinkArte(id){
+  const url=(prompt('Endereço da arte (Drive, Canva, qualquer link de imagem):')||'').trim();
+  if(!url)return;
+  const ordem=imagensDe(id).length+1;
+  const {data:rows,error}=await sb.from('posts_imagens')
+    .insert({post_id:id,url:url,ordem:ordem}).select();
+  if(error){showToast('Não guardou o link: '+error.message,true);return;}
+  if(rows&&rows[0]&&!postImgs.some(x=>x.id===rows[0].id))postImgs.push(rows[0]);
+  render();
+}
+/* A área de transferência só aceita PNG com segurança. JPEG e WebP
+   passam pelo canvas antes, senão o navegador recusa em silêncio. */
+function paraPng(blob){
+  if(blob.type==='image/png')return Promise.resolve(blob);
+  return new Promise((ok,falha)=>{
+    const img=new Image();
+    const u=URL.createObjectURL(blob);
+    img.onload=()=>{
+      const cv=document.createElement('canvas');
+      cv.width=img.naturalWidth; cv.height=img.naturalHeight;
+      cv.getContext('2d').drawImage(img,0,0);
+      URL.revokeObjectURL(u);
+      cv.toBlob(b=>b?ok(b):falha(new Error('canvas vazio')),'image/png');
+    };
+    img.onerror=()=>{URL.revokeObjectURL(u);falha(new Error('não abriu a imagem'));};
+    img.src=u;
+  });
+}
+async function copiarArte(imgId){
+  const im=postImgs.find(x=>x.id===imgId);
+  if(!im)return;
+  const url=urlImagem(im);
+  if(!url){showToast('Esta arte não tem endereço',true);return;}
+  if(!(navigator.clipboard&&window.ClipboardItem)){
+    showToast('Este navegador não copia imagem. Use Baixar e anexe o arquivo.',true);return;
+  }
+  try{
+    const resp=await fetch(url,{mode:'cors'});
+    if(!resp.ok)throw new Error('HTTP '+resp.status);
+    const png=await paraPng(await resp.blob());
+    await navigator.clipboard.write([new ClipboardItem({'image/png':png})]);
+    showToast('Arte copiada — é só colar');
+  }catch(e){
+    showToast('Não deu para copiar a imagem. Use Baixar e anexe o arquivo.',true);
+  }
+}
+function baixarArte(imgId){
+  const im=postImgs.find(x=>x.id===imgId);
+  if(!im)return;
+  const url=urlImagem(im);
+  if(!url){showToast('Esta arte não tem endereço',true);return;}
+  const a=document.createElement('a');
+  a.href=url; a.download=(im.caminho||'arte').split('/').pop();
+  a.target='_blank'; a.rel='noopener';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+async function copiarLinkArte(imgId){
+  const im=postImgs.find(x=>x.id===imgId);
+  if(!im)return;
+  const url=urlImagem(im);
+  if(!url){showToast('Esta arte não tem endereço',true);return;}
+  try{await navigator.clipboard.writeText(url);showToast('Endereço da arte copiado');}
+  catch(e){showToast('Não deu para copiar o endereço',true);}
+}
+async function removerArte(imgId){
+  const im=postImgs.find(x=>x.id===imgId);
+  if(!im)return;
+  if(!confirm('Remover esta arte do post?'))return;
+  if(im.caminho)await sb.storage.from('divulgacao').remove([im.caminho]);
+  const {error}=await sb.from('posts_imagens').delete().eq('id',imgId);
+  if(error){showToast('Não removeu: '+error.message,true);return;}
+  postImgs=postImgs.filter(x=>x.id!==imgId);
+  render();
+}
+
+/* ---------- o post ---------- */
+async function novoPost(){
+  const cargo=postFiltro||cargosAbertos()[0]||'';
+  const {data:rows,error}=await sb.from('posts_divulgacao')
+    .insert({titulo:'',cargo:cargo,unidade:'',legenda:'',assunto_email:'',
+             hashtags:'',autor:usuario?usuario.email:''}).select();
+  if(error){showToast('Não criou o post: '+error.message,true);return;}
+  if(rows&&rows[0]){
+    if(!posts.some(x=>x.id===rows[0].id))posts.push(rows[0]);
+    postAberto[rows[0].id]=true;
+  }
+  render();
+}
+function setCampoPost(id,campo,valor){
+  const p=posts.find(x=>x.id===id);
+  if(!p)return;
+  p[campo]=valor;
+  atualizarPrevia(id);
+  agendaFicha('post|'+id+'|'+campo,async()=>{
+    const o={}; o[campo]=valor;
+    const {error}=await sb.from('posts_divulgacao').update(o).eq('id',id);
+    if(error){setSync(false,'Erro ao salvar');showToast('Não salvou: '+error.message,true);return;}
+    setSync(true);
+  });
+}
+/* Troca só o texto da prévia, sem redesenhar a lista: assim o cursor
+   não pula para fora do campo a cada letra digitada. */
+function atualizarPrevia(id){
+  const p=posts.find(x=>x.id===id);
+  if(!p)return;
+  CANAIS.forEach(c=>{
+    const el=document.getElementById('prev-'+id+'-'+c.id);
+    if(el)el.textContent=textoParaCopiar(p,c.id);
+  });
+}
+async function separarCanal(id,canal){
+  const p=posts.find(x=>x.id===id);
+  if(!p)return;
+  const campo=canalInfo(canal).campo;
+  const o={}; o[campo]=p.legenda||'';
+  const {error}=await sb.from('posts_divulgacao').update(o).eq('id',id);
+  if(error){showToast('Não salvou: '+error.message,true);return;}
+  p[campo]=o[campo];
+  render();
+}
+async function voltarParaBase(id,canal){
+  const info=canalInfo(canal);
+  if(!confirm('O texto próprio do '+info.nome+' será apagado e ele volta a seguir a legenda-base.\n\nConfirma?'))return;
+  const o={}; o[info.campo]=null;
+  const {error}=await sb.from('posts_divulgacao').update(o).eq('id',id);
+  if(error){showToast('Não salvou: '+error.message,true);return;}
+  const p=posts.find(x=>x.id===id);
+  if(p)p[info.campo]=null;
+  render();
+}
+async function arquivarPost(id,valor){
+  const {error}=await sb.from('posts_divulgacao').update({arquivado:valor}).eq('id',id);
+  if(error){showToast('Não salvou: '+error.message,true);return;}
+  const p=posts.find(x=>x.id===id);
+  if(p)p.arquivado=valor;
+  render();
+  showToast(valor?'Post arquivado':'Post restaurado');
+}
+async function excluirPost(id){
+  const p=posts.find(x=>x.id===id);
+  if(!p)return;
+  if(!confirm('Apagar o post "'+(p.titulo||'sem título')+'" e as artes dele?\n\nIsso não tem volta.'))return;
+  const caminhos=imagensDe(id).filter(x=>x.caminho).map(x=>x.caminho);
+  if(caminhos.length)await sb.storage.from('divulgacao').remove(caminhos);
+  const {error}=await sb.from('posts_divulgacao').delete().eq('id',id);
+  if(error){showToast('Não apagou: '+error.message,true);return;}
+  posts=posts.filter(x=>x.id!==id);
+  postImgs=postImgs.filter(x=>x.post_id!==id);
+  postPubs=postPubs.filter(x=>x.post_id!==id);
+  render();
+  showToast('Post apagado');
+}
+function setPostFiltro(k){postFiltro=k;render();}
+function abrirPost(id,aberto){postAberto[id]=aberto;}
+
+/* ---------- a tela ---------- */
+function renderDivulgacao(list){
+  const abertos=cargosAbertos();
+  const vivos=posts.filter(p=>!p.arquivado);
+  // Vaga já fechada continua no filtro se ainda houver post dela à vista;
+  // cargo que só aparece em post arquivado não vira aba vazia.
+  const usados=[];
+  vivos.forEach(p=>{if(p.cargo&&usados.indexOf(p.cargo)<0)usados.push(p.cargo);});
+  const cargos=abertos.concat(usados.filter(k=>abertos.indexOf(k)<0));
+
+  let h='<div class="vaga-abas">'+
+    '<button class="tab'+(postFiltro?'':' on')+'" onclick="setPostFiltro(\'\')">'+
+      'Todos <span class="n">'+vivos.length+'</span></button>'+
+    cargos.map(k=>'<button class="tab'+(k===postFiltro?' on':'')+'" onclick="setPostFiltro('+
+      escAttr(JSON.stringify(k))+')">'+escHtml(k)+' <span class="n">'+
+      vivos.filter(p=>p.cargo===k).length+'</span></button>').join('')+
+    '</div>';
+
+  h+='<div class="post-topo"><button class="btn" onclick="novoPost()">+ Novo post</button>'+
+     '<span class="post-dica">Escreva a legenda uma vez. Depois é só copiar para o canal certo.</span></div>';
+
+  const unidades=[];
+  posts.forEach(p=>{if(p.unidade&&unidades.indexOf(p.unidade)<0)unidades.push(p.unidade);});
+  h+='<datalist id="post-unidades">'+unidades.map(u=>'<option value="'+escAttr(u)+'">').join('')+'</datalist>';
+
+  const lista=vivos.filter(p=>!postFiltro||p.cargo===postFiltro)
+    .sort((a,b)=>String(b.criado_em).localeCompare(String(a.criado_em)));
+  if(!lista.length){
+    h+='<div class="empty">Nenhum post guardado'+(postFiltro?' para <b>'+escHtml(postFiltro)+'</b>':'')+'.<br>'+
+       'Crie um: a legenda que você escrever fica aqui para todas as próximas divulgações.</div>';
+  }else{
+    h+=lista.map(cardPost).join('');
+  }
+
+  const arq=posts.filter(p=>p.arquivado);
+  if(arq.length){
+    h+='<details class="addbox"><summary>Arquivados ('+arq.length+')</summary>'+
+       arq.map(p=>'<div class="vaga-linha"><div class="vaga-quem"><b>'+
+         escHtml(p.titulo||'Post sem título')+'</b><div class="vaga-sub">'+
+         escHtml(p.cargo||'sem cargo')+'</div></div><div class="vaga-acoes">'+
+         '<button class="linkbtn" onclick="arquivarPost(\''+p.id+'\',false)">Restaurar</button>'+
+         '<button class="linkbtn" onclick="excluirPost(\''+p.id+'\')">Apagar</button>'+
+         '</div></div>').join('')+'</details>';
+  }
+  list.innerHTML=h;
+}
+
+function opcoesCargo(atual){
+  const todos=cargosAbertos().slice();
+  if(atual&&todos.indexOf(atual)<0)todos.push(atual);
+  return '<option value="">(sem cargo)</option>'+todos.map(k=>
+    '<option value="'+escAttr(k)+'"'+(k===atual?' selected':'')+'>'+escHtml(k)+'</option>').join('');
+}
+
+function cardPost(p){
+  let h='<div class="post-card"><div class="post-top">'+
+    '<input class="post-tit" value="'+escAttr(p.titulo)+'" placeholder="Título do post"'+
+      ' oninput="setCampoPost(\''+p.id+'\',\'titulo\',this.value)">'+
+    '<div class="post-acoes">'+
+      '<button class="icon" title="Arquivar" onclick="arquivarPost(\''+p.id+'\',true)">🗄</button>'+
+      '<button class="icon del" title="Apagar" onclick="excluirPost(\''+p.id+'\')">🗑</button>'+
+    '</div></div>';
+
+  h+='<div class="post-campos">'+
+     '<label>Cargo<select onchange="setCampoPost(\''+p.id+'\',\'cargo\',this.value)">'+
+       opcoesCargo(p.cargo)+'</select></label>'+
+     '<label>Unidade<input list="post-unidades" value="'+escAttr(p.unidade)+'" placeholder="Nazo BH"'+
+       ' oninput="setCampoPost(\''+p.id+'\',\'unidade\',this.value)"></label>'+
+     '<span class="post-dica">É isso que {CARGO} e {UNIDADE} viram no texto copiado.</span>'+
+     '</div>';
+
+  h+='<div class="post-artes">'+imagensDe(p.id).map(cardArte).join('')+
+     '<label class="post-arte-add" title="Enviar imagem">+ Arte'+
+       '<input type="file" accept="image/*" multiple hidden data-id="'+p.id+'"'+
+       ' onchange="enviarArte(this)"></label>'+
+     '<button class="post-arte-add" title="Guardar um link do Drive ou do Canva"'+
+       ' onclick="colarLinkArte(\''+p.id+'\')">+ Link</button>'+
+     '</div>';
+
+  h+='<div class="post-canais">'+CANAIS.map(c=>{
+    const u=ultimaPub(p.id,c.id);
+    return '<div class="post-canal">'+
+      '<button class="btn post-copiar '+c.cls+'" onclick="copiarPost(\''+p.id+'\',\''+c.id+'\')">'+
+        'Copiar para '+c.nome+'</button>'+
+      '<div class="post-quando">'+(u?'publicado '+haQuanto(u.publicado_em):'nunca publicado')+'</div>'+
+      '</div>';
+  }).join('')+'</div>';
+
+  h+='<details class="post-previa"'+(postAberto[p.id]?' open':'')+
+     ' ontoggle="abrirPost(\''+p.id+'\',this.open)">'+
+     '<summary>Ver e editar o texto</summary>'+corpoPost(p)+'</details>';
+  return h+'</div>';
+}
+
+function cardArte(im){
+  return '<div class="post-arte"><img src="'+escAttr(urlImagem(im))+'" alt="" loading="lazy">'+
+    '<div class="post-arte-bar">'+
+      '<button class="icon" title="Copiar a imagem" onclick="copiarArte(\''+im.id+'\')">⧉</button>'+
+      '<button class="icon" title="Baixar" onclick="baixarArte(\''+im.id+'\')">⇩</button>'+
+      '<button class="icon" title="Copiar o endereço" onclick="copiarLinkArte(\''+im.id+'\')">🔗</button>'+
+      '<button class="icon del" title="Remover" onclick="removerArte(\''+im.id+'\')">✕</button>'+
+    '</div></div>';
+}
+
+function corpoPost(p){
+  let h='<div class="post-ed"><label class="post-lbl">Legenda-base'+
+    '<textarea rows="8" placeholder="A legenda da vaga. Escreva {CARGO} e {UNIDADE} onde o texto muda de uma unidade para outra."'+
+    ' oninput="setCampoPost(\''+p.id+'\',\'legenda\',this.value)">'+escHtml(p.legenda)+'</textarea></label>';
+
+  h+='<div class="post-dois">'+
+     '<label class="post-lbl">Assunto do e-mail<input value="'+escAttr(p.assunto_email)+'"'+
+       ' placeholder="Vaga: {CARGO} — {UNIDADE}"'+
+       ' oninput="setCampoPost(\''+p.id+'\',\'assunto_email\',this.value)"></label>'+
+     '<label class="post-lbl">Hashtags do LinkedIn<input value="'+escAttr(p.hashtags)+'"'+
+       ' placeholder="#vagas #gastronomia"'+
+       ' oninput="setCampoPost(\''+p.id+'\',\'hashtags\',this.value)"></label>'+
+     '</div>';
+
+  h+=CANAIS.map(c=>{
+    const base=usaBase(p,c.id);
+    let b='<div class="post-canal-ed"><div class="post-canal-cab"><b>'+c.nome+'</b>';
+    if(base){
+      b+='<span class="post-tag">segue a legenda-base</span>'+
+         '<button class="linkbtn" onclick="separarCanal(\''+p.id+'\',\''+c.id+'\')">'+
+         'escrever um texto só para aqui</button>';
+    }else{
+      b+='<span class="post-tag prop">texto próprio</span>'+
+         '<button class="linkbtn" onclick="voltarParaBase(\''+p.id+'\',\''+c.id+'\')">'+
+         'voltar a seguir a base</button>';
+    }
+    b+='</div>';
+    if(!base)b+='<textarea rows="6" oninput="setCampoPost(\''+p.id+'\',\''+c.campo+'\',this.value)">'+
+      escHtml(p[c.campo]||'')+'</textarea>';
+    return b+'<div class="post-prev-rot">Vai sair assim</div><pre class="post-prev" id="prev-'+
+      p.id+'-'+c.id+'">'+escHtml(textoParaCopiar(p,c.id))+'</pre></div>';
+  }).join('');
+  return h+'</div>';
 }
 
 boot();
